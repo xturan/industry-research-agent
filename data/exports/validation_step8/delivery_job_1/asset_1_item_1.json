@@ -1,0 +1,13 @@
+{
+  "delivery_job_item_id": 1,
+  "content_asset_id": 1,
+  "title": "lithium pricing power outlook：结构化研究解读（公众号版）",
+  "content_type": "article",
+  "source_research_run_id": 2,
+  "generation_run_id": 3,
+  "content_format": "wechat_article",
+  "disclaimers": [
+    "免责声明：本文仅用于产业研究与信息交流，不构成任何证券买卖建议或投资承诺。"
+  ],
+  "delivery_target": "export_bundle"
+}

@@ -1,0 +1,24 @@
+{
+  "delivery_job_id": 1,
+  "delivery_target": "export_bundle",
+  "mode": "mock",
+  "review_status": "approved",
+  "status": "dispatching",
+  "source_run_id": 2,
+  "items": [
+    {
+      "delivery_job_item_id": 1,
+      "content_asset_id": 1,
+      "markdown_path": "data/exports/validation_step8/delivery_job_1/asset_1_item_1.md",
+      "text_path": "data/exports/validation_step8/delivery_job_1/asset_1_item_1.txt",
+      "metadata_path": "data/exports/validation_step8/delivery_job_1/asset_1_item_1.json"
+    },
+    {
+      "delivery_job_item_id": 2,
+      "content_asset_id": 2,
+      "markdown_path": "data/exports/validation_step8/delivery_job_1/asset_2_item_2.md",
+      "text_path": "data/exports/validation_step8/delivery_job_1/asset_2_item_2.txt",
+      "metadata_path": "data/exports/validation_step8/delivery_job_1/asset_2_item_2.json"
+    }
+  ]
+}

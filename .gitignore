@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.env
+*.egg-info/
+dist/
+build/
+alembic_autogen.db
+validation_migration.db
+validation_*.db
+data/raw/*
+!data/raw/.gitkeep
