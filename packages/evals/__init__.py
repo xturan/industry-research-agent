@@ -6,6 +6,8 @@ from packages.evals.schemas import (
     EvalSummary,
     SmokeEvalRequest,
     SmokeEvalResponse,
+    SourceSmokeEvalRequest,
+    SourceSmokeEvalResponse,
 )
 from packages.evals.service import EvalService, EvalServiceError
 
@@ -17,4 +19,6 @@ __all__ = [
     "EvalSummary",
     "SmokeEvalRequest",
     "SmokeEvalResponse",
+    "SourceSmokeEvalRequest",
+    "SourceSmokeEvalResponse",
 ]

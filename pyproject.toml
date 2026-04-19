@@ -20,6 +20,7 @@ dependencies = [
   "python-multipart>=0.0.9",
   "prometheus-client>=0.20.0",
   "openai>=1.35.0",
+  "pypdf>=5.4.0",
 ]
 
 [project.optional-dependencies]
@@ -44,6 +45,11 @@ select = ["E", "F", "I", "B", "UP"]
 "packages/db/bootstrap.py" = ["UP017"]
 "packages/db/models/enums.py" = ["UP042"]
 "packages/agents/schemas.py" = ["UP042"]
+"packages/registry/research_prompts.py" = ["E501"]
+"packages/sources/enums.py" = ["UP042"]
+"packages/sources/schemas.py" = ["UP017"]
+"packages/sources/citation.py" = ["UP017"]
+"packages/sources/performance.py" = ["UP017"]
 "packages/agents/workflow.py" = ["UP017"]
 "packages/content/schemas.py" = ["UP042"]
 "packages/content/service.py" = ["UP017"]

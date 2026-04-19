@@ -11,6 +11,7 @@ from packages.agents.schemas import (
     ResearchProvider,
     ResearchRunView,
     RiskItem,
+    SourceAcquisitionSummary,
     ThesisItem,
 )
 from packages.agents.service import ResearchWorkflowService
@@ -27,5 +28,6 @@ __all__ = [
     "ResearchRunView",
     "ResearchWorkflowService",
     "RiskItem",
+    "SourceAcquisitionSummary",
     "ThesisItem",
 ]

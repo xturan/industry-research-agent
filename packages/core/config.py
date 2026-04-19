@@ -80,6 +80,14 @@ class Settings(BaseSettings):
         default=False,
         alias="DEEPSEEK_STORE_REASONING_CONTENT",
     )
+    source_http_timeout_seconds: int = Field(default=20, alias="SOURCE_HTTP_TIMEOUT_SECONDS")
+    source_http_retry_count: int = Field(default=2, alias="SOURCE_HTTP_RETRY_COUNT")
+    source_http_backoff_seconds: float = Field(default=0.3, alias="SOURCE_HTTP_BACKOFF_SECONDS")
+    eia_api_key: str | None = Field(default=None, alias="EIA_API_KEY")
+    sec_user_agent: str = Field(
+        default="invest-agent/0.1 (research@local)",
+        alias="SEC_USER_AGENT",
+    )
 
 
 @lru_cache
