@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from packages.core.config import get_settings
 from packages.core.logging import bind_log_context
+from packages.core.run_log import CompactRunLogger
 from packages.tasks.claim import compute_retry_delay_seconds
 from packages.tasks.enums import TaskJobStatus, TaskType
 from packages.tasks.handlers import NonRetryableTaskError, TaskHandlers
@@ -115,6 +116,23 @@ class TaskService:
         handlers = TaskHandlers(self.session)
         task_type_text = task_job.task_type.value
         updated = task_job
+        run_logger = CompactRunLogger(
+            task_name=f"task_execute_{task_type_text}",
+            run_id=f"task-{task_job.id}",
+        )
+        run_logger.start(
+            input_summary={
+                "task_id": task_job.id,
+                "task_type": task_type_text,
+                "attempt": attempt.attempt_number,
+                "payload": task_job.payload_json,
+            },
+            decision_summary=[
+                "execute claimed task with registered handler",
+                "mark succeeded or structured failure without changing idempotency key",
+                "schedule retry only for retryable failures",
+            ],
+        )
 
         with bind_log_context(task_id=str(task_job.id), worker_id=worker_id):
             LOGGER.info(
@@ -191,6 +209,18 @@ class TaskService:
                     updated.status.value,
                 )
 
+        run_logger.finish(
+            status=updated.status.value,
+            output_summary={
+                "task_id": updated.id,
+                "task_type": updated.task_type.value,
+                "status": updated.status.value,
+                "attempt_count": updated.attempt_count,
+                "source_run_id": updated.source_run_id,
+                "error": updated.error_message,
+                "result": updated.result_json,
+            },
+        )
         return to_task_view(updated)
 
     def _enqueue(
@@ -203,6 +233,21 @@ class TaskService:
         max_attempts: int,
         available_in_seconds: int,
     ) -> TaskAcceptedResponse:
+        run_logger = CompactRunLogger(task_name=f"task_enqueue_{task_type.value}")
+        run_logger.start(
+            input_summary={
+                "task_type": task_type.value,
+                "payload": payload_json,
+                "idempotency_key": idempotency_key,
+                "priority": priority,
+                "max_attempts": max_attempts,
+                "available_in_seconds": available_in_seconds,
+            },
+            decision_summary=[
+                "enqueue task through repository",
+                "deduplicate by idempotency key when present",
+            ],
+        )
         row, created = self.repository.enqueue_task(
             task_type=task_type,
             payload_json=payload_json,
@@ -213,7 +258,7 @@ class TaskService:
         )
         if created:
             mark_task_enqueued(task_type=task_type.value)
-        return TaskAcceptedResponse(
+        response = TaskAcceptedResponse(
             task_id=row.id,
             task_type=row.task_type,
             status=row.status,
@@ -221,3 +266,5 @@ class TaskService:
             accepted_at=row.created_at,
             deduplicated=not created,
         )
+        run_logger.finish(status=response.status.value, output_summary=response)
+        return response

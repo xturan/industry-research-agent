@@ -3,8 +3,14 @@
 from packages.sources.enums import (
     AccessMethod,
     CollectorType,
+    GovernanceAxis,
+    InfoType,
+    LineFamily,
     PaginationMode,
+    PublisherType,
+    RegionalLevel,
     SourceCategory,
+    SourceRole,
     TrustTier,
 )
 from packages.sources.schemas import SourceAccess, SourceCapabilities, SourceProfile
@@ -37,6 +43,12 @@ def build_cn_exchange_announcement_generic_profile(*, enabled: bool = False) -> 
         priority_hint=76,
         tags=["china", "exchange", "announcement", "pdf"],
         profile_family="china_exchange",
+        governance_axis=GovernanceAxis.LINE,
+        line_family=LineFamily.EXCHANGE,
+        regional_level=RegionalLevel.NATIONAL,
+        info_type=InfoType.REGULATORY_ANNOUNCEMENT,
+        publisher_type=PublisherType.EXCHANGE,
+        source_role=SourceRole.PRIMARY,
         collector_type=CollectorType.HTML_LIST_DETAIL,
         entry_urls=["https://example.cn/exchange/announcements"],
         selectors={
@@ -93,6 +105,12 @@ def build_cn_exchange_szse_notice_v1_profile(*, enabled: bool = False) -> Source
         priority_hint=84,
         tags=["china", "szse", "exchange", "announcement", "disclosure"],
         profile_family="china_exchange",
+        governance_axis=GovernanceAxis.LINE,
+        line_family=LineFamily.EXCHANGE,
+        regional_level=RegionalLevel.NATIONAL,
+        info_type=InfoType.REGULATORY_ANNOUNCEMENT,
+        publisher_type=PublisherType.EXCHANGE,
+        source_role=SourceRole.PRIMARY,
         collector_type=CollectorType.HTML_LIST_DETAIL,
         entry_urls=["https://www.szse.cn/disclosure/notice/general/index.html"],
         selectors={

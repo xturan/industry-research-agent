@@ -3,8 +3,14 @@
 from packages.sources.enums import (
     AccessMethod,
     CollectorType,
+    GovernanceAxis,
+    InfoType,
+    LineFamily,
     PaginationMode,
+    PublisherType,
+    RegionalLevel,
     SourceCategory,
+    SourceRole,
     TrustTier,
 )
 from packages.sources.schemas import SourceAccess, SourceCapabilities, SourceProfile
@@ -36,6 +42,12 @@ def build_cn_policy_generic_profile(*, enabled: bool = False) -> SourceProfile:
         priority_hint=74,
         tags=["china", "policy", "html", "pdf"],
         profile_family="china_policy",
+        governance_axis=GovernanceAxis.LINE,
+        line_family=LineFamily.POLICY,
+        regional_level=RegionalLevel.NATIONAL,
+        info_type=InfoType.POLICY_NOTICE,
+        publisher_type=PublisherType.MINISTRY,
+        source_role=SourceRole.PRIMARY,
         collector_type=CollectorType.HTML_LIST_DETAIL,
         entry_urls=["https://example.cn/policy/list"],
         selectors={
@@ -93,6 +105,12 @@ def build_cn_policy_ndrc_tzgg_v1_profile(*, enabled: bool = False) -> SourceProf
         priority_hint=82,
         tags=["china", "ndrc", "policy", "notice", "attachment"],
         profile_family="china_policy",
+        governance_axis=GovernanceAxis.LINE,
+        line_family=LineFamily.POLICY,
+        regional_level=RegionalLevel.NATIONAL,
+        info_type=InfoType.POLICY_NOTICE,
+        publisher_type=PublisherType.MINISTRY,
+        source_role=SourceRole.PRIMARY,
         collector_type=CollectorType.HTML_LIST_DETAIL,
         entry_urls=["https://www.ndrc.gov.cn/xwdt/tzgg/index.html"],
         selectors={

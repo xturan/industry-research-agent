@@ -19,6 +19,7 @@ class SourceCategory(StrEnum):
     POLICY_PORTAL = "policy_portal"
     EXCHANGE_ANNOUNCEMENT = "exchange_announcement"
     INDUSTRY_ASSOCIATION = "industry_association"
+    PROJECT_SIGNAL = "project_signal"
 
 
 class QueryType(StrEnum):
@@ -27,6 +28,48 @@ class QueryType(StrEnum):
     FILING = "filing"
     HEALTH = "health"
     GENERAL = "general"
+
+
+class GovernanceAxis(StrEnum):
+    LINE = "line"
+    BLOCK = "block"
+    MIXED = "mixed"
+
+
+class LineFamily(StrEnum):
+    POLICY = "policy"
+    EXCHANGE = "exchange"
+    INDUSTRY = "industry"
+    CROSS_DOMAIN = "cross_domain"
+
+
+class RegionalLevel(StrEnum):
+    NATIONAL = "national"
+    PROVINCIAL = "provincial"
+    MUNICIPAL = "municipal"
+    CROSS_REGION = "cross_region"
+
+
+class InfoType(StrEnum):
+    POLICY_NOTICE = "policy_notice"
+    REGULATORY_ANNOUNCEMENT = "regulatory_announcement"
+    INDUSTRY_REPORT = "industry_report"
+    INDUSTRY_NOTICE = "industry_notice"
+    PROJECT_TRANSACTION = "project_transaction"
+
+
+class PublisherType(StrEnum):
+    MINISTRY = "ministry"
+    EXCHANGE = "exchange"
+    ASSOCIATION = "association"
+    INSTITUTION = "institution"
+    MIXED = "mixed"
+
+
+class SourceRole(StrEnum):
+    PRIMARY = "primary"
+    SECONDARY = "secondary"
+    SUPPLEMENTAL = "supplemental"
 
 
 class AccessMethod(StrEnum):

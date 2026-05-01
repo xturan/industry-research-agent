@@ -1,5 +1,6 @@
 ﻿from __future__ import annotations
 
+import re
 from time import perf_counter
 
 from packages.sources.adapters.base import BaseSourceAdapter
@@ -33,6 +34,87 @@ from packages.sources.schemas import (
     ToolRequest,
     ToolResponse,
 )
+
+_QUERY_TERM_PATTERN = re.compile(r"[\u4e00-\u9fffA-Za-z0-9]+")
+
+
+def _rank_discovered_items_for_query(
+    items: list[DiscoveredItem],
+    *,
+    request: ToolRequest,
+) -> list[DiscoveredItem]:
+    if not items or request.query_context is None:
+        return items
+
+    query = request.query_context.query
+    task_family = str(request.query_context.metadata.get("task_family") or "")
+    scored_items = [
+        (
+            _discovered_item_query_score(
+                item,
+                query=query,
+                task_family=task_family,
+            ),
+            index,
+            item,
+        )
+        for index, item in enumerate(items)
+    ]
+    if all(score == 0 for score, _, _ in scored_items):
+        return items
+    return [item for _, _, item in sorted(scored_items, key=lambda row: (-row[0], row[1]))]
+
+
+def _discovered_item_query_score(
+    item: DiscoveredItem,
+    *,
+    query: str,
+    task_family: str,
+) -> int:
+    searchable_text = f"{item.title} {item.summary or ''} {item.url}".lower()
+    query_terms = _query_terms(query)
+    score = sum(5 for term in query_terms if term.lower() in searchable_text)
+
+    if task_family == "data_metrics":
+        score += _data_metrics_item_score(item.title, query=query)
+    return score
+
+
+def _query_terms(query: str) -> list[str]:
+    return [
+        term.strip()
+        for term in _QUERY_TERM_PATTERN.findall(query)
+        if term.strip() and len(term.strip()) >= 2
+    ]
+
+
+def _data_metrics_item_score(title: str, *, query: str) -> int:
+    score = 0
+    query_text = query.lower()
+
+    # General annual statistical bulletins are the broadest reusable fallback
+    # when a metrics query asks for energy, output, investment, trade, or fiscal
+    # evidence and a list page only exposes mixed statistical bulletin types.
+    if "国民经济和社会发展统计公报" in title:
+        score += 30
+    elif "统计公报" in title:
+        score += 4
+
+    if "人口" in title:
+        score += 20 if "人口" in query_text else -10
+    if "科技经费" in title:
+        has_science_focus = any(term in query_text for term in ("科技", "研发", "研究", "经费"))
+        score += 20 if has_science_focus else -10
+    return score
+
+
+def _should_hydrate_search_item_detail(request: ToolRequest) -> bool:
+    task_family = str(
+        request.payload.get("task_family")
+        or request.query_context.metadata.get("task_family")
+        or ""
+    )
+    return bool(request.payload.get("direct_structured_lane")) and task_family == "data_metrics"
 
 
 class GenericProfileSourceAdapter(BaseSourceAdapter):
@@ -72,11 +154,15 @@ class GenericProfileSourceAdapter(BaseSourceAdapter):
             default_limit=request.query_context.max_documents_per_source,
             max_limit=100,
         )
-        items = discover_response.items
+        items = _rank_discovered_items_for_query(
+            discover_response.items,
+            request=request,
+        )
         selected_items = items[offset : offset + limit]
         raw_documents: list[RawDocument] = []
         normalized_documents: list[NormalizedDocument] = []
         errors = list(discover_response.errors)
+        detail_warnings: list[str] = []
 
         for item in selected_items:
             normalized_response = collector.normalize_to_documents(
@@ -89,11 +175,28 @@ class GenericProfileSourceAdapter(BaseSourceAdapter):
                     trace_id=request.trace_id,
                 )
             )
+            if _should_hydrate_search_item_detail(request) and normalized_response.raw_documents:
+                detail_response = self.fetch_document_detail(
+                    request.model_copy(
+                        update={
+                            "tool_name": "fetch_document_detail",
+                            "document_id": normalized_response.raw_documents[0].document_id,
+                        }
+                    )
+                )
+                errors.extend(detail_response.errors)
+                if detail_response.trace is not None:
+                    detail_warnings.extend(detail_response.trace.warnings)
+                if detail_response.documents or detail_response.normalized_documents:
+                    raw_documents.extend(detail_response.documents)
+                    normalized_documents.extend(detail_response.normalized_documents)
+                    continue
             raw_documents.extend(normalized_response.raw_documents)
             normalized_documents.extend(normalized_response.normalized_documents)
             errors.extend(normalized_response.errors)
 
         warnings = [*list_fetch.warnings]
+        warnings.extend(detail_warnings)
         if discover_response.trace is not None:
             warnings.extend(discover_response.trace.warnings)
         total_items = len(items)

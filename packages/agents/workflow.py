@@ -19,14 +19,16 @@ from packages.agents.schemas import (
     ResearchProvider,
     SourceAcquisitionSummary,
 )
+from packages.core.run_log import CompactRunLogger
 from packages.db.models import Run, RunStatus, RunStep, RunType, StepStatus
 from packages.rag.bundle import EvidenceBundleBuilder
 from packages.rag.retrieval import ChunkRetrievalService
 from packages.rag.schemas import EvidenceBundle, RetrievalChunkItem, RetrievalResponse
 from packages.sources.citation import normalize_evidence_item
-from packages.sources.enums import ToolErrorCode
+from packages.sources.enums import ToolErrorCode, ToolStatus
 from packages.sources.performance import SourcePerformanceService
 from packages.sources.quality import summarize_source_quality
+from packages.sources.query_decomposition import QueryDecompositionTask, decompose_query
 from packages.sources.schemas import (
     EvidenceBundle as SourceEvidenceBundle,
 )
@@ -41,6 +43,12 @@ from packages.sources.schemas import (
     ToolError,
     ToolRequest,
     ToolTrace,
+)
+from packages.sources.search_assisted_domestic import (
+    SEARCH_ASSISTED_SOURCE_ID,
+    SEARCH_ASSISTED_SOURCE_NAME,
+    SearchAssistedDomesticOrchestrator,
+    convert_search_response_to_evidence_items,
 )
 from packages.sources.service import SourceIntelligenceService
 
@@ -90,6 +98,7 @@ class ResearchWorkflowRunner:
         self.provider_resolution = provider_resolution
         self._active_provider = None
         self._provider_step_metadata: dict[str, dict[str, Any]] = {}
+        self._run_logger: CompactRunLogger | None = None
 
     def run(self, request: ResearchAnalyzeRequest) -> ResearchAnalysisResult:
         fallback_provider = request.provider or (
@@ -101,6 +110,19 @@ class ResearchWorkflowRunner:
             resolved_provider=fallback_provider,
             resolved_model=request.model,
             thinking_enabled=bool(request.enable_thinking),
+        )
+        self._run_logger = CompactRunLogger(task_name="research_analyze", run_id=run.id)
+        self._run_logger.start(
+            input_summary=run.input_json,
+            decision_summary=[
+                "resolve provider/model settings",
+                (
+                    "use source acquisition pipeline"
+                    if request.enable_source_acquisition
+                    else "use existing retrieval/evidence bundle pipeline"
+                ),
+                "run supervisor, thesis, opponent, evidence judge, risk, memo stages",
+            ],
         )
 
         resolution: ProviderResolution | None = None
@@ -362,6 +384,7 @@ class ResearchWorkflowRunner:
             return failed_result
         finally:
             self._active_provider = None
+            self._run_logger = None
 
     def _run_source_acquisition(
         self,
@@ -413,8 +436,40 @@ class ResearchWorkflowRunner:
         pdf_errors: list[str] = []
         pdf_metrics_by_source: dict[str, dict[str, int]] = {}
         pdf_summary = self._build_pdf_summary(enabled=request.enable_pdf_processing)
+        decomposition_tasks: list[QueryDecompositionTask] = []
+        search_assisted_task_outputs: list[tuple[QueryDecompositionTask, Any]] = []
+        search_assisted_allowed_task_count = 0
+        search_assisted_direct_keep_task_count = 0
+        search_assisted_hold_or_refused_task_count = 0
+        search_assisted_notes: list[str] = []
+        search_assisted_coverage_gap_markers: list[str] = []
+        search_assisted_coverage_gap_count = 0
+
+        if request.source_ids:
+            search_assisted_notes.append(
+                "search_assisted_domestic_skipped_due_to_source_ids_override"
+            )
+        else:
+            try:
+                decomposition = decompose_query(request.query)
+                decomposition_tasks = decomposition.decomposition_tasks
+                if decomposition.unsupported_or_missing_sources:
+                    search_assisted_notes.extend(decomposition.unsupported_or_missing_sources)
+            except Exception as exc:
+                source_errors.append(
+                    ToolError(
+                        code=ToolErrorCode.INTERNAL_ERROR,
+                        message=f"query decomposition failed: {exc}",
+                        retryable=False,
+                        detail={"path": "search_assisted_domestic"},
+                    )
+                )
 
         def _search_stage() -> dict[str, Any]:
+            nonlocal search_assisted_allowed_task_count
+            nonlocal search_assisted_direct_keep_task_count
+            nonlocal search_assisted_hold_or_refused_task_count
+            nonlocal search_assisted_coverage_gap_count
             per_source: list[dict[str, Any]] = []
             for item in routed_sources:
                 source_id = item.source_id
@@ -463,6 +518,101 @@ class ResearchWorkflowRunner:
                         "errors": len(response.errors),
                     }
                 )
+            if not request.source_ids and decomposition_tasks:
+                search_assisted_allowed_tasks = [
+                    task
+                    for task in decomposition_tasks
+                    if task.execution_bucket == "search_assisted_sources"
+                ]
+                direct_keep_tasks = [
+                    task
+                    for task in decomposition_tasks
+                    if task.execution_bucket == "direct_structured_sources"
+                ]
+                search_assisted_allowed_task_count = len(search_assisted_allowed_tasks)
+                search_assisted_direct_keep_task_count = len(direct_keep_tasks)
+                if search_assisted_direct_keep_task_count:
+                    search_assisted_notes.append(
+                        "search_assisted_direct_keep_controls_preserved"
+                    )
+                    search_assisted_notes.append(
+                        f"direct_keep_task_count={search_assisted_direct_keep_task_count}"
+                    )
+                if search_assisted_allowed_tasks:
+                    orchestrator = SearchAssistedDomesticOrchestrator(
+                        max_candidates=query_context.max_documents_per_source
+                    )
+                    search_assisted_documents = 0
+                    search_assisted_errors = 0
+                    for task in search_assisted_allowed_tasks:
+                        response = orchestrator.orchestrate_task(task)
+                        search_assisted_task_outputs.append((task, response))
+                        search_assisted_documents += len(response.documents)
+                        search_assisted_errors += len(response.errors)
+                        search_documents.extend(response.documents)
+                        detail_documents.extend(response.documents)
+                        detail_normalized_documents.extend(response.normalized_documents)
+                        source_errors.extend(response.errors)
+                        gate_decision = (
+                            response.metadata.get("gate_decision")
+                            if isinstance(response.metadata, dict)
+                            else None
+                        )
+                        if gate_decision in {"hold", "refuse"}:
+                            search_assisted_hold_or_refused_task_count += 1
+                        if isinstance(response.metadata, dict):
+                            coverage_gaps = response.metadata.get("coverage_gaps")
+                            if isinstance(coverage_gaps, list):
+                                for gap in coverage_gaps:
+                                    if not isinstance(gap, dict):
+                                        continue
+                                    lane_id = gap.get("lane_id")
+                                    reason_code = gap.get("reason_code")
+                                    if not isinstance(lane_id, str) or not isinstance(
+                                        reason_code,
+                                        str,
+                                    ):
+                                        continue
+                                    search_assisted_coverage_gap_count += 1
+                                    search_assisted_coverage_gap_markers.append(
+                                        f"coverage_gap:{lane_id}:{reason_code}"
+                                    )
+                        source_traces.append(
+                            ToolTrace(
+                                tool_name="search_assisted_domestic",
+                                source_id=SEARCH_ASSISTED_SOURCE_ID,
+                                status=response.status,
+                                item_count=len(response.documents),
+                                page_count=len(response.normalized_documents),
+                                metadata={
+                                    "task_id": task.task_id,
+                                    "task_family": task.task_family,
+                                    "execution_bucket": task.execution_bucket,
+                                    "source_cluster": task.source_cluster,
+                                    "candidate_decisions": [
+                                        decision.model_dump(mode="json")
+                                        for decision in response.candidate_decisions
+                                    ],
+                                    "response_metadata": response.metadata,
+                                    "error_count": len(response.errors),
+                                },
+                            )
+                        )
+                    search_doc_counts[SEARCH_ASSISTED_SOURCE_ID] = search_assisted_documents
+                    per_source.append(
+                        {
+                            "source_id": SEARCH_ASSISTED_SOURCE_ID,
+                            "status": (
+                                "success"
+                                if search_assisted_documents > 0
+                                else "partial"
+                            ),
+                            "documents_found": search_assisted_documents,
+                            "errors": search_assisted_errors,
+                        }
+                    )
+                else:
+                    search_assisted_notes.append("search_assisted_no_allowed_tasks")
             return {
                 "sources": per_source,
                 "documents_found": len(search_documents),
@@ -592,6 +742,24 @@ class ResearchWorkflowRunner:
                         "errors": 0,
                     }
                 )
+            if search_assisted_task_outputs:
+                search_assisted_detail_count = sum(
+                    len(response.documents)
+                    for _, response in search_assisted_task_outputs
+                )
+                detail_doc_counts[SEARCH_ASSISTED_SOURCE_ID] = search_assisted_detail_count
+                per_source.append(
+                    {
+                        "source_id": SEARCH_ASSISTED_SOURCE_ID,
+                        "status": (
+                            "success"
+                            if search_assisted_detail_count > 0
+                            else "partial"
+                        ),
+                        "details_fetched": search_assisted_detail_count,
+                        "errors": 0,
+                    }
+                )
             return {
                 "sources": per_source,
                 "detail_documents": len(detail_documents),
@@ -707,6 +875,62 @@ class ResearchWorkflowRunner:
                         "errors": len(extract_response.errors),
                     }
                 )
+            if search_assisted_task_outputs:
+                search_assisted_evidence_count = 0
+                for task, response in search_assisted_task_outputs:
+                    remaining_capacity = max(request.top_k - search_assisted_evidence_count, 0)
+                    if remaining_capacity == 0:
+                        break
+                    converted_items = convert_search_response_to_evidence_items(
+                        task=task,
+                        response=response,
+                        max_items=min(
+                            query_context.max_evidence_per_source,
+                            remaining_capacity,
+                        ),
+                    )
+                    source_evidence_items.extend(converted_items)
+                    search_assisted_evidence_count += len(converted_items)
+                    source_traces.append(
+                        ToolTrace(
+                            tool_name="search_assisted_evidence_conversion",
+                            source_id=SEARCH_ASSISTED_SOURCE_ID,
+                            status=(
+                                ToolStatus.SUCCESS
+                                if converted_items
+                                else (
+                                    ToolStatus.UNSUPPORTED
+                                    if response.status == ToolStatus.UNSUPPORTED
+                                    else ToolStatus.PARTIAL
+                                )
+                            ),
+                            item_count=len(response.normalized_documents),
+                            evidence_count=len(converted_items),
+                            metadata={
+                                "task_id": task.task_id,
+                                "task_family": task.task_family,
+                                "source_cluster": task.source_cluster,
+                                "response_status": response.status.value,
+                            },
+                        )
+                    )
+                evidence_counts[SEARCH_ASSISTED_SOURCE_ID] = search_assisted_evidence_count
+                per_source.append(
+                    {
+                        "source_id": SEARCH_ASSISTED_SOURCE_ID,
+                        "status": (
+                            "success"
+                            if search_assisted_evidence_count > 0
+                            else "partial"
+                        ),
+                        "evidence_items": search_assisted_evidence_count,
+                        "pdf_evidence_items": 0,
+                        "errors": sum(
+                            len(response.errors)
+                            for _, response in search_assisted_task_outputs
+                        ),
+                    }
+                )
             return {
                 "sources": per_source,
                 "evidence_items": len(source_evidence_items),
@@ -801,6 +1025,31 @@ class ResearchWorkflowRunner:
         def _build_bundle_stage() -> dict[str, Any]:
             source_summary_items: list[SourceSummaryItem] = []
             routed_source_ids = [item.source_id for item in routed_sources]
+            routing_recommendation_payload = [
+                item.model_dump(mode="json") for item in routed_sources
+            ]
+            include_search_assisted_source = bool(
+                search_assisted_task_outputs or search_assisted_allowed_task_count > 0
+            )
+            if (
+                include_search_assisted_source
+                and SEARCH_ASSISTED_SOURCE_ID not in routed_source_ids
+            ):
+                routed_source_ids.append(SEARCH_ASSISTED_SOURCE_ID)
+                routing_recommendation_payload.append(
+                    {
+                        "source_id": SEARCH_ASSISTED_SOURCE_ID,
+                        "reason": (
+                            "query decomposition routed allowed tasks to "
+                            "search-assisted domestic execution"
+                        ),
+                        "priority": 50,
+                        "final_score": 50.0,
+                        "score_breakdown": {"search_assisted_domestic": 50.0},
+                        "selected_via": "query_decomposition",
+                        "matched_terms": [],
+                    }
+                )
             for recommendation in routed_sources:
                 source_id = recommendation.source_id
                 profile = source_service.source_registry.get_profile(source_id, enabled_only=False)
@@ -820,14 +1069,46 @@ class ResearchWorkflowRunner:
                         notes=[recommendation.reason],
                     )
                 )
+            if include_search_assisted_source:
+                search_assisted_note_items: list[str] = [
+                    (
+                        "search-assisted domestic evidence from allowed "
+                        "query-decomposition tasks"
+                    ),
+                    f"allowed_tasks={search_assisted_allowed_task_count}",
+                    (
+                        "direct_keep_controls="
+                        f"{search_assisted_direct_keep_task_count}"
+                    ),
+                    (
+                        "hold_or_refused_tasks="
+                        f"{search_assisted_hold_or_refused_task_count}"
+                    ),
+                ]
+                source_summary_items.append(
+                    SourceSummaryItem(
+                        source_id=SEARCH_ASSISTED_SOURCE_ID,
+                        source_name=SEARCH_ASSISTED_SOURCE_NAME,
+                        document_count=max(
+                            search_doc_counts.get(SEARCH_ASSISTED_SOURCE_ID, 0),
+                            detail_doc_counts.get(SEARCH_ASSISTED_SOURCE_ID, 0),
+                        ),
+                        evidence_count=evidence_counts.get(SEARCH_ASSISTED_SOURCE_ID, 0),
+                        notes=[*search_assisted_note_items, *search_assisted_notes],
+                    )
+                )
 
             gaps: list[str] = []
-            if not routed_sources:
+            if not routed_source_ids:
                 gaps.append("no_routed_sources")
             if not source_evidence_items:
                 gaps.append("no_evidence_items_extracted")
             if source_errors:
                 gaps.extend(self._source_error_messages(source_errors))
+            if search_assisted_coverage_gap_markers:
+                gaps.extend(
+                    list(dict.fromkeys(search_assisted_coverage_gap_markers))
+                )
 
             source_quality_summary = summarize_source_quality(
                 source_ids=routed_source_ids,
@@ -871,6 +1152,21 @@ class ResearchWorkflowRunner:
                     f"{source_quality_summary.sources_failed} source(s) "
                     "failed or returned unusable output."
                 )
+            if include_search_assisted_source:
+                notes.append(
+                    "Search-assisted domestic path executed via query decomposition "
+                    f"(allowed_tasks={search_assisted_allowed_task_count}, "
+                    f"direct_keep_controls={search_assisted_direct_keep_task_count}, "
+                    f"hold_or_refused={search_assisted_hold_or_refused_task_count})."
+                )
+            if search_assisted_coverage_gap_count > 0:
+                notes.append(
+                    f"coverage_gap_count={search_assisted_coverage_gap_count}"
+                )
+                notes.extend(
+                    list(dict.fromkeys(search_assisted_coverage_gap_markers))
+                )
+            notes.extend(search_assisted_notes)
             if request.enable_pdf_processing:
                 notes.append(
                     "PDF processing enabled for source acquisition "
@@ -888,9 +1184,7 @@ class ResearchWorkflowRunner:
                 summary=SourceAcquisitionSummary(
                     enabled=True,
                     routed_sources=routed_source_ids,
-                    routing_recommendations=[
-                        item.model_dump(mode="json") for item in routed_sources
-                    ],
+                    routing_recommendations=routing_recommendation_payload,
                     documents_found=len(search_documents),
                     evidence_items_found=len(source_evidence_items),
                     bundle_id=bundle.bundle_id,
@@ -1194,6 +1488,14 @@ class ResearchWorkflowRunner:
             step.finished_at = datetime.now(UTC)
             self.session.add(step)
             self.session.commit()
+            if self._run_logger is not None:
+                self._run_logger.step(
+                    step_name=step_name,
+                    agent_name=agent_name,
+                    input_summary=input_json,
+                    status=StepStatus.FAILED.value,
+                    error=str(exc),
+                )
             raise
 
         step.status = StepStatus.SUCCEEDED
@@ -1210,6 +1512,14 @@ class ResearchWorkflowRunner:
         step.output_json = output_value
         self.session.add(step)
         self.session.commit()
+        if self._run_logger is not None:
+            self._run_logger.step(
+                step_name=step_name,
+                agent_name=agent_name,
+                input_summary=input_json,
+                output_summary=output_value,
+                status=StepStatus.SUCCEEDED.value,
+            )
         return result
 
     def _record_skipped_step(
@@ -1231,6 +1541,14 @@ class ResearchWorkflowRunner:
         )
         self.session.add(step)
         self.session.commit()
+        if self._run_logger is not None:
+            self._run_logger.step(
+                step_name=step_name,
+                agent_name=agent_name,
+                input_summary={"reason": reason},
+                output_summary={"reason": reason},
+                status=StepStatus.SKIPPED.value,
+            )
 
     def _build_evidence_summary(
         self, *, retrieval: RetrievalResponse, bundle: EvidenceBundle
@@ -1269,6 +1587,8 @@ class ResearchWorkflowRunner:
         run.output_json = output_json
         self.session.add(run)
         self.session.commit()
+        if self._run_logger is not None:
+            self._run_logger.finish(status=status.value, output_summary=output_json)
 
     def _consume_provider_step_metadata(self, step_name: str) -> dict[str, Any] | None:
         if self._active_provider is None:

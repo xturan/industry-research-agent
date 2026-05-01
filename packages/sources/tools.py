@@ -2,9 +2,12 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from time import perf_counter
+from urllib.parse import urlsplit, urlunsplit
 
 from packages.sources.citation import normalize_evidence_item
 from packages.sources.enums import ToolErrorCode, ToolStatus
+from packages.sources.governance import build_source_governance_snapshot
+from packages.sources.packs import get_source_pack
 from packages.sources.quality import summarize_source_quality
 from packages.sources.registry import SourceRegistry, build_default_source_registry
 from packages.sources.router import SourceRouter
@@ -69,6 +72,10 @@ class SourceToolRegistry:
             recommendations = self.source_router.route(
                 request.query_context,
                 performance_by_source=performance_by_source,
+                profiles_by_source={
+                    profile.source_id: profile
+                    for profile in self.source_registry.list_profiles(enabled_only=False)
+                },
             )
         except TypeError:
             recommendations = self.source_router.route(request.query_context)
@@ -85,6 +92,10 @@ class SourceToolRegistry:
                 item_count=len(recommendations),
                 page_count=1,
                 metadata={
+                    "source_pack": request.query_context.source_pack,
+                    "source_strategy": request.query_context.source_strategy,
+                    "domestic_mode": request.query_context.domestic_mode,
+                    "regional_focus": request.query_context.regional_focus,
                     "query_type": (
                         recommendations[0].query_type.value
                         if recommendations and recommendations[0].query_type is not None
@@ -123,8 +134,19 @@ class SourceToolRegistry:
 
     def build_evidence_bundle(self, request: ToolRequest) -> ToolResponse:
         started = perf_counter()
+        source_pack = get_source_pack(request.query_context.source_pack)
         max_docs_per_source = request.query_context.max_documents_per_source
         max_evidence_per_source = request.query_context.max_evidence_per_source
+        if source_pack is not None and request.limit is None:
+            max_docs_per_source = min(
+                max_docs_per_source,
+                source_pack.default_max_documents_per_source,
+            )
+        if source_pack is not None and request.max_evidence_per_source is None:
+            max_evidence_per_source = min(
+                max_evidence_per_source,
+                source_pack.default_max_evidence_per_source,
+            )
         if request.limit is not None:
             max_docs_per_source = min(request.limit, max_docs_per_source)
         if request.max_evidence_per_source is not None:
@@ -283,6 +305,26 @@ class SourceToolRegistry:
             evidence_items=evidence_items,
             source_summaries=list(source_summaries.values()),
         )
+        dedupe_result = self._dedupe_bundle_items(documents, normalized_documents, evidence_items)
+        documents = dedupe_result["documents"]
+        normalized_documents = dedupe_result["normalized_documents"]
+        evidence_items = dedupe_result["evidence_items"]
+        dedupe_meta = dedupe_result["metadata"]
+        governance_snapshot = build_source_governance_snapshot(
+            traces=traces,
+            source_summaries=list(source_summaries.values()),
+            evidence_items=evidence_items,
+            dedupe_metadata=dedupe_meta,
+        )
+        if (
+            dedupe_meta["removed_document_duplicates"] > 0
+            or dedupe_meta["removed_evidence_duplicates"] > 0
+        ):
+            source_quality.warnings.append(
+                "Applied bundle dedupe: "
+                f"docs={dedupe_meta['removed_document_duplicates']}, "
+                f"evidence={dedupe_meta['removed_evidence_duplicates']}"
+            )
         bundle = EvidenceBundle(
             query=request.query_context.query,
             items=evidence_items,
@@ -292,10 +334,29 @@ class SourceToolRegistry:
             gaps=gaps,
             metadata={
                 "route_recommendation_count": len(route_response.route_recommendations),
+                "source_pack": request.query_context.source_pack,
+                "source_strategy": request.query_context.source_strategy,
+                "domestic_mode": request.query_context.domestic_mode,
+                "regional_focus": request.query_context.regional_focus,
+                "source_pack_defaults_applied": (
+                    {
+                        "pack_id": source_pack.pack_id,
+                        "default_max_documents_per_source": (
+                            source_pack.default_max_documents_per_source
+                        ),
+                        "default_max_evidence_per_source": (
+                            source_pack.default_max_evidence_per_source
+                        ),
+                    }
+                    if source_pack is not None
+                    else None
+                ),
                 "max_docs_per_source": max_docs_per_source,
                 "max_evidence_per_source": max_evidence_per_source,
                 "truncated_sources": sorted(truncated_sources),
                 "source_quality_summary": source_quality.model_dump(mode="json"),
+                "governance_snapshot": governance_snapshot.model_dump(mode="json"),
+                "dedupe": dedupe_meta,
                 "trace_count": len(traces),
                 "requested_evidence_mode": (
                     request.evidence_mode.value
@@ -322,6 +383,7 @@ class SourceToolRegistry:
             errors=errors,
             traces=traces,
             source_quality_summary=source_quality,
+            governance_snapshot=governance_snapshot,
             trace=ToolTrace(
                 tool_name=request.tool_name,
                 status=status,
@@ -336,11 +398,73 @@ class SourceToolRegistry:
                 metadata={
                     "error_count": len(errors),
                     "trace_count": len(traces),
+                    "dedupe": dedupe_meta,
                     "source_quality_summary": source_quality.model_dump(mode="json"),
+                    "governance_snapshot": governance_snapshot.model_dump(mode="json"),
                 },
             ),
             message=message,
         )
+
+    def _dedupe_bundle_items(self, documents, normalized_documents, evidence_items):
+        seen_documents: set[tuple[str, str]] = set()
+        deduped_documents = []
+        removed_document_duplicates = 0
+        for item in documents:
+            canonical_uri = self._canonicalize_uri(item.source_uri)
+            key = (item.source_id, item.document_id or canonical_uri)
+            if key in seen_documents:
+                removed_document_duplicates += 1
+                continue
+            seen_documents.add(key)
+            deduped_documents.append(item)
+
+        seen_normalized_docs: set[tuple[str, str]] = set()
+        deduped_normalized_documents = []
+        for item in normalized_documents:
+            key = (item.source_id, item.document_id)
+            if key in seen_normalized_docs:
+                continue
+            seen_normalized_docs.add(key)
+            deduped_normalized_documents.append(item)
+
+        evidence_by_key = {}
+        removed_evidence_duplicates = 0
+        for item in evidence_items:
+            source_uri = item.citation.source_uri or item.citation.metadata.get("url")
+            canonical_uri = self._canonicalize_uri(source_uri)
+            key = (
+                item.source_id,
+                item.citation.document_id,
+                item.citation.locator.page_number,
+                item.citation.locator.section_id,
+                canonical_uri,
+            )
+            if key in evidence_by_key:
+                removed_evidence_duplicates += 1
+                if item.score > evidence_by_key[key].score:
+                    evidence_by_key[key] = item
+                continue
+            evidence_by_key[key] = item
+
+        return {
+            "documents": deduped_documents,
+            "normalized_documents": deduped_normalized_documents,
+            "evidence_items": list(evidence_by_key.values()),
+            "metadata": {
+                "removed_document_duplicates": removed_document_duplicates,
+                "removed_evidence_duplicates": removed_evidence_duplicates,
+                "document_count_after_dedupe": len(deduped_documents),
+                "evidence_count_after_dedupe": len(evidence_by_key),
+            },
+        }
+
+    def _canonicalize_uri(self, uri: str | None) -> str:
+        if not uri:
+            return ""
+        parsed = urlsplit(uri.strip())
+        path = parsed.path.rstrip("/")
+        return urlunsplit((parsed.scheme.lower(), parsed.netloc.lower(), path, "", ""))
 
     def _resolve_adapter(self, request: ToolRequest):
         if not request.source_id:

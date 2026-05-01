@@ -3,8 +3,14 @@
 from packages.sources.enums import (
     AccessMethod,
     CollectorType,
+    GovernanceAxis,
+    InfoType,
+    LineFamily,
     PaginationMode,
+    PublisherType,
+    RegionalLevel,
     SourceCategory,
+    SourceRole,
     TrustTier,
 )
 from packages.sources.schemas import SourceAccess, SourceCapabilities, SourceProfile
@@ -37,6 +43,12 @@ def build_cn_industry_association_generic_profile(*, enabled: bool = False) -> S
         priority_hint=68,
         tags=["china", "industry", "association", "report", "pdf"],
         profile_family="china_industry",
+        governance_axis=GovernanceAxis.BLOCK,
+        line_family=LineFamily.INDUSTRY,
+        regional_level=RegionalLevel.CROSS_REGION,
+        info_type=InfoType.INDUSTRY_REPORT,
+        publisher_type=PublisherType.ASSOCIATION,
+        source_role=SourceRole.SUPPLEMENTAL,
         collector_type=CollectorType.HTML_LIST_DETAIL,
         entry_urls=["https://example.cn/industry/notices"],
         selectors={

@@ -1,5 +1,5 @@
 # 1) 在“启动 uvicorn 的同一个终端”设置环境变量
-$env:DEEPSEEK_API_KEY="sk-673a651829134843834d106867180012"
+$env:DEEPSEEK_API_KEY="<YOUR_DEEPSEEK_API_KEY>"
 $env:DEEPSEEK_BASE_URL="https://api.deepseek.com/v1"
 $env:DEEPSEEK_RESEARCH_MODEL="deepseek-reasoner"
 $env:DEEPSEEK_TIMEOUT_SECONDS="180"
@@ -22,3 +22,22 @@ Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/research/analyze" `
       "synthesize_memo":"deepseek-reasoner"
     }
   }' | ConvertTo-Json -Depth 100
+
+
+cd E:\invest_agent
+$env:TAVILY_API_KEY="<YOUR_TAVILY_API_KEY>"
+$env:PYTHONIOENCODING="utf-8"
+$env:PYTHONUTF8="1"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
+python data\tmp\_phase5_search_assisted_domestic_eval.py --mode live --print-json
+
+
+
+
+
+export TAVILY_API_KEY="<YOUR_TAVILY_API_KEY>"
+export PYTHONIOENCODING="utf-8"
+export PYTHONUTF8="1"
+
+python3 data/tmp/_phase5_search_assisted_domestic_eval.py --mode live --print-json

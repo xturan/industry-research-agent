@@ -15,3 +15,8 @@ validation_migration.db
 validation_*.db
 data/raw/*
 !data/raw/.gitkeep
+data/run_logs/*
+!data/run_logs/.gitkeep
+data/tmp/*
+!data/tmp/.gitkeep
+.codex/

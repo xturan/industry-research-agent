@@ -81,6 +81,27 @@ PowerShell tip:
   make down
   ```
 
+## Compact System Run Logs
+
+Runtime audit logs are enabled by default through:
+
+```bash
+SYSTEM_RUN_LOG_ENABLED=true
+SYSTEM_RUN_LOG_DIR=data/run_logs
+SYSTEM_RUN_LOG_MAX_VALUE_CHARS=240
+SYSTEM_RUN_LOG_MAX_ITEMS=8
+```
+
+Each workflow writes compact JSONL files named by UTC runtime and task name, for example:
+
+```text
+20260426T010203Z_research-analyze_run-42.jsonl
+```
+
+The logs record concise `input`, `decision`, `output`, and `error` summaries for research,
+content generation, delivery, and async task execution. They intentionally redact sensitive
+keys and reasoning fields, and they truncate large values to keep logs small.
+
 ## Database Migrations and Seed
 
 - Apply migrations:
@@ -494,6 +515,77 @@ Out of scope remains:
 - advanced layout reconstruction
 - per-site PDF strategy tuning
 
+### Domestic Source Scaleout v2 (Phase 0 -> Phase 6)
+
+What is added:
+- Phase 0 inventory baseline encoded in `packages/sources/domestic_inventory.py`:
+  - normalized report-code coverage `C01-C46`
+  - template mapping table (10 template families)
+  - pack-state table (`executable / beta / placeholder`)
+  - first-wave sample shortlist for domestic rollout
+- Phase 1 sample-validation profiles:
+  - central policy: State Council / NDRC / MIIT
+  - disclosure: SSE / SZSE / CNINFO
+  - provincial + city sample lines
+- Phase 2 backbone buildout:
+  - `project_signal_pack_cn_v1` with procurement/trade/approval signals
+  - `policy_pack_cn_v2` and `disclosure_pack_cn_v2` promoted to `executable`
+- Phase 3 provincial rollout:
+  - `local_rollout_pack_cn_v2` promoted to `executable`
+  - expanded provincial profiles:
+    - `cn_policy_anhui_drc_tzgg_v1`
+    - `cn_policy_shandong_gxt_tzgg_v1`
+    - `cn_policy_fujian_drc_tzgg_v1`
+    - `cn_policy_henan_gxt_tzgg_v1`
+- Phase 4 city and park rollout:
+  - new city profiles:
+    - `cn_policy_guangzhou_gxt_tzgg_v1`
+    - `cn_policy_nanjing_gxt_tzgg_v1`
+    - `cn_policy_chengdu_jxj_tzgg_v1`
+  - park profile:
+    - `cn_park_sh_lingang_tzgg_v1`
+  - new pack: `city_park_pack_cn_v1` (`executable`)
+- Phase 5 association/special-topic enhancement:
+  - new association profiles:
+    - `cn_industry_caam_news_v1`
+    - `cn_industry_ces_report_v1`
+  - `industry_signal_pack_cn_v2` added and set `executable`
+- Phase 6 governance and reliability baseline:
+  - `governance_snapshot` added to source evidence-bundle output
+  - includes:
+    - `fetch_success_rate`
+    - `parse_success_rate`
+    - `attachment_success_rate`
+    - `drift_rate`
+    - `duplicate_ratio`
+    - `freshness_lag_hours_avg`
+    - `pack_evidence_density`
+    - per-source contribution items
+  - service API now exposes:
+    - `SourceIntelligenceService.build_governance_snapshot(...)`
+
+How to use:
+- policy backbone:
+  - `source_pack: "policy_pack_cn_v2"`
+- disclosure backbone:
+  - `source_pack: "disclosure_pack_cn_v2"`
+- project signals:
+  - `source_pack: "project_signal_pack_cn_v1"`
+- provincial rollout:
+  - `source_pack: "local_rollout_pack_cn_v2"`
+  - or `source_strategy: "cn_local_rollout_v2"`
+- city + park rollout:
+  - `source_pack: "city_park_pack_cn_v1"`
+  - or `source_strategy: "cn_city_park_rollout"`
+- industry enhancement:
+  - `source_pack: "industry_signal_pack_cn_v2"`
+  - or `source_strategy: "cn_industry_signal_v2"`
+
+Current limitations:
+- profiles still rely on `html_list_detail` collectors plus site patching.
+- no browser/OCR/auth fallback yet.
+- deep pagination and anti-bot tuning remain TODO.
+
 ## Content Factory Endpoints
 
 - `POST /content/generate` - generate platform content assets from `research_run_id` or supplied memo payload
@@ -618,6 +710,10 @@ Raw source files are persisted under `data/raw/` for later traceability.
 - Domestic PDF attachment pipeline tests (Step 4.3):
   ```bash
   pytest -q tests/test_sources_pdf_step43.py
+  ```
+- Domestic scaleout v2 phase tests (Phase 0 -> Phase 6):
+  ```bash
+  pytest -q tests/test_sources_domestic_scaleout_phase0.py tests/test_sources_domestic_scaleout_phase1.py tests/test_sources_domestic_scaleout_phase2.py tests/test_sources_domestic_scaleout_phase3.py tests/test_sources_domestic_scaleout_phase4.py tests/test_sources_domestic_scaleout_phase5.py tests/test_sources_domestic_scaleout_phase6.py
   ```
 - Lint:
   ```bash

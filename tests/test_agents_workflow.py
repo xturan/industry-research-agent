@@ -36,6 +36,10 @@ from packages.sources.schemas import (
     ToolResponse,
     ToolTrace,
 )
+from packages.sources.search_assisted_domestic import (
+    SEARCH_ASSISTED_SOURCE_ID,
+    DomesticSearchAssistedResponse,
+)
 
 
 def _setup_research_db(monkeypatch, tmp_path: Path) -> str:
@@ -228,6 +232,170 @@ def test_source_assisted_explicit_source_ids_no_results(monkeypatch, tmp_path: P
     assert result.source_acquisition.enabled is True
     assert result.source_acquisition.routed_sources == ["world_bank"]
     assert result.source_acquisition.evidence_items_found == 0
+
+
+def test_source_assisted_direct_keep_query_preserves_control_path(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    db_url = _setup_research_db(monkeypatch, tmp_path)
+    engine = create_engine(db_url)
+    orchestrator_calls = {"count": 0}
+
+    class _NeverCalledOrchestrator:
+        def __init__(self, *args, **kwargs):  # noqa: ANN003
+            del args, kwargs
+
+        def orchestrate_task(self, task):  # noqa: ANN001
+            del task
+            orchestrator_calls["count"] += 1
+            raise AssertionError("direct-keep tasks must not call search-assisted orchestration")
+
+    monkeypatch.setattr(
+        "packages.agents.workflow.SearchAssistedDomesticOrchestrator",
+        _NeverCalledOrchestrator,
+    )
+
+    with Session(engine) as session:
+        result = ResearchWorkflowService(session).analyze(
+            ResearchAnalyzeRequest(
+                query="中信海直（000099.SZ）在低空经济方向有哪些公告和项目",
+                mode="mock",
+                top_k=5,
+                enable_source_acquisition=True,
+            )
+        )
+
+    assert result.status == RunStatus.SUCCEEDED.value
+    assert result.source_acquisition is not None
+    assert result.source_acquisition.enabled is True
+    assert SEARCH_ASSISTED_SOURCE_ID not in result.source_acquisition.routed_sources
+    assert orchestrator_calls["count"] == 0
+    assert any(
+        "search_assisted_direct_keep_controls_preserved" in note
+        for note in result.source_acquisition.notes
+    )
+
+
+def test_source_assisted_allowed_query_produces_evidence_items(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    db_url = _setup_research_db(monkeypatch, tmp_path)
+    engine = create_engine(db_url)
+    orchestrator_calls = {"count": 0}
+
+    class _FakeSearchAssistedOrchestrator:
+        def __init__(self, *args, **kwargs):  # noqa: ANN003
+            del args, kwargs
+
+        def orchestrate_task(self, task):  # noqa: ANN001
+            orchestrator_calls["count"] += 1
+            document_id = f"doc_{task.task_id}"
+            return DomesticSearchAssistedResponse(
+                status=ToolStatus.SUCCESS,
+                task_id=task.task_id,
+                task_family=task.task_family,
+                documents=[
+                    RawDocument(
+                        document_id=document_id,
+                        source_id=SEARCH_ASSISTED_SOURCE_ID,
+                        title=f"{task.task_family} page",
+                        source_uri=f"https://www.gov.cn/{task.task_id}.html",
+                        raw_text="Search-assisted raw document body.",
+                        metadata={"discovery_score": 0.82},
+                    )
+                ],
+                normalized_documents=[
+                    NormalizedDocument(
+                        document_id=document_id,
+                        source_id=SEARCH_ASSISTED_SOURCE_ID,
+                        title=f"{task.task_family} page",
+                        summary="Search-assisted normalized summary.",
+                        sections=[
+                            DocumentSection(
+                                section_id=f"{document_id}_sec_1",
+                                heading="Summary",
+                                text="Search-assisted normalized section text.",
+                                order_index=0,
+                            )
+                        ],
+                        metadata={
+                            "final_url": f"https://www.gov.cn/{task.task_id}.html",
+                            "discovery_score": 0.82,
+                        },
+                    )
+                ],
+                metadata={
+                    "gate_decision": "allow",
+                    "gate_reason": "test_allow",
+                    "coverage_sufficient": False,
+                    "budget_state": {
+                        "estimated_credits": 3,
+                        "max_estimated_tavily_credits": 12,
+                    },
+                    "coverage_gaps": [
+                        {
+                            "lane_id": "provincial_policy_rollout",
+                            "reason_code": "insufficient_accepted_documents",
+                        }
+                    ],
+                    "round_trace": [
+                        {
+                            "round_index": 1,
+                            "coverage_sufficient_after_round": False,
+                            "domain_widening_blocked": True,
+                        }
+                    ],
+                },
+            )
+
+    monkeypatch.setattr(
+        "packages.agents.workflow.SearchAssistedDomesticOrchestrator",
+        _FakeSearchAssistedOrchestrator,
+    )
+
+    with Session(engine) as session:
+        result = ResearchWorkflowService(session).analyze(
+            ResearchAnalyzeRequest(
+                query="安徽的低空经济未来前景如何",
+                mode="mock",
+                top_k=6,
+                enable_source_acquisition=True,
+            )
+        )
+
+    assert result.status == RunStatus.SUCCEEDED.value
+    assert result.evidence_summary.selected_items >= 1
+    assert result.source_acquisition is not None
+    assert SEARCH_ASSISTED_SOURCE_ID in result.source_acquisition.routed_sources
+    assert result.source_acquisition.evidence_items_found >= 1
+    assert orchestrator_calls["count"] >= 1
+    assert any(
+        trace.get("tool_name") == "search_assisted_domestic"
+        for trace in result.source_acquisition.source_traces
+    )
+    search_assisted_trace = next(
+        trace
+        for trace in result.source_acquisition.source_traces
+        if trace.get("tool_name") == "search_assisted_domestic"
+    )
+    response_metadata = search_assisted_trace["metadata"]["response_metadata"]
+    assert response_metadata["coverage_sufficient"] is False
+    assert response_metadata["budget_state"]["estimated_credits"] == 3
+    assert response_metadata["coverage_gaps"][0]["lane_id"] == "provincial_policy_rollout"
+    assert response_metadata["round_trace"][0]["domain_widening_blocked"] is True
+    coverage_gap_count_notes = [
+        note
+        for note in result.source_acquisition.notes
+        if note.startswith("coverage_gap_count=")
+    ]
+    assert coverage_gap_count_notes
+    assert int(coverage_gap_count_notes[0].split("=", 1)[1]) >= 1
+    assert (
+        "coverage_gap:provincial_policy_rollout:insufficient_accepted_documents"
+        in result.source_acquisition.notes
+    )
 
 
 def test_source_assisted_partial_failure_still_succeeds(monkeypatch, tmp_path: Path) -> None:

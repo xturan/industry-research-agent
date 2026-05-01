@@ -10,9 +10,15 @@ from packages.sources.enums import (
     AccessMethod,
     CollectorType,
     EvidenceMode,
+    GovernanceAxis,
+    InfoType,
+    LineFamily,
     PaginationMode,
+    PublisherType,
     QueryType,
+    RegionalLevel,
     SourceCategory,
+    SourceRole,
     ToolErrorCode,
     ToolStatus,
     TrustTier,
@@ -57,6 +63,10 @@ class QueryContext(StrictModel):
     tickers: list[str] = Field(default_factory=list)
     countries: list[str] = Field(default_factory=list)
     user_provided_sources: list[UserProvidedSource] = Field(default_factory=list)
+    source_pack: str | None = None
+    source_strategy: str | None = None
+    domestic_mode: str | None = None
+    regional_focus: list[str] = Field(default_factory=list)
     max_sources: int = Field(default=5, ge=1, le=50)
     max_documents_per_source: int = Field(default=5, ge=1, le=100)
     max_evidence_per_source: int = Field(default=3, ge=1, le=100)
@@ -101,6 +111,12 @@ class SourceProfile(StrictModel):
     priority_hint: int = Field(default=50, ge=1, le=100)
     tags: list[str] = Field(default_factory=list)
     profile_family: str | None = None
+    governance_axis: GovernanceAxis | None = None
+    line_family: LineFamily | None = None
+    regional_level: RegionalLevel | None = None
+    info_type: InfoType | None = None
+    publisher_type: PublisherType | None = None
+    source_role: SourceRole | None = None
     collector_type: CollectorType | None = None
     entry_urls: list[str] = Field(default_factory=list)
     selectors: dict[str, str] = Field(default_factory=dict)
@@ -251,6 +267,28 @@ class SourceQualitySummary(StrictModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+class SourceContributionItem(StrictModel):
+    source_id: str = Field(min_length=1, max_length=80)
+    evidence_count: int = Field(default=0, ge=0)
+    document_count: int = Field(default=0, ge=0)
+    contribution_score: float = Field(default=0.0, ge=0.0)
+    freshness_lag_hours: float | None = Field(default=None, ge=0.0)
+
+
+class SourceGovernanceSnapshot(StrictModel):
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    fetch_success_rate: float = Field(default=0.0, ge=0.0, le=1.0)
+    parse_success_rate: float = Field(default=0.0, ge=0.0, le=1.0)
+    attachment_success_rate: float = Field(default=0.0, ge=0.0, le=1.0)
+    drift_rate: float = Field(default=0.0, ge=0.0, le=1.0)
+    duplicate_ratio: float = Field(default=0.0, ge=0.0, le=1.0)
+    freshness_lag_hours_avg: float | None = Field(default=None, ge=0.0)
+    pack_evidence_density: float = Field(default=0.0, ge=0.0)
+    source_contribution: list[SourceContributionItem] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 class RoutingRecommendation(StrictModel):
     source_id: str = Field(min_length=1, max_length=80)
     reason: str = Field(min_length=1, max_length=400)
@@ -346,5 +384,6 @@ class ToolResponse(StrictModel):
     trace: ToolTrace | None = None
     traces: list[ToolTrace] = Field(default_factory=list)
     source_quality_summary: SourceQualitySummary | None = None
+    governance_snapshot: SourceGovernanceSnapshot | None = None
     message: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)

@@ -10,6 +10,12 @@ class Settings(BaseSettings):
     app_name: str = Field(default="invest-agent-api", alias="APP_NAME")
     app_env: str = Field(default="local", alias="APP_ENV")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
+    system_run_log_enabled: bool = Field(default=True, alias="SYSTEM_RUN_LOG_ENABLED")
+    system_run_log_dir: str = Field(default="data/run_logs", alias="SYSTEM_RUN_LOG_DIR")
+    system_run_log_max_value_chars: int = Field(
+        default=240, alias="SYSTEM_RUN_LOG_MAX_VALUE_CHARS"
+    )
+    system_run_log_max_items: int = Field(default=8, alias="SYSTEM_RUN_LOG_MAX_ITEMS")
 
     api_host: str = Field(default="0.0.0.0", alias="API_HOST")
     api_port: int = Field(default=8000, alias="API_PORT")
@@ -83,6 +89,16 @@ class Settings(BaseSettings):
     source_http_timeout_seconds: int = Field(default=20, alias="SOURCE_HTTP_TIMEOUT_SECONDS")
     source_http_retry_count: int = Field(default=2, alias="SOURCE_HTTP_RETRY_COUNT")
     source_http_backoff_seconds: float = Field(default=0.3, alias="SOURCE_HTTP_BACKOFF_SECONDS")
+    tavily_api_key: str | None = Field(default=None, alias="TAVILY_API_KEY")
+    tavily_api_keys: str | None = Field(default=None, alias="TAVILY_API_KEYS")
+    tavily_search_depth: str = Field(default="basic", alias="TAVILY_SEARCH_DEPTH")
+    tavily_topic: str = Field(default="general", alias="TAVILY_TOPIC")
+    tavily_country: str = Field(default="china", alias="TAVILY_COUNTRY")
+    tavily_max_results: int = Field(default=5, alias="TAVILY_MAX_RESULTS")
+    tavily_auto_parameters: bool = Field(default=False, alias="TAVILY_AUTO_PARAMETERS")
+    tavily_include_answer: bool = Field(default=False, alias="TAVILY_INCLUDE_ANSWER")
+    tavily_include_raw_content: bool = Field(default=False, alias="TAVILY_INCLUDE_RAW_CONTENT")
+    tavily_timeout_seconds: int = Field(default=30, alias="TAVILY_TIMEOUT_SECONDS")
     eia_api_key: str | None = Field(default=None, alias="EIA_API_KEY")
     sec_user_agent: str = Field(
         default="invest-agent/0.1 (research@local)",

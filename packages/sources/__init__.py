@@ -1,4 +1,29 @@
-﻿from packages.sources.collector_factory import CollectorExecutorFactory
+from packages.sources.collector_factory import CollectorExecutorFactory
+from packages.sources.crawl4ai_extraction import (
+    Crawl4AIExtractionInput,
+    Crawl4AIExtractionProvider,
+    Crawl4AIExtractionRequest,
+    Crawl4AIExtractionResponse,
+    Crawl4AIExtractionService,
+    Crawl4AIExtractionSettings,
+    Crawl4AIPageResult,
+    Crawl4AIUnavailableError,
+    SearchUrlCandidate,
+    SourceCrawl4AIError,
+)
+from packages.sources.domestic_inventory import (
+    DomesticInventoryRow,
+    SampleSourceRow,
+    TemplateMappingRow,
+    list_domestic_inventory_rows,
+    list_executable_source_keys,
+    list_first_wave_sample_sources,
+    list_frozen_template_families,
+    list_inventory_report_codes,
+    list_pack_state_rows,
+    list_report_codes,
+    list_template_mapping_rows,
+)
 from packages.sources.enums import (
     AccessMethod,
     ChinaLocatorType,
@@ -11,6 +36,7 @@ from packages.sources.enums import (
     ToolStatus,
     TrustTier,
 )
+from packages.sources.governance import build_source_governance_snapshot
 from packages.sources.live_fetch import (
     LiveHtmlFetchError,
     LiveHtmlFetchResult,
@@ -21,12 +47,30 @@ from packages.sources.live_pdf import (
     LivePdfDownloadResult,
     LivePdfDownloadService,
 )
+from packages.sources.packs import (
+    SourcePack,
+    get_source_pack,
+    list_source_packs,
+    list_source_packs_by_state,
+    resolve_strategy_pack,
+)
 from packages.sources.pdf_text import (
     PdfTextExtractionError,
     PdfTextExtractionService,
 )
 from packages.sources.performance import SourcePerformanceService
 from packages.sources.profile_adapter import GenericProfileSourceAdapter
+from packages.sources.query_decomposition import (
+    ALLOWED_EXECUTION_BUCKETS,
+    ALLOWED_TASK_FAMILIES,
+    DIRECT_KEEP_TASK_FAMILIES,
+    QueryDecomposition,
+    QueryDecompositionTask,
+    build_query_decomposition_prompt,
+    decompose_query,
+    get_query_decomposition_prompt_template,
+    repair_query_decomposition,
+)
 from packages.sources.registry import SourceRegistry, build_default_source_registry
 from packages.sources.router import SourceRouter
 from packages.sources.schemas import (
@@ -40,6 +84,8 @@ from packages.sources.schemas import (
     QueryContext,
     RawDocument,
     RoutingRecommendation,
+    SourceContributionItem,
+    SourceGovernanceSnapshot,
     SourcePerformanceItem,
     SourcePerformanceSummary,
     SourceProfile,
@@ -52,6 +98,24 @@ from packages.sources.schemas import (
     ToolTrace,
     UserProvidedSource,
 )
+from packages.sources.search_assisted_domestic import (
+    DomesticCandidateDecision,
+    DomesticSearchAssistedResponse,
+    DomesticTaskGateResult,
+    SearchAssistedDomesticOrchestrator,
+)
+from packages.sources.search_discovery import (
+    TAVILY_SEARCH_ENDPOINT,
+    SearchDiscoveryProvider,
+    SourceTavilyError,
+    TavilySearchAdapter,
+    TavilySearchRequest,
+    TavilySearchResponse,
+    TavilySearchResult,
+    TavilySearchSettings,
+    TavilyUsageMetadata,
+    tavily_settings_from_app_settings,
+)
 from packages.sources.service import SourceIntelligenceService
 from packages.sources.tools import SourceToolRegistry, build_source_tool_registry
 
@@ -62,7 +126,16 @@ __all__ = [
     "CitationLocator",
     "CollectorExecutorFactory",
     "CollectorType",
+    "Crawl4AIExtractionInput",
+    "Crawl4AIExtractionProvider",
+    "Crawl4AIExtractionRequest",
+    "Crawl4AIExtractionResponse",
+    "Crawl4AIExtractionService",
+    "Crawl4AIExtractionSettings",
+    "Crawl4AIPageResult",
+    "Crawl4AIUnavailableError",
     "DocumentSection",
+    "DomesticInventoryRow",
     "EvidenceBundle",
     "EvidenceItem",
     "EvidenceMode",
@@ -80,19 +153,41 @@ __all__ = [
     "PdfTextExtractionService",
     "QueryType",
     "QueryContext",
+    "QueryDecomposition",
+    "QueryDecompositionTask",
     "RawDocument",
     "RoutingRecommendation",
+    "SampleSourceRow",
+    "SearchDiscoveryProvider",
+    "SearchUrlCandidate",
     "SourceCategory",
+    "SourceCrawl4AIError",
+    "DomesticCandidateDecision",
+    "DomesticSearchAssistedResponse",
+    "DomesticTaskGateResult",
+    "SearchAssistedDomesticOrchestrator",
     "SourceIntelligenceService",
+    "SourceContributionItem",
+    "SourceGovernanceSnapshot",
     "SourceProfile",
     "SourcePerformanceItem",
     "SourcePerformanceService",
+    "SourcePack",
     "SourcePerformanceSummary",
     "SourceQualitySummary",
     "SourceRegistry",
     "SourceRouter",
     "SourceSummaryItem",
+    "SourceTavilyError",
     "SourceToolRegistry",
+    "TAVILY_SEARCH_ENDPOINT",
+    "TavilySearchAdapter",
+    "TavilySearchRequest",
+    "TavilySearchResponse",
+    "TavilySearchResult",
+    "TavilySearchSettings",
+    "TavilyUsageMetadata",
+    "TemplateMappingRow",
     "TimeRange",
     "ToolError",
     "ToolErrorCode",
@@ -103,5 +198,26 @@ __all__ = [
     "TrustTier",
     "UserProvidedSource",
     "build_default_source_registry",
+    "build_query_decomposition_prompt",
+    "build_source_governance_snapshot",
     "build_source_tool_registry",
+    "decompose_query",
+    "get_source_pack",
+    "get_query_decomposition_prompt_template",
+    "tavily_settings_from_app_settings",
+    "list_domestic_inventory_rows",
+    "list_executable_source_keys",
+    "list_first_wave_sample_sources",
+    "list_frozen_template_families",
+    "list_inventory_report_codes",
+    "list_pack_state_rows",
+    "list_report_codes",
+    "list_source_packs",
+    "list_source_packs_by_state",
+    "list_template_mapping_rows",
+    "repair_query_decomposition",
+    "resolve_strategy_pack",
+    "ALLOWED_EXECUTION_BUCKETS",
+    "ALLOWED_TASK_FAMILIES",
+    "DIRECT_KEEP_TASK_FAMILIES",
 ]

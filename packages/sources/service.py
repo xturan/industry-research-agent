@@ -2,10 +2,12 @@
 
 from typing import Any
 
+from packages.sources.governance import build_source_governance_snapshot
 from packages.sources.registry import SourceRegistry, build_default_source_registry
 from packages.sources.router import SourceRouter
 from packages.sources.schemas import (
     QueryContext,
+    SourceGovernanceSnapshot,
     SourcePerformanceItem,
     ToolRequest,
     ToolResponse,
@@ -45,21 +47,29 @@ class SourceIntelligenceService:
             performance_by_source=(
                 source_performance_by_source or self.source_performance_by_source
             ),
+            profiles_by_source={
+                profile.source_id: profile
+                for profile in self.source_registry.list_profiles(enabled_only=False)
+            },
         )
 
     def build_bundle_for_query(
         self,
         query_context: QueryContext,
         *,
+        source_pack: str | None = None,
         limit: int | None = None,
         page: int | None = None,
         offset: int | None = None,
         max_evidence_per_source: int | None = None,
         payload: dict[str, Any] | None = None,
     ) -> ToolResponse:
+        effective_context = query_context
+        if source_pack:
+            effective_context = query_context.model_copy(update={"source_pack": source_pack})
         request = ToolRequest(
             tool_name="build_evidence_bundle",
-            query_context=query_context,
+            query_context=effective_context,
             limit=limit,
             page=page,
             offset=offset,
@@ -67,3 +77,29 @@ class SourceIntelligenceService:
             payload=payload or {},
         )
         return self.tool_registry.dispatch(request)
+
+    def build_governance_snapshot(
+        self,
+        query_context: QueryContext,
+        *,
+        source_pack: str | None = None,
+        payload: dict[str, Any] | None = None,
+    ) -> SourceGovernanceSnapshot:
+        response = self.build_bundle_for_query(
+            query_context,
+            source_pack=source_pack,
+            payload=payload,
+        )
+        if response.governance_snapshot is not None:
+            return response.governance_snapshot
+        bundle = response.bundle
+        return build_source_governance_snapshot(
+            traces=response.traces,
+            source_summaries=(bundle.source_summary if bundle is not None else []),
+            evidence_items=response.evidence_items,
+            dedupe_metadata=(
+                bundle.metadata.get("dedupe")
+                if bundle is not None and isinstance(bundle.metadata, dict)
+                else None
+            ),
+        )
