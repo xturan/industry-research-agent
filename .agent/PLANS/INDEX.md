@@ -6,7 +6,9 @@ Last updated: 2026-04-30
 
 | Plan | Status | Notes |
 |---|---|---|
-| `source-local-procurement-regulatory-depth-v1.md` | `active_phase1_public_resource_procurement` | Successor to Source Local Statistics Regional Precision v1. Phase 0 blocker matrix completed; first slice targets `tender_or_procurement=7` via public-resource/procurement backbone. |
+| `source-local-procurement-regulatory-depth-v1.md` | `active_phase1_completed_pending_substrate_transition` | Paused per Route C. Phase 1 complete, live gate deferred. |
+
+No active PLAN in execution. Most recently completed: `theme-watchlist-intel-workbench-v1.md`.
 | `archive/source-local-statistics-regional-precision-v1.md` | `completed_with_successor_blocker` | Reduced the statistics/source-profile blocker and recovered M02/M03/P08 official data evidence. Phase 6 live/audit reached `12 success`, `0` shape diagnostics, `8 fail / 4 weak_pass`, `66` credits; general `statistics` and `project_list=2` passed thresholds, but `tender_or_procurement=7` failed target `<=5`; superseded by `source-local-procurement-regulatory-depth-v1.md`. |
 | `archive/source-transaction-file-local-depth-v1.md` | `completed_with_successor_blocker` | Stabilized official file/download handling, transaction/project evidence semantics, exact-local ordering, and macro-to-local fanout. Phase 7 reached `12 success`, `0` shape diagnostics, `8 fail / 4 weak_pass`, `69` Tavily credits; `tender_or_procurement=5` and `project_list=3` passed thresholds, but `statistics=4` failed target `<=3`; superseded by `source-local-statistics-regional-precision-v1.md`. |
 | `archive/source-local-quant-file-backbone-v1.md` | `completed_with_successor_blocker` | Stabilized local quantitative gates and file/download failure visibility. Phase 5 live/audit reached `12 success`, `0` shape diagnostics, `1 blocker / 8 fail / 3 weak_pass`, `70` credits; `statistics=3` passed target `<=3`, but `tender_or_procurement=7` failed target `<=5`; superseded by `source-transaction-file-local-depth-v1.md`. |
@@ -37,6 +39,7 @@ The workspace hygiene task has completed and is archived at:
 
 | Plan | Status | Notes |
 |---|---|---|
+| `theme-watchlist-intel-workbench-v1.md` | `completed` | First user-facing product demo: theme CRUD API + workbench HTML UI. 256 tests passing. |
 | `archive/domestic-source-lite-refactor-v1.md` | `completed` | Tavily/Crawl4AI domestic source lite refactor completed through Phase 5 validation. |
 | `archive/research-workflow-source-assisted-integration-v1.md` | `completed` | Search-assisted domestic source path integrated into research workflow and validated through eval harness. |
 | `archive/group2-worker-lane-design-v1.md` | `completed` | Group2 lane design accepted by human review on 2026-04-28. |
@@ -56,12 +59,7 @@ The workspace hygiene task has completed and is archived at:
 
 ## Queued But Not Created
 
-These are named in `STATUS.md` but do not currently exist as PLAN files:
-
-| Plan | Status | Notes |
-|---|---|---|
-| `longtasks-substrate-v1.md` | queued name only | Post-completion summarizer recommended this as the next active PLAN because async task safety and substrate dirty files are release-critical. |
-| `theme-watchlist-intel-workbench-v1.md` | queued name only | Recommended after substrate stabilization, or earlier only if prioritizing a user-facing product demo. |
+No queued plans. All previously queued plans have been created and completed.
 
 ## Hygiene Rules
 

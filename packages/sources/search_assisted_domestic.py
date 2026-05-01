@@ -53,7 +53,10 @@ from packages.sources.source_family_backbone import (
     official_quantitative_obligation_satisfied,
     source_family_backbones_for_source_classes,
 )
-from packages.sources.source_resolver import evaluate_candidate_compatibility
+from packages.sources.source_resolver import (
+    domain_has_procurement_signal,
+    evaluate_candidate_compatibility,
+)
 
 _FIRST_WAVE_TASK_FAMILIES = {
     "policy_direction",
@@ -1301,20 +1304,61 @@ def _annotate_source_class_metadata(
     if not source_classes:
         return
     for document in [*documents, *normalized_documents]:
-        _merge_source_class_metadata(document.metadata, source_classes, task=task)
+        doc_source_classes = list(source_classes)
+        # Phase 1: boost procurement source class for procurement-domain documents
+        doc_url = (document.metadata or {}).get("url", "")
+        doc_domain = (document.metadata or {}).get("domain", "")
+        if not doc_domain and doc_url:
+            from urllib.parse import urlparse
+            doc_domain = urlparse(str(doc_url)).netloc
+        if domain_has_procurement_signal(domain=str(doc_domain), url=str(doc_url)):
+            if "tender_or_procurement" not in doc_source_classes:
+                doc_source_classes.append("tender_or_procurement")
+        _merge_source_class_metadata(document.metadata, doc_source_classes, task=task)
+
+
+_PROCUREMENT_CONTEXT_KEYWORDS = (
+    "招标",
+    "中标",
+    "采购",
+    "政府采购",
+    "公共资源",
+    "投标",
+    "tender",
+    "procurement",
+    "bidding",
+    "ggzy",
+    "ccgp",
+)
 
 
 def _source_classes_for_task(task: QueryDecompositionTask) -> list[str]:
+    source_classes: list[str] = []
     if task.task_family == "policy_direction":
-        return ["official_policy"]
-    if task.task_family == "local_rollout":
-        return ["local_government", "official_policy"]
-    if task.task_family == "industry_topic":
+        source_classes = ["official_policy"]
+    elif task.task_family == "local_rollout":
+        source_classes = ["local_government", "official_policy"]
+    elif task.task_family == "industry_topic":
         source_classes = ["industry_report", "industry_association", "association_report"]
         if _industry_price_capacity_source_class_needed(task):
             source_classes.extend(["price_data", "industry_price_capacity"])
-        return source_classes
-    return []
+    else:
+        return []
+
+    # Phase 1: detect procurement context from task phrases and evidence goal
+    if _task_has_procurement_context(task):
+        source_classes.append("tender_or_procurement")
+    return source_classes
+
+
+def _task_has_procurement_context(task: QueryDecompositionTask) -> bool:
+    """Check if the task context contains procurement signals."""
+    text_blob = " ".join([
+        *task.search_phrases,
+        task.evidence_goal,
+        task.source_cluster,
+    ]).lower()
+    return any(keyword.lower() in text_blob for keyword in _PROCUREMENT_CONTEXT_KEYWORDS)
 
 
 def _industry_price_capacity_source_class_needed(task: QueryDecompositionTask) -> bool:

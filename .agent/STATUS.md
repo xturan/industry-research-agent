@@ -10,7 +10,9 @@ Execution workflow update: PLAN execution is now speed-biased through `.agent/sk
 
 ## Primary Active Plan
 
-- `.agent/PLANS/source-local-procurement-regulatory-depth-v1.md`
+- No active long-running PLAN. Most recent completed: `.agent/PLANS/theme-watchlist-intel-workbench-v1.md` (workbench product demo)
+- Previous completed: `.agent/PLANS/longtasks-substrate-v1.md` (substrate audit)
+- Previous paused: `.agent/PLANS/source-local-procurement-regulatory-depth-v1.md` (procurement Phase 1)
 - Previous completed with successor blocker: `.agent/PLANS/archive/source-local-statistics-regional-precision-v1.md`
 - Previous completed with successor blocker: `.agent/PLANS/archive/source-transaction-file-local-depth-v1.md`
 - Previous completed with successor blocker: `.agent/PLANS/archive/source-local-quant-file-backbone-v1.md`
@@ -30,20 +32,18 @@ Execution workflow update: PLAN execution is now speed-biased through `.agent/sk
 - Previous eval plan: `.agent/PLANS/source-quality-stress-eval-v1.md`
 - Last completed: `.agent/PLANS/archive/domestic-source-coverage-and-routing-v2.md`
 - Latest governance sidecar completed: `.agent/PLANS/archive/execution-mode-router-tech-roadmap-v1.md`
-- State: active_phase1_public_resource_procurement
+- State: workbench_completed_no_active_plan
 
 ## Current Phase
 
-- Current phase: Source Local Procurement Regulatory Depth v1 Phase 1 tender / public-resource backbone.
-- Last completed source milestone: Source Local Statistics Regional Precision v1 completed with successor blocker after Phase 6 live/audit gate (`12 success`, `8 fail / 4 weak_pass`, `tender_or_procurement=7`, `regulatory_record=4`, `project_list=2`, general `statistics` gap reduced).
-- Next execution state: implement the first `public_resource_procurement` slice with tests before any further live rerun.
-- Execution guardrail: the 12-case smoke set and future 50-query pressure set are regression/evaluation instruments. The active PLAN must improve general source-family backbones and must not drive one-query overfitting before any 50-case expansion.
+- Theme Watchlist Intel Workbench v1 completed. All 4 phases done: theme CRUD API, workbench HTML UI with research + search, end-to-end validation (256 tests).
+- No active PLAN. Next step depends on user priority: resume source procurement depth, integrate real LLM provider, deploy DB, or add workbench features.
 
 ## Task Classification
 
-- Primary area: `source_layer`
-- Secondary areas: `domestic_source_collectors`, `eval_policy_ops`, `provider_layer`
-- Current step: Start Source Local Procurement Regulatory Depth v1 Phase 0 with `local_direct`; do not run full 50-query live evaluation.
+- Primary area: `content_factory`
+- Secondary areas: `research_workflow`
+- Current step: Workbench demo complete. Ready for next priority.
 - Protected contracts: EvidenceBundle schema, EvidenceItem citation fields, `source_quality_summary`, research analyze response shape, provider abstraction semantics, source routing response shape, task/job status semantics, `run` / `run_steps` meaning, provider/config compatibility, direct-keep primary paths, legacy `enable_source_acquisition=False` behavior, content asset metadata contract, and delivery state transition behavior remain protected.
 
 ## Current Source Local Procurement Regulatory Depth Snapshot

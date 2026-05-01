@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "API Server (FastAPI)",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "uvicorn", "apps.api.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"],
+      "port": 8000
+    },
+    {
+      "name": "Task Worker",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "apps.worker.main"],
+      "port": 0
+    }
+  ]
+}

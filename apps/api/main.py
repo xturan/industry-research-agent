@@ -18,6 +18,8 @@ from apps.api.routes.registry import router as registry_router
 from apps.api.routes.research import router as research_router
 from apps.api.routes.search import router as search_router
 from apps.api.routes.tasks import router as tasks_router
+from apps.api.routes.themes import router as themes_router
+from apps.api.routes.workbench import router as workbench_router
 from packages.core.config import get_settings
 from packages.core.logging import bind_log_context, clear_log_context, configure_logging
 from packages.core.utils import utc_now_iso
@@ -47,6 +49,8 @@ app.include_router(tasks_router)
 app.include_router(evals_router)
 app.include_router(ops_router)
 app.include_router(registry_router)
+app.include_router(themes_router)
+app.include_router(workbench_router)
 
 
 def _request_path_template(request: Request) -> str:

@@ -5,7 +5,10 @@ import pytest
 from packages.sources.enums import GovernanceAxis, InfoType, LineFamily, RegionalLevel
 from packages.sources.query_decomposition import QueryDecompositionTask
 from packages.sources.source_resolver import (
+    domain_has_procurement_signal,
     evaluate_candidate_compatibility,
+    is_generic_policy_page_candidate,
+    is_procurement_domain,
     is_supplemental_or_fallback_task_family,
 )
 
@@ -656,3 +659,140 @@ def test_round3_lane_family_eligibility_helper() -> None:
     assert is_supplemental_or_fallback_task_family("local_rollout") is True
     assert is_supplemental_or_fallback_task_family("industry_topic") is True
     assert is_supplemental_or_fallback_task_family("policy_direction") is False
+
+
+# ---------------------------------------------------------------------------
+# Phase 1 — public_resource_procurement backbone tests
+# ---------------------------------------------------------------------------
+
+
+def test_is_procurement_domain_recognizes_ggzy_subdomains() -> None:
+    """Known procurement domains are correctly classified."""
+    procurement_domains = [
+        "ggzy.hefei.gov.cn",
+        "ggzy.changzhou.gov.cn",
+        "ggzyjy.nmg.gov.cn",
+        "ccgp.gov.cn",
+        "www.ccgp.gov.cn",
+        "ggzy.xinjiang.gov.cn",
+        "sxggzyjy.cn",
+    ]
+    for domain in procurement_domains:
+        assert is_procurement_domain(domain), f"Expected procurement domain: {domain}"
+
+
+def test_is_procurement_domain_rejects_generic_gov_domains() -> None:
+    """Generic .gov.cn domains are NOT procurement domains."""
+    generic_domains = [
+        "www.gov.cn",
+        "hefei.gov.cn",
+        "changzhou.gov.cn",
+        "ah.gov.cn",
+        "ndrc.gov.cn",
+        "miit.gov.cn",
+    ]
+    for domain in generic_domains:
+        assert not is_procurement_domain(domain), f"Expected non-procurement: {domain}"
+
+
+def test_is_procurement_domain_handles_none_and_empty() -> None:
+    assert not is_procurement_domain(None)
+    assert not is_procurement_domain("")
+    assert not is_procurement_domain("   ")
+
+
+def test_domain_has_procurement_signal_via_domain() -> None:
+    assert domain_has_procurement_signal(domain="ggzy.hefei.gov.cn") is True
+    assert domain_has_procurement_signal(domain="ccgp.gov.cn") is True
+
+
+def test_domain_has_procurement_signal_via_url_keywords() -> None:
+    assert domain_has_procurement_signal(domain="hefei.gov.cn", url="/zwgk/zbgg/招标公告") is True
+    assert domain_has_procurement_signal(domain="ah.gov.cn", url="/政府采购/") is True
+    assert domain_has_procurement_signal(domain="ah.gov.cn", url="/ggzy/002001/") is True
+    assert domain_has_procurement_signal(domain="ah.gov.cn", url="/trade/tender/list.html") is True
+
+
+def test_domain_has_procurement_signal_rejects_generic() -> None:
+    assert domain_has_procurement_signal(domain="hefei.gov.cn") is False
+    assert domain_has_procurement_signal(domain="www.gov.cn") is False
+    assert domain_has_procurement_signal(domain=None) is False
+
+
+def test_is_generic_policy_page_candidate_for_generic_domain() -> None:
+    """A generic .gov.cn domain without procurement subdomain is a generic policy page."""
+    assert is_generic_policy_page_candidate(
+        url="https://www.hefei.gov.cn/zwgk/policy.html",
+        domain="www.hefei.gov.cn",
+        title="合肥市产业政策",
+    ) is True
+
+
+def test_is_generic_policy_page_candidate_for_procurement_domain_clean_path() -> None:
+    """A procurement domain with a clean (non-policy-path) URL is NOT generic."""
+    assert is_generic_policy_page_candidate(
+        url="https://ggzy.hefei.gov.cn/jyxx/002001/002001001/",
+        domain="ggzy.hefei.gov.cn",
+        title="合肥公共资源交易公告",
+    ) is False
+
+
+def test_is_generic_policy_page_candidate_for_procurement_domain_policy_path() -> None:
+    """A procurement domain with a policy/news path IS flagged as generic."""
+    assert is_generic_policy_page_candidate(
+        url="https://ggzy.changzhou.gov.cn/zwgk/policy_notice.html",
+        domain="ggzy.changzhou.gov.cn",
+        title="政策通知",
+    ) is True
+
+
+def test_is_generic_policy_page_candidate_none_domain() -> None:
+    assert is_generic_policy_page_candidate(
+        url="https://example.com/page",
+        domain=None,
+        title="Some page",
+    ) is True
+
+
+def test_procurement_and_policy_domains_are_distinct() -> None:
+    """procurement != generic_policy: the two domain classes must not overlap."""
+    procurement = {"ggzy.hefei.gov.cn", "ccgp.gov.cn", "ggzyjy.nmg.gov.cn"}
+    policy = {"www.gov.cn", "hefei.gov.cn", "ndrc.gov.cn"}
+    assert procurement.isdisjoint(policy)
+
+
+def test_city_county_procurement_domains_recognized() -> None:
+    """Verify known city/county procurement domains are recognized."""
+    known_procurement_domains = [
+        # Anhui province
+        "ggzy.ah.gov.cn",
+        # Hefei city
+        "ggzy.hefei.gov.cn",
+        # Changzhou city
+        "ggzy.xzsp.changzhou.gov.cn",
+        # Shenzhen
+        "szggzy.com",
+        # Guangdong province
+        "gdggzy.org.cn",
+        # Jiangsu province
+        "jsggzy.jszwfw.gov.cn",
+        # Xinjiang
+        "ggzy.xinjiang.gov.cn",
+        # Inner Mongolia
+        "ggzyjy.nmg.gov.cn",
+        # Shaanxi
+        "sxggzyjy.cn",
+        # Suzhou
+        "szzyjy.com.cn",
+        # Hainan
+        "zw.hainan.gov.cn",
+        # National
+        "ccgp.gov.cn",
+    ]
+
+    recognized = sum(1 for d in known_procurement_domains if is_procurement_domain(d))
+    # At least 80% should be recognized
+    threshold = max(1, int(len(known_procurement_domains) * 0.8))
+    assert recognized >= threshold, (
+        f"Only {recognized}/{len(known_procurement_domains)} procurement domains recognized"
+    )

@@ -260,22 +260,19 @@ If the task is complete:
 - move it to `.agent/PLANS/archive/`
 - update `.agent/STATUS.md` to reflect the next active plan or that no active long task exists
 
-## Phase auto-switch rule
-For active long-running plans, enforce phase continuity by default:
+## Phase auto-switch rule (ENFORCED)
+Execute the FULL PLAN without stopping after each phase. Default behavior:
 
-- when the current phase acceptance criteria are met and required validations pass,
-  automatically mark that phase as completed in the plan
-- in the same turn, switch `Current phase` to the next phase in:
-  - the active plan file under `.agent/PLANS/`
-  - `.agent/STATUS.md`
-- continue execution into the next phase without waiting for an extra user prompt,
-  unless the user explicitly asks to pause
-- do not skip phase boundaries; every phase transition must be recorded with:
-  - validation snapshot
-  - key assumptions
-  - risks/TODOs
-- if a blocker, high-risk change, or human review gate is reached, stop auto-switching,
-  record the blocker in both plan and status, and request user guidance
+- When a phase is complete → immediately continue to the next phase
+- Do NOT ask "是否继续" unless a STOP condition is met
+- Stop ONLY when:
+  1. A result is clearly worsening the situation (regression, data corruption)
+  2. The task is diverging from the PLAN's stated objective
+  3. A protected-contract change is unexpectedly required
+  4. External dependency is missing (API key, credential, network, database)
+  5. Validation fails repeatedly without a safe fix path
+- For routine phase completion: record progress in PLAN/STATUS and auto-continue
+- This rule overrides any previous "ask before continuing" behavior
 
 ## Delivery rules
 - Work step by step.
@@ -314,3 +311,42 @@ When completing a PLAN / long-running epic, the final report must include:
 - recommended next step
 
 Do not only report files or phases. Explain the practical effect of the PLAN in terms the user can test.
+
+## Claude Code compatibility (migrated from Codex)
+
+This project was originally designed for the Codex agent system. The `.agent/` directory preserves the original skill definitions and governance artifacts. The `.claude/` directory provides Claude Code-native equivalents:
+
+### Slash commands (`.claude/commands/`)
+| Command | Equivalent Codex Skill | Purpose |
+|---|---|---|
+| `/workflow` | execution-mode-router + subagent-gate-contract | Route execution: local_direct, light_subagent, full_subagent, remediation_gate |
+| `/source-check` | source-regression-check + domestic-source-check | Source-layer regression validation |
+| `/debug` | systematic-debugging | Root-cause-first debugging |
+| `/brainstorm` | brainstorming | Deep collaborative design exploration |
+| `/plan-review` | plan-self-review | PLAN completeness and safety review |
+
+### Subagent roles (`.claude/memory/subagents.md`)
+Equivalent to `.codex/agents/*.toml` — loaded on demand when spawning agents with the Agent tool.
+
+### Project settings (`.claude/settings.json`)
+Equivalent to `.codex/config.toml` — project-level permissions and model preferences.
+
+### Key compatibility notes
+- The original `.agent/skills/` files remain as authoritative reference — Claude Code slash commands are condensed entry points
+- `.agent/STATUS.md` and `.agent/PLANS/` remain the single source of truth for project state
+- `.agent/SKILL_ROUTER.md` routing rules are embedded in this AGENTS.md and the `/workflow` command
+- When in doubt, AGENTS.md and `.agent/STATUS.md` take precedence over `.claude/` convenience commands
+
+### Scheduled automation (`.claude/scheduled-tasks/`)
+| Task | Schedule | Equivalent Codex |
+|---|---|---|
+| `daily-invest-agent-progress` | Daily at 2:57 AM | `automations/automation/automation.toml` (weekly 3AM heartbeat) |
+
+### Global user config (`~/.claude/`)
+| File | Migrated from |
+|---|---|
+| `~/.claude/CLAUDE.md` | `~/.codex/AGENTS.md` + `memories/PROFILE.md` + `memories/ACTIVE.md` |
+| `~/.claude/settings.json` | `~/.codex/config.toml` (model, effort, features) |
+| `~/.claude/commands/plan-creator.md` | `~/.codex/skills/plan-creator/SKILL.md` |
+
+Note: The original Codex `memories/` (LEARNINGS, ERRORS, FEATURE_REQUESTS) remain at `~/.codex/memories/` as reference. New memory entries go into Claude Code's native auto memory system.

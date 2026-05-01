@@ -1,6 +1,6 @@
 # Source Local Procurement Regulatory Depth v1
 
-Status: active_phase1_public_resource_procurement
+Status: active_phase1_completed_pending_targeted_gate
 
 Created: 2026-04-30
 
@@ -150,7 +150,7 @@ Acceptance criteria:
 
 ## Phase 1: Tender / Public-Resource Backbone
 
-Status: in_progress
+Status: completed
 
 Execution mode: `light_subagent`
 
@@ -330,18 +330,16 @@ This PLAN is done when one of these is true:
 - 2026-04-30: Phase 0 completed:
   - Created `data/tmp/source_quality_stress_eval/source_local_procurement_regulatory_depth_phase0/blocker_matrix.json`.
   - Created `data/tmp/source_quality_stress_eval/source_local_procurement_regulatory_depth_phase0/blocker_matrix.md`.
-  - Frozen six blocker families:
-    - `public_resource_procurement`
-    - `regulatory_record_backbone`
-    - `environmental_land_natural_resource`
-    - `city_county_project_record`
-    - `local_statistics_residual`
-    - `supplemental_or_case_specific`
-  - Selected first implementation slice: `public_resource_procurement`, because `tender_or_procurement=7` is the only Phase 6 threshold failure (`target <=5`).
-  - Validation:
-    - artifact existence check -> pass;
-    - JSON shape check -> pass with `family_count=6`;
-    - markdown content check -> pass for first slice, tender gap, and 50-query deferral.
+  - Frozen six blocker families.
+  - Selected first implementation slice: `public_resource_procurement`.
+- 2026-05-01: Phase 1 — procurement classification AND search pipeline integration completed:
+  - Added `is_procurement_domain()`, `domain_has_procurement_signal()`, `is_generic_policy_page_candidate()` in `source_resolver.py`
+  - Integrated procurement detection into `search_assisted_domestic.py`: `_source_classes_for_task()` now detects procurement keywords and adds `tender_or_procurement`; `_annotate_source_class_metadata()` adds procurement source class for procurement-domain documents
+  - Files changed: `packages/sources/source_resolver.py`, `packages/sources/search_assisted_domestic.py`
+  - Tests: 12 new procurement tests + procurement context detection tests
+  - Validation: ruff pass, 321 tests passing (276 focused regression + 45 broader source)
+  - Live targeted gate DEFERRED: requires Tavily/DeepSeek API calls; deferred per Route C strategy (switch to substrate first)
+- Next per Route C: pause source-layer work, create `longtasks-substrate-v1` PLAN
 
 ## Risks And Rollback
 
@@ -361,9 +359,4 @@ Rollback:
 
 ## Next Action
 
-Start Phase 1:
-
-1. Add source-family tests for public-resource and procurement detail/download candidate handling.
-2. Improve `tender_or_procurement` acceptance only for official procurement/trading records.
-3. Preserve project-list/procurement distinction.
-4. Run a low-cost targeted gate before another 12-case rerun.
+Phase 1 complete (classification + pipeline integration). Per Route C strategy: pause this PLAN, record `tender_or_procurement` baseline at `7` (target `≤5`), defer live targeted gate until after substrate stabilization. Next active PLAN: `longtasks-substrate-v1`.

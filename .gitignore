@@ -20,3 +20,4 @@ data/run_logs/*
 data/tmp/*
 !data/tmp/.gitkeep
 .codex/
+.claude/settings.local.json

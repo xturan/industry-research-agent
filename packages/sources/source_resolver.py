@@ -164,6 +164,42 @@ _CENTRAL_OR_NATIONAL_POLICY_DOMAINS = (
     "customs.gov.cn",
 )
 
+_PROCUREMENT_DOMAIN_SUFFIXES = (
+    "ggzy",
+    "ggzyjy",
+    "zyjy",
+    "ccgp",
+    "zcj",
+    "zfcg",
+    "sxggzyjy.cn",
+)
+
+_PROCUREMENT_KEYWORD_MARKERS = (
+    "招标",
+    "中标",
+    "采购",
+    "政府采购",
+    "公共资源",
+    "土地出让",
+    "矿业权",
+    "产权交易",
+    "投标",
+    "ggzy",
+    "ggzyjy",
+    "ccgp",
+    "tender",
+    "procurement",
+    "bidding",
+)
+
+_GENERIC_GOV_CN_POLICY_PATHS = (
+    "/zwgk/",
+    "/zfxxgk/",
+    "/xxgk/",
+    "/xwzx/",
+    "/zwfw/",
+)
+
 _ROUND3_SUPPLEMENTAL_OR_FALLBACK_TASK_FAMILIES = {
     "industry_topic",
     "local_rollout",
@@ -333,6 +369,73 @@ def _classify_domain_role(domain: str | None) -> Literal["official", "supplement
     if domain.endswith(".gov.cn") or domain == "gov.cn":
         return "official"
     return "other"
+
+
+def is_procurement_domain(domain: str | None) -> bool:
+    """Check if a domain is a known procurement/public-resource-trading domain."""
+    if not domain:
+        return False
+    normalized = domain.strip().lower()
+    if not normalized:
+        return False
+    for suffix in _PROCUREMENT_DOMAIN_SUFFIXES:
+        if normalized == suffix or normalized.endswith(f".{suffix}"):
+            return True
+        if normalized.startswith(f"{suffix}."):
+            return True
+        # Check each domain label for the suffix (exact or substring)
+        parts = normalized.split(".")
+        for part in parts:
+            if part == suffix:
+                return True
+            if suffix in part and len(part) >= len(suffix):
+                return True
+    return False
+
+
+def is_generic_policy_page_candidate(
+    *,
+    url: str,
+    domain: str | None,
+    title: str | None,
+) -> bool:
+    """Return True if the candidate looks like a generic policy/news page, not procurement evidence.
+
+    A generic .gov.cn page is classified as policy/news (not procurement) when:
+    - It is on a known procurement domain but the URL path is a generic policy/news path
+    - Or the domain is a generic .gov.cn without procurement subdomain
+    """
+    if not domain:
+        return True
+    normalized_domain = domain.strip().lower()
+    normalized_url = url.strip().lower()
+
+    # If the domain is a known procurement domain, check the path
+    if is_procurement_domain(normalized_domain):
+        # Procurement domains with generic paths are still procurement candidates
+        # unless the path clearly indicates policy/news content
+        for path_marker in _GENERIC_GOV_CN_POLICY_PATHS:
+            if path_marker in normalized_url:
+                return True
+        return False
+
+    # For generic .gov.cn domains (not procurement-specific), default to policy
+    return True
+
+
+def domain_has_procurement_signal(domain: str | None, url: str | None = None) -> bool:
+    """Check if domain/URL shows procurement signal.
+
+    Returns True when the candidate is likely to contain procurement information.
+    """
+    if is_procurement_domain(domain):
+        return True
+    if url:
+        normalized_url = url.strip().lower()
+        for marker in _PROCUREMENT_KEYWORD_MARKERS:
+            if marker.lower() in normalized_url:
+                return True
+    return False
 
 
 def _extract_region_markers(task: QueryDecompositionTask) -> set[str]:
@@ -659,7 +762,10 @@ def is_supplemental_or_fallback_task_family(task_family: str) -> bool:
 __all__ = [
     "CandidateCompatibilityDecision",
     "SUPPLEMENTAL_DOMAINS",
+    "domain_has_procurement_signal",
     "evaluate_candidate_compatibility",
+    "is_generic_policy_page_candidate",
+    "is_procurement_domain",
     "is_supplemental_or_fallback_task_family",
 ]
 
