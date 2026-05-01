@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from apps.api.routes.content import router as content_router
+from apps.api.routes.deep_research import router as deep_research_router
 from apps.api.routes.delivery import router as delivery_router
 from apps.api.routes.documents import router as documents_router
 from apps.api.routes.evals import router as evals_router
@@ -51,6 +52,7 @@ app.include_router(ops_router)
 app.include_router(registry_router)
 app.include_router(themes_router)
 app.include_router(workbench_router)
+app.include_router(deep_research_router)
 
 
 def _request_path_template(request: Request) -> str:

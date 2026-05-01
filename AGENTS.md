@@ -312,41 +312,5 @@ When completing a PLAN / long-running epic, the final report must include:
 
 Do not only report files or phases. Explain the practical effect of the PLAN in terms the user can test.
 
-## Claude Code compatibility (migrated from Codex)
-
-This project was originally designed for the Codex agent system. The `.agent/` directory preserves the original skill definitions and governance artifacts. The `.claude/` directory provides Claude Code-native equivalents:
-
-### Slash commands (`.claude/commands/`)
-| Command | Equivalent Codex Skill | Purpose |
-|---|---|---|
-| `/workflow` | execution-mode-router + subagent-gate-contract | Route execution: local_direct, light_subagent, full_subagent, remediation_gate |
-| `/source-check` | source-regression-check + domestic-source-check | Source-layer regression validation |
-| `/debug` | systematic-debugging | Root-cause-first debugging |
-| `/brainstorm` | brainstorming | Deep collaborative design exploration |
-| `/plan-review` | plan-self-review | PLAN completeness and safety review |
-
-### Subagent roles (`.claude/memory/subagents.md`)
-Equivalent to `.codex/agents/*.toml` — loaded on demand when spawning agents with the Agent tool.
-
-### Project settings (`.claude/settings.json`)
-Equivalent to `.codex/config.toml` — project-level permissions and model preferences.
-
-### Key compatibility notes
-- The original `.agent/skills/` files remain as authoritative reference — Claude Code slash commands are condensed entry points
-- `.agent/STATUS.md` and `.agent/PLANS/` remain the single source of truth for project state
-- `.agent/SKILL_ROUTER.md` routing rules are embedded in this AGENTS.md and the `/workflow` command
-- When in doubt, AGENTS.md and `.agent/STATUS.md` take precedence over `.claude/` convenience commands
-
-### Scheduled automation (`.claude/scheduled-tasks/`)
-| Task | Schedule | Equivalent Codex |
-|---|---|---|
-| `daily-invest-agent-progress` | Daily at 2:57 AM | `automations/automation/automation.toml` (weekly 3AM heartbeat) |
-
-### Global user config (`~/.claude/`)
-| File | Migrated from |
-|---|---|
-| `~/.claude/CLAUDE.md` | `~/.codex/AGENTS.md` + `memories/PROFILE.md` + `memories/ACTIVE.md` |
-| `~/.claude/settings.json` | `~/.codex/config.toml` (model, effort, features) |
-| `~/.claude/commands/plan-creator.md` | `~/.codex/skills/plan-creator/SKILL.md` |
-
-Note: The original Codex `memories/` (LEARNINGS, ERRORS, FEATURE_REQUESTS) remain at `~/.codex/memories/` as reference. New memory entries go into Claude Code's native auto memory system.
+## Claude Code compatibility
+This project migrated from Codex. See `.claude/memory/codex-migration-map.md` for the full mapping of skills, agents, configs, and automations.

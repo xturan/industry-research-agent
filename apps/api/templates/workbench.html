@@ -94,6 +94,19 @@ header .status { font-size:12px; color:var(--muted); }
       <div id="research-error"></div>
       <div id="research-result"></div>
     </div>
+    <div class="panel" id="dr-panel">
+      <h2>🤖 Deep Research（多轮深度调研）</h2>
+      <div class="form-row">
+        <input type="text" id="dr-query" placeholder="输入研究问题，例如：广东人形机器人产业政策和项目落地情况">
+        <select id="dr-rounds"><option value="2">2轮(快)</option><option value="3" selected>3轮</option><option value="4">4轮(深)</option></select>
+        <button class="btn btn-primary" onclick="submitDeepResearch()">启动深度调研</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+        模仿 GPT Deep Research：口径扩展 → 多轮搜索 → 源分级(A/B/C/D) → 证据链 → 报告。需要 ~20-40 Tavily credits + 3-6 DeepSeek calls。
+      </div>
+      <div id="dr-error"></div>
+      <div id="dr-result"></div>
+    </div>
     <div class="panel" id="search-panel">
       <h2>🔎 证据搜索</h2>
       <div class="form-row">
@@ -247,6 +260,57 @@ function renderSearchResult(r) {
       `).join('')}
     </div>
   `).join('');
+}
+
+async function submitDeepResearch() {
+  const query = document.getElementById('dr-query').value.trim();
+  if (!query) return;
+  const rounds = parseInt(document.getElementById('dr-rounds').value);
+  const errEl = document.getElementById('dr-error');
+  const resEl = document.getElementById('dr-result');
+  errEl.innerHTML = '';
+  resEl.innerHTML = '<div class="loading">⏳ 深度调研进行中（多轮搜索+源分级+证据链，约1-3分钟）...</div>';
+  try {
+    const result = await api('/deep-research/analyze', {
+      method:'POST', body:JSON.stringify({query, max_rounds: rounds})
+    });
+    renderDRResult(result);
+  } catch(e) { errEl.innerHTML = '<div class="error">调研失败: '+e.message+'</div>'; resEl.innerHTML = ''; }
+}
+
+function renderDRResult(r) {
+  const el = document.getElementById('dr-result');
+  const tiers = {}; (r.source_assessments||[]).forEach(s => { tiers[s.tier] = (tiers[s.tier]||0)+1; });
+  const tierStr = Object.entries(tiers).map(([k,v]) => `${k}:${v}`).join(' ');
+  const evidenceHtml = (r.evidence_chain||[]).slice(0,8).map(e => `
+    <div class="result-card">
+      <h4>${esc(e.claim||'').slice(0,120)} <span class="confidence conf-${e.confidence==='high'?'high':e.confidence==='medium'?'medium':'low'}">${e.confidence||'?'}</span></h4>
+      <span class="tag">${esc(e.stage||'')}</span>
+      ${(e.source_urls||[]).slice(0,2).map(u => `<span class="tag" style="font-size:10px">🔗 ${esc(u.slice(0,60))}</span>`).join('')}
+    </div>
+  `).join('');
+  el.innerHTML = `
+    <div class="result-card" style="border-left:3px solid var(--accent)">
+      <h4>📋 调研报告 <span class="confidence conf-${(r.overall_confidence||'medium').toLowerCase()}">${r.overall_confidence||'?'}</span></h4>
+      <p style="font-size:11px;color:var(--muted)">${r.search_rounds_executed||0}轮搜索 · ${r.estimated_tavily_credits||0} credits · ${(r.source_assessments||[]).length}源 [${tierStr}] · ${(r.evidence_chain||[]).length}证据项</p>
+      <div id="memo-content">${esc(r.executive_summary||'')}</div>
+      ${(r.key_findings||[]).map(f => `<div class="tag">✅ ${esc(f)}</div>`).join('')}
+      ${(r.key_inferences||[]).map(i => `<div class="tag">💡 ${esc(i)}</div>`).join('')}
+    </div>
+    <div style="margin-top:10px"><strong>⚠️ 数据缺口 (${(r.data_gaps||[]).length})</strong></div>
+    ${(r.data_gaps||[]).map(g => `<div class="search-result"><span style="color:var(--red)">⚠</span> ${esc(g)}</div>`).join('')}
+    <div style="margin-top:10px"><strong>❓ 不确定性 (${(r.uncertainties||[]).length})</strong></div>
+    ${(r.uncertainties||[]).map(u => `<div class="search-result"><span style="color:var(--amber)">❓</span> ${esc(u)}</div>`).join('')}
+    ${evidenceHtml ? '<div style="margin-top:10px"><strong>📌 证据链</strong></div>'+evidenceHtml : ''}
+    <div style="margin-top:10px"><strong>🔍 源评估</strong></div>
+    ${(r.source_assessments||[]).slice(0,10).map(s => `
+      <div class="search-result">
+        <span class="tag">${s.tier}</span>
+        <span style="font-size:11px">${esc(s.title||'').slice(0,80)}</span>
+        <span style="font-size:10px;color:var(--muted)">auth:${(s.authority_score||0).toFixed(0)}%</span>
+      </div>
+    `).join('')}
+  `;
 }
 
 function esc(s) { if (!s) return ''; const d=document.createElement('div'); d.textContent=String(s); return d.innerHTML; }

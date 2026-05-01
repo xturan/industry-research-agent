@@ -10,9 +10,8 @@ Execution workflow update: PLAN execution is now speed-biased through `.agent/sk
 
 ## Primary Active Plan
 
-- No active long-running PLAN. Most recent completed: `.agent/PLANS/theme-watchlist-intel-workbench-v1.md` (workbench product demo)
-- Previous completed: `.agent/PLANS/longtasks-substrate-v1.md` (substrate audit)
-- Previous paused: `.agent/PLANS/source-local-procurement-regulatory-depth-v1.md` (procurement Phase 1)
+- `.agent/PLANS/deep-research-agent-v1.md` — active (enhancing with workbench integration)
+- Previous completed: `.agent/PLANS/search-quality-improvement-v1.md`
 - Previous completed with successor blocker: `.agent/PLANS/archive/source-local-statistics-regional-precision-v1.md`
 - Previous completed with successor blocker: `.agent/PLANS/archive/source-transaction-file-local-depth-v1.md`
 - Previous completed with successor blocker: `.agent/PLANS/archive/source-local-quant-file-backbone-v1.md`
@@ -32,18 +31,18 @@ Execution workflow update: PLAN execution is now speed-biased through `.agent/sk
 - Previous eval plan: `.agent/PLANS/source-quality-stress-eval-v1.md`
 - Last completed: `.agent/PLANS/archive/domestic-source-coverage-and-routing-v2.md`
 - Latest governance sidecar completed: `.agent/PLANS/archive/execution-mode-router-tech-roadmap-v1.md`
-- State: workbench_completed_no_active_plan
+- State: search_quality_plan_completed
 
 ## Current Phase
 
-- Theme Watchlist Intel Workbench v1 completed. All 4 phases done: theme CRUD API, workbench HTML UI with research + search, end-to-end validation (256 tests).
-- No active PLAN. Next step depends on user priority: resume source procurement depth, integrate real LLM provider, deploy DB, or add workbench features.
+- Search Quality Improvement v1 completed. Layer 1 (Tavily advanced depth + domain expansion + phrase augmentation) and Layer 2 (deterministic + LLM-ready search phrase augmentation) implemented. 230 tests passing.
+- 3 files changed: search_discovery.py, search_assisted_domestic.py, search_phrase_augmenter.py (new).
 
 ## Task Classification
 
-- Primary area: `content_factory`
-- Secondary areas: `research_workflow`
-- Current step: Workbench demo complete. Ready for next priority.
+- Primary area: `source_layer`
+- Secondary areas: `domestic_source_collectors`
+- Current step: Search quality improvements complete. Ready for next priority.
 - Protected contracts: EvidenceBundle schema, EvidenceItem citation fields, `source_quality_summary`, research analyze response shape, provider abstraction semantics, source routing response shape, task/job status semantics, `run` / `run_steps` meaning, provider/config compatibility, direct-keep primary paths, legacy `enable_source_acquisition=False` behavior, content asset metadata contract, and delivery state transition behavior remain protected.
 
 ## Current Source Local Procurement Regulatory Depth Snapshot

@@ -241,6 +241,9 @@ class TavilySearchAdapter:
         )
 
     def search_task(self, task: QueryDecompositionTask) -> list[TavilySearchResponse]:
+        procurement_context = _task_has_procurement_context(task)
+        search_depth = "advanced" if procurement_context else None
+        topic = "news" if procurement_context else None
         responses: list[TavilySearchResponse] = []
         for phrase in task.search_phrases:
             responses.append(
@@ -250,6 +253,8 @@ class TavilySearchAdapter:
                         include_domains=task.include_domains,
                         exclude_domains=task.exclude_domains,
                         exact_match=bool(task.exact_phrases),
+                        search_depth=search_depth,
+                        topic=topic,
                     )
                 )
             )
@@ -470,6 +475,23 @@ def _safe_float(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+_PROCUREMENT_DETECTION_KEYWORDS = (
+    "招标", "中标", "采购", "政府采购", "公共资源", "投标",
+    "tender", "procurement", "bidding", "ggzy", "ccgp",
+    "土地出让", "产权交易", "行政处罚", "环评",
+)
+
+
+def _task_has_procurement_context(task: QueryDecompositionTask) -> bool:
+    """Detect procurement/regulatory context from task to enable advanced search."""
+    text = " ".join([
+        *task.search_phrases,
+        task.evidence_goal,
+        task.source_cluster,
+    ]).lower()
+    return any(keyword.lower() in text for keyword in _PROCUREMENT_DETECTION_KEYWORDS)
 
 
 __all__ = [

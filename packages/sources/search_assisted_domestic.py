@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from datetime import datetime
 from typing import Any, Literal
 from urllib.parse import urlparse
@@ -401,6 +402,12 @@ class SearchAssistedDomesticOrchestrator:
         search_response_count = 0
         coverage_sufficient = False
 
+        # Layer 1c: expand include_domains for procurement tasks with region context
+        task = _expand_task_domains_for_search(task)
+
+        # Layer 2: augment search phrases for better coverage
+        task = _augment_task_search_phrases(task)
+
         round_index = 1
         while round_index <= self.round_policy.max_rounds:
             if budget_state.exhausted():
@@ -734,7 +741,13 @@ def convert_search_assisted_documents_to_evidence_items(
                 section_index=section_index,
                 title=title,
                 summary=normalized_document.summary,
-                support_text=section_text,
+                support_text=_enhance_text_for_procurement(
+                    section_text,
+                    _merge_document_metadata(
+                        normalized_metadata=normalized_document.metadata,
+                        raw_metadata=(raw_document.metadata if raw_document is not None else None),
+                    ),
+                ),
                 source_uri=source_uri,
                 published_at=published_at,
                 score=base_score,
@@ -795,6 +808,103 @@ def convert_search_response_to_evidence_items(
         normalized_documents=response.normalized_documents,
         max_items=max_items,
     )
+
+
+_PROCUREMENT_STRUCTURED_PATTERNS: list[tuple[str, str]] = [
+    (r"(?:中标|成交)(?:金额|价格)[：:]\s*(.{1,80})", "bid_amount"),
+    (r"(?:采购|招标)(?:人|单位)[：:]\s*(.{1,80})", "procurement_entity"),
+    (r"(?:中标|成交|预中标)(?:供应商|人|单位)[：:]\s*(.{1,120})", "winning_bidder"),
+    (r"(?:项目|采购)(?:编号|名称)[：:]\s*(.{1,120})", "project_code"),
+    (r"(?:公告|发布)(?:日期|时间)[：:]\s*(\d{4}[-/年]\d{1,2}[-/月]\d{1,2}[日]?)", "publish_date"),
+    (r"(?:预算|最高限价)(?:金额)?[：:]\s*(.{1,80})", "budget_amount"),
+    (r"(?:合同)(?:金额|总价)[：:]\s*(.{1,80})", "contract_amount"),
+]
+
+_PDF_ATTACHMENT_PATTERNS = [
+    (r'href="([^"]*\.pdf)"[^>]*>([^<]{0,80})', "html_pdf_link"),
+    (r'<a[^>]*href="([^"]*\.pdf)"[^>]*>', "html_pdf_bare"),
+    (r'(https?://[^\s<>"]+\.pdf)', "text_pdf_url"),
+]
+
+
+def _extract_procurement_structured_fields(text: str) -> dict[str, str]:
+    """Extract structured fields from Chinese procurement/government pages."""
+    fields: dict[str, str] = {}
+    for pattern, field_name in _PROCUREMENT_STRUCTURED_PATTERNS:
+        match = re.search(pattern, text)
+        if match:
+            value = match.group(1).strip()
+            if value and len(value) > 1:
+                fields[field_name] = value
+    return fields
+
+
+def _enhance_text_for_procurement(
+    support_text: str,
+    metadata: dict[str, Any],
+) -> str:
+    """Entry point for text enhancement — delegates to structured field extraction."""
+    return _enhance_support_text_with_structured_fields(support_text, metadata)
+
+
+def _enhance_support_text_with_structured_fields(
+    support_text: str,
+    metadata: dict[str, Any],
+) -> str:
+    """Prepend structured procurement fields and PDF attachment links to support text."""
+    if not support_text.strip():
+        return support_text
+
+    lines: list[str] = []
+    fields = _extract_procurement_structured_fields(support_text)
+    if fields:
+        lines.append("[结构化采购信息]")
+        field_labels = {
+            "procurement_entity": "采购主体",
+            "winning_bidder": "中标方",
+            "bid_amount": "中标金额",
+            "budget_amount": "预算金额",
+            "contract_amount": "合同金额",
+            "project_code": "项目编号",
+            "publish_date": "发布日期",
+        }
+        for key, label in field_labels.items():
+            if key in fields:
+                lines.append(f"{label}: {fields[key]}")
+        metadata["procurement_structured_fields"] = fields
+        metadata["procurement_structured"] = True
+
+    # Extract PDF attachment links — crucial for county-level procurement pages
+    pdf_urls = _extract_pdf_attachment_urls(support_text)
+    if pdf_urls:
+        lines.append("\n[附件/PDF链接]")
+        for pdf_url in pdf_urls[:5]:
+            lines.append(f"附件: {pdf_url}")
+        metadata["procurement_pdf_attachments"] = pdf_urls
+        metadata["procurement_pdf_count"] = len(pdf_urls)
+
+    if not lines:
+        return support_text
+    return "\n".join(lines) + "\n\n" + support_text
+
+
+def _extract_pdf_attachment_urls(text: str) -> list[str]:
+    """Extract PDF attachment URLs from procurement page content."""
+    urls: list[str] = []
+    seen: set[str] = set()
+    for pattern, _kind in _PDF_ATTACHMENT_PATTERNS:
+        for match in re.finditer(pattern, text, re.IGNORECASE):
+            url = match.group(1).strip()
+            if url and url not in seen:
+                # Normalize relative URLs
+                if url.startswith("//"):
+                    url = f"https:{url}"
+                elif url.startswith("/"):
+                    url = f"https:/{url}"  # Will be resolved by the reader
+                if url.endswith(".pdf") and len(url) > 10:
+                    seen.add(url)
+                    urls.append(url)
+    return urls[:5]
 
 
 def _build_evidence_item(
@@ -972,6 +1082,90 @@ def _safe_float(value: Any) -> float | None:
 def _bounded_score(value: float | None, *, default: float) -> float:
     candidate = value if value is not None else default
     return min(max(float(candidate), 0.0), 1.0)
+
+
+def _expand_task_domains_for_search(
+    task: QueryDecompositionTask,
+) -> QueryDecompositionTask:
+    """Expand include_domains with region-specific procurement domains when the
+    task has procurement context and a recognizable region focus."""
+    from packages.sources.local_source_patterns import (
+        local_source_domains_for_backbones,
+    )
+    from packages.sources.source_resolver import domain_has_procurement_signal
+
+    # Only expand when task has procurement signal
+    text_blob = " ".join([
+        *task.search_phrases,
+        task.evidence_goal,
+        task.source_cluster,
+    ]).lower()
+    procurement_keywords = (
+        "招标", "中标", "采购", "政府采购", "公共资源", "投标",
+        "tender", "procurement", "bidding", "ggzy", "ccgp",
+    )
+    if not any(kw.lower() in text_blob for kw in procurement_keywords):
+        return task
+
+    # Collect regions from search phrases and include_domains
+    known_regions = {
+        "安徽", "合肥", "肥西", "芜湖", "马鞍山", "安庆", "蚌埠",
+        "广东", "深圳", "江苏", "苏州", "常州", "浙江", "杭州",
+        "上海", "陕西", "西安", "神木", "新疆", "若羌",
+        "四川", "成都", "山东", "福建", "河南", "湖北", "武汉",
+        "海南", "海口", "三亚", "内蒙古",
+    }
+    detected_regions: set[str] = set()
+    for phrase in task.search_phrases:
+        for region in known_regions:
+            if region in phrase:
+                detected_regions.add(region)
+
+    if not detected_regions:
+        return task
+
+    # Add procurement backbone domains for detected regions
+    extra_domains: set[str] = set(task.include_domains)
+    try:
+        procurement_domains = local_source_domains_for_backbones(
+            regions=list(detected_regions),
+            backbones=["project_public_resource"],
+            include_parent=True,
+        )
+        for domain in procurement_domains:
+            if domain_has_procurement_signal(domain=domain):
+                extra_domains.add(domain)
+    except Exception:
+        # Safe fallback — don't break the pipeline for domain expansion
+        pass
+
+    if extra_domains == set(task.include_domains):
+        return task
+
+    return task.model_copy(update={"include_domains": sorted(extra_domains)})
+
+
+def _augment_task_search_phrases(
+    task: QueryDecompositionTask,
+) -> QueryDecompositionTask:
+    """Augment search phrases with additional terms via deterministic keyword expansion.
+
+    Future: integrate DeepSeek LLM augmentation for complex/procurement queries.
+    """
+    from packages.sources.search_phrase_augmenter import augment_search_phrases
+
+    extra_phrases = augment_search_phrases(task)
+    if not extra_phrases:
+        return task
+
+    existing = set(task.search_phrases)
+    new_phrases = [p for p in extra_phrases if p not in existing]
+    if not new_phrases:
+        return task
+
+    return task.model_copy(
+        update={"search_phrases": [*task.search_phrases, *new_phrases]}
+    )
 
 
 def _gate_task(task: QueryDecompositionTask) -> DomesticTaskGateResult:
