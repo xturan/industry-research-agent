@@ -1,93 +1,38 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(git *)",
-      "Bash(docker *)",
-      "Bash(make *)",
-      "Bash(python *)",
-      "Bash(uv *)",
-      "Bash(pip *)",
-      "Bash(npm *)",
-      "Bash(npx *)",
-      "Bash(ruff *)",
-      "Bash(pytest *)",
-      "Bash(mypy *)",
-      "Bash(uvicorn *)",
-      "Bash(mkdir *)",
-      "Bash(ls *)",
-      "Bash(find *)",
-      "Bash(cat *)",
-      "Bash(head *)",
-      "Bash(tail *)",
-      "Bash(wc *)",
-      "Bash(echo *)",
-      "Bash(which *)",
-      "Bash(type *)",
-      "Bash(curl *)",
-      "Bash(wget *)",
-      "Bash(cd *)",
-      "Bash(cp *)",
-      "Bash(mv *)",
-      "Bash(rm *)",
-      "Bash(chmod *)",
-      "Bash(source *)",
-      "Bash(tree *)",
-      "Bash(file *)",
-      "Bash(dir *)",
-      "Bash(export *)",
-      "Bash(set *)",
-      "Bash(pwsh *)",
-      "Bash(dir *)",
-      "Bash(Get-Content *)",
-      "Bash(Test-Path *)",
-      "Read(*.py)",
-      "Read(*.md)",
-      "Read(*.toml)",
-      "Read(*.json)",
-      "Read(*.yml)",
-      "Read(*.yaml)",
-      "Read(*.env.example)",
-      "Read(*.gitignore)",
-      "Edit(*.py)",
-      "Edit(*.md)",
-      "Edit(*.json)",
-      "Edit(*.toml)",
-      "Edit(*.yml)",
-      "Edit(*.yaml)",
-      "Write(*.py)",
-      "Write(*.md)",
-      "Write(*.json)",
-      "Write(*.toml)",
-      "Write(*.yml)",
-      "Write(*.yaml)",
-      "WebSearch(*)",
-      "WebFetch(*)",
-      "Glob(*)",
-      "Grep(*)",
-      "TodoWrite",
-      "Agent(general-purpose)",
-      "Agent(Explore)",
-      "Agent(Plan)",
-      "mcp__Claude_Preview__preview_start",
-      "mcp__Claude_Preview__preview_stop",
-      "mcp__Claude_Preview__preview_list",
-      "mcp__Claude_Preview__preview_logs",
-      "mcp__Claude_Preview__preview_snapshot",
-      "mcp__Claude_Preview__preview_screenshot",
-      "mcp__Claude_Preview__preview_eval",
-      "mcp__Claude_Preview__preview_console_logs",
-      "mcp__Claude_Preview__preview_network",
-      "mcp__Claude_Preview__preview_inspect",
-      "mcp__Claude_Preview__preview_click",
-      "mcp__Claude_Preview__preview_fill",
-      "mcp__Claude_Preview__preview_resize",
-      "mcp__ccd_session__mark_chapter",
-      "mcp__ccd_session__spawn_task"
-    ],
-    "defaultMode": "default"
+    "defaultMode": "bypassPermissions"
   },
-  "enableAllProjectMcpServers": true,
-  "model": "claude-sonnet-4-6",
-  "alwaysThinkingEnabled": true,
-  "showThinkingSummaries": false
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python E:/invest_agent/.agent/hooks/session_end.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python E:/invest_agent/.agent/hooks/bash_error.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python E:/invest_agent/.agent/hooks/memory_touch.py"
+          }
+        ]
+      }
+    ]
+  }
 }

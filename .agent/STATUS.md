@@ -4,14 +4,34 @@
 
 Primary active long-running PLAN is now Source Local Procurement Regulatory Depth v1.
 
+### Source Tier Model (LoRA 后训练) — Step 3 完成, 结论形成
+
+**Plan**: `.agent/PLANS/unified-research-pipeline-v1.md` (Step 1-8)
+**Status**: Step 3 (训练) 完成 ✅ | 结论: Hybrid 三层架构为最优解
+**Reports**: `packages/training/EVAL_REPORT.md`, `packages/training/TRAINING_REPORT.md`
+
+已完成全部:
+- 环境: PyTorch 2.12.0+cu128 (SJTU镜像), VS Build Tools (MSVC), RTX 5060 sm_120 ✅
+- 模型: deepseek-r1:7b (Ollama 4.7GB) ✅
+- 训练: 17min, 3 epochs, loss 3.64→0.33, 154MB LoRA adapter ✅
+- 数据集: 809 samples, 564 train / 120 val / 125 test
+
+关键发现:
+- LoRA 无法教模型区分 A/B (都是 .gov.cn, 仅凭 domain+url+title)
+- B 级从 100% 崩溃到 5.6% — 模型过度学习 A 级模式
+- 规则分类器 (_classify_source) 对 A/B 已是 100% 最优解
+- 模型价值在 C 级 (46.7% vs 规则 6.7%)
+
+最终方案: Hybrid 三层架构 — 硬规则处理 A/B/D (60-70%命中), qwen2.5:7b 处理 C 级+边界
+
 Source Local Statistics Regional Precision v1 completed with a successor blocker. It reduced the statistics/source-profile blocker, recovered M02/M03/P08-style official data evidence, and its Phase 6 12-case live reached `12 success`, `0` audit shape diagnostics, `8 fail / 4 weak_pass`, and no dominant general `statistics` gap. Full 50-query live remains deferred. The next objective is local procurement / public-resource, regulatory-record, environmental/land, and city/county project-record depth.
 
 Execution workflow update: PLAN execution is now speed-biased through `.agent/skills/execution-mode-router.md`. Routine docs/eval/status work should use `local_direct`; scoped source/provider/eval implementation should use `light_subagent`; failed live/eval gates should use `remediation_gate`; full v2 subagent workflow remains reserved for protected-contract, source/provider/research boundary, multi-lane, or user-facing evidence-risk work.
 
 ## Primary Active Plan
 
-- `.agent/PLANS/deep-research-agent-v1.md` — active (enhancing with workbench integration)
-- Previous completed: `.agent/PLANS/search-quality-improvement-v1.md`
+- `.agent/PLANS/research-product-v1.md` — active_phase1
+- Previous completed: `.agent/PLANS/deep-research-agent-v1.md`
 - Previous completed with successor blocker: `.agent/PLANS/archive/source-local-statistics-regional-precision-v1.md`
 - Previous completed with successor blocker: `.agent/PLANS/archive/source-transaction-file-local-depth-v1.md`
 - Previous completed with successor blocker: `.agent/PLANS/archive/source-local-quant-file-backbone-v1.md`

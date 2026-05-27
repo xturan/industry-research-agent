@@ -17,6 +17,7 @@ from apps.api.routes.memory import router as memory_router
 from apps.api.routes.ops import router as ops_router
 from apps.api.routes.registry import router as registry_router
 from apps.api.routes.research import router as research_router
+from apps.api.routes.research_reports import router as research_reports_router
 from apps.api.routes.search import router as search_router
 from apps.api.routes.tasks import router as tasks_router
 from apps.api.routes.themes import router as themes_router
@@ -53,6 +54,7 @@ app.include_router(registry_router)
 app.include_router(themes_router)
 app.include_router(workbench_router)
 app.include_router(deep_research_router)
+app.include_router(research_reports_router)
 
 
 def _request_path_template(request: Request) -> str:

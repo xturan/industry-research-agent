@@ -84,7 +84,7 @@ header .status { font-size:12px; color:var(--muted); }
       <h2>📝 研究查询</h2>
       <div class="form-row">
         <input type="text" id="query-input" placeholder="输入研究问题，例如：安徽的低空经济未来前景如何？">
-        <select id="query-mode"><option value="mock">Mock 模式</option><option value="llm">LLM 模式</option></select>
+        <select id="query-mode"><option value="quick-dr">Quick DR</option><option value="standard-dr" selected>Standard DR</option><option value="deep-dr">Deep DR</option><option value="mock">Mock (legacy)</option><option value="llm">LLM (legacy)</option></select>
         <button class="btn btn-primary" onclick="submitResearch()">提交研究</button>
       </div>
       <div class="form-row" style="font-size:11px;color:var(--muted)">
@@ -187,6 +187,16 @@ async function submitResearch() {
   errEl.innerHTML = '';
   resEl.innerHTML = '<div class="loading">⏳ 正在执行研究...</div>';
   try {
+    // Route to Deep Research for quick/standard/deep modes
+    const isDR = mode.endsWith('-dr');
+    if (isDR) {
+      const strategy = mode.replace('-dr', '');
+      const result = await api('/research/analyze', {
+        method:'POST', body:JSON.stringify({query, mode:'mock', research_strategy: strategy})
+      });
+      renderDRResult(result);
+      return;
+    }
     const body = {
       query, mode,
       provider: mode==='mock'?'mock':'deepseek',

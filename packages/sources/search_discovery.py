@@ -58,6 +58,7 @@ class TavilySearchRequest(SearchDiscoveryModel):
     exclude_domains: list[str] = Field(default_factory=list)
     country: str | None = None
     topic: str | None = None
+    time_range: str | None = None
     exact_match: bool | None = None
     max_results: int | None = Field(default=None, ge=1, le=20)
     search_depth: str | None = None
@@ -255,6 +256,7 @@ class TavilySearchAdapter:
                         exact_match=bool(task.exact_phrases),
                         search_depth=search_depth,
                         topic=topic,
+                        time_range="year",  # Default: last 12 months for freshness
                     )
                 )
             )
@@ -291,6 +293,8 @@ class TavilySearchAdapter:
             payload["exclude_domains"] = request.exclude_domains
         if request.exact_match is not None:
             payload["exact_match"] = request.exact_match
+        if request.time_range:
+            payload["time_range"] = request.time_range
         return payload
 
     def _usage_for_request(

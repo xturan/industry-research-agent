@@ -21,3 +21,10 @@ data/tmp/*
 !data/tmp/.gitkeep
 .codex/
 .claude/settings.local.json
+
+# Model output (large weights, will re-download on target machine)
+packages/training/data/model_output/
+packages/training/data/model_output_v2/
+
+# Keep uv.lock for reproducible installs
+# uv.lock is committed intentionally

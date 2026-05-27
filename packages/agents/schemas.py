@@ -40,6 +40,11 @@ RESEARCH_MODEL_STEPS = (
 class ResearchAnalyzeRequest(BaseModel):
     query: str = Field(min_length=1, max_length=400)
     mode: ResearchMode = ResearchMode.MOCK
+    research_strategy: str | None = Field(
+        default=None,
+        description="'quick' (2 rounds), 'standard' (3 rounds), 'deep' (5 rounds). "
+        "When set, routes to Deep Research pipeline instead of legacy agent pipeline.",
+    )
     provider: ResearchProvider | None = None
     model: str | None = Field(default=None, min_length=1, max_length=200)
     step_models: dict[str, str] | None = None

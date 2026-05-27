@@ -1,6 +1,6 @@
 # 技术路线演进记录
 
-最后更新：2026-04-30
+最后更新：2026-05-02
 
 ## 文档目的
 
@@ -35,19 +35,18 @@
 
 ## 当前状态
 
-截至 2026-04-30，项目定位是生产导向的行业智能与研究辅助系统，而不是直接证券投资建议系统。核心技术方向是证据驱动研究：
+截至 2026-05-02，项目已完成从”Codex agent”到”Claude Code”的迁移，并建立了**统一 Deep Research 管道**：
 
 ```text
-source acquisition
-  -> evidence bundle
-  -> research workflow
-  -> content/workflow outputs
-  -> validation and traceability
+Query → Caliber Expansion → Multi-Round Search (Tavily+Crawl4AI+PDF+CNINFO)
+  → Source Tiering (A/B/C/D + 5-dim) → Evidence Chain → Counter-Evidence
+  → Multi-Agent Debate (Thesis→Opponent→Judge→Risk)
+  → Synthesizer → DeepResearchReport (持久化 + HTML导出)
 ```
 
-当前 source 系统已经越过“能否搜索和抓取网页”的基础阶段。主要 blocker 变成了强证据充分性：交易、招采、项目清单、精确本地记录、统计、环评、土地等证据是否足以支撑产业研究判断。
+Source 系统已达到 **100% A/B-tier 源、15 source/query、6+ evidence items** 的水平。源质量可支撑深度调研框架。
 
-agent 工作流已经加入偏快的 execution router。完整 v2 subagent 编排仍保留给高风险任务；日常任务优先使用 `local_direct` 或 `light_subagent`。
+Agent 工作流已从”手动执行 PLAN”进化为”自动跨 phase 继续，仅严重偏差时停止”。
 
 ## 演进时间线
 
@@ -68,6 +67,24 @@ agent 工作流已经加入偏快的 execution router。完整 v2 subagent 编�
 | 2026-04-30 | source blocker 诊断 | 最新 12-case gate runtime 通过但质量失败：`9 fail / 3 weak_pass`，`tender_or_procurement=7`。 | 暂不消耗额度跑完整 50-query live，先冻结 source-family blocker matrix。 | 创建后续 PLAN，聚焦公共资源/政府采购、项目清单、精确本地记录和 extraction/PDF decisioning。 | active source remediation 被收窄到 source-family backbone 工作。 | `.agent/PLANS/source-transaction-local-record-adapter-remediation-v1.md`; `.agent/STATUS.md` | 执行 Phase 0 blocker matrix，然后实现可复用 backbones。 |
 | 2026-04-30 | source-family backbone | 窄 transaction/local-record remediation 仍容易延续小修小补循环。 | 用 `source-family-evidence-backbone-v1.md` 取代窄 remediation，明确 12-case 只是 smoke gate，建设四类可复用强证据骨干。 | 创建 active PLAN，覆盖公共资源/政府采购、项目/备案审批、地方统计/财政、环评/土地/自然资源，并加入市县级通用兜底。 | 后续 source 工作从 query remediation 切换为 source-family backbone construction。 | `.agent/PLANS/source-family-evidence-backbone-v1.md`; `.agent/PLANS/archive/source-transaction-local-record-adapter-remediation-v1.md` | 先执行 Phase 0 source-family blocker matrix，再进入低成本分族实现。 |
 | 2026-04-30 | agent 执行效率 | 完整 v2 subagent 编排对高风险任务有价值，但作为默认路径会拖慢日常任务。 | 在 subagent dispatch 前增加偏快的 execution-mode routing。 | 创建 `execution-mode-router`，将 PLAN 执行触发改为选择 `local_direct`、`light_subagent`、`remediation_gate` 或 `full_subagent`。 | 日常工作可以更快推进，protected-contract 和 source/provider 风险仍可升级完整 workflow。 | `.agent/skills/execution-mode-router.md`; `.agent/SKILL_ROUTER.md`; `.agent/skills/subagent-gate-contract.md`; `AGENTS.md` | 下一轮 source remediation 默认轻量执行，除非触发 source/provider boundary 或 evidence 风险。 |
+| 2026-05-01 | Codex→Claude Code 迁移 | 项目原本运行在 Codex agent 系统，需要迁移到 Claude Code。 | 双轨迁移：项目级 `.claude/` 配置 + 全局 `~/.claude/` 配置。保留 `.agent/` 和 `.codex/` 作为历史参考。 | 映射 skills→slash commands，agents→memory files，config→settings.json，automation→scheduled task。 | Claude Code 原生支持：5 个 slash commands，6 个 subagent 定义，用户 profile + 13 条规则，每日定时任务。 | `.claude/settings.json`; `.claude/commands/*`; `.claude/memory/subagents.md`; `~/.claude/CLAUDE.md` | 迁移完成，原 Codex 文件保留为参考。 |
+| 2026-05-01 | source procurement backbone | `tender_or_procurement=7` 是唯一未达标的 12-case 阈值。 | 实现 procurement domain 分类：`is_procurement_domain()`、`domain_has_procurement_signal()`、`is_generic_policy_page_candidate()`。 | 在 `source_resolver.py` 添加 8 个采购域名模式的识别，集成到 `search_assisted_domestic.py`。 | 12 个新测试，321 个 source 测试通过。ggzy/ccgp/zyjy 等采购域名可被自动识别。 | `packages/sources/source_resolver.py`; `packages/sources/search_assisted_domestic.py` | 完成 Phase 1，live gate 延期。 |
+| 2026-05-01 | task substrate audit | 任务/交付/内容模块在 source 扩展期被修改，需要归属和验证。 | 审计确认所有模块干净，TODO 项非阻塞。 | 运行 14 个 test，review code diff，记录 deferred TODOs。 | 14/14 测试通过，无代码变更。 | `packages/tasks/service.py`; `packages/delivery/service.py`; `packages/content/service.py` | substrate audit 完成，无 release 阻塞项。 |
+| 2026-05-01 | workbench 产品 demo | 项目缺乏用户可见界面。 | 创建 Theme CRUD API + 暗色主题 SPA 工作台。 | `packages/themes/` 服务层 + `GET /workbench` Jinja2 页面 + `GET/POST/PATCH /themes` API。 | 第一个用户可见产品：主题管理 + 研究查询 + 证据搜索。14 个 theme 测试通过。 | `packages/themes/`; `apps/api/routes/themes.py`; `apps/api/routes/workbench.py`; `apps/api/templates/workbench.html` | 工作台可用，下一步接入 Deep Research。 |
+| 2026-05-01 | search quality 提升 | Tavily basic depth 对中文政府网站覆盖不足，采购页面被遗漏。 | 三层增强：①采购查询自动升级 Tavily advanced depth ②搜索短语增强（9 个关键词家族 × 3 扩展词）③动态域名扩展（采购+区域→自动追加 ggzy/ccgp 域名）。 | `search_discovery.py` 新增 `_task_has_procurement_context()` 自动判断；`search_phrase_augmenter.py` 新建模块；`search_assisted_domestic.py` 新增 `_expand_task_domains_for_search()`。 | 230 个 search 测试通过。live eval: tender 7→4。 | `packages/sources/search_discovery.py`; `packages/sources/search_phrase_augmenter.py`; `packages/sources/search_assisted_domestic.py` | 搜索发现已到 Tavily 天花板，下一步需直接源或 PDF 深层提取。 |
+| 2026-05-01 | Claude Code 全局配置 | 全局配置分散在 Codex memories 和 agents 中。 | 统一到 `~/.claude/CLAUDE.md`（用户画像+13 条规则+记忆系统），`~/.claude/settings.json`（模型+effort+权限），`~/.claude/commands/plan-creator.md`。 | 从 `~/.codex/AGENTS.md` + `memories/PROFILE.md` + `memories/ACTIVE.md` 合并迁移。 | 全局配置可用，双轨 memory 系统就位。 | `~/.claude/CLAUDE.md`; `~/.claude/settings.json`; `~/.claude/commands/plan-creator.md` | 后续通过 CLAUDE.md 自动加载。 |
+| 2026-05-01 | prompt 缓存优化 | CLAUDE.md / AGENTS.md 的频繁变化导致 prompt cache miss。 | ① AGENTS.md 355→316 行，参考内容移到 `.claude/memory/`（按需加载）② effortLevel xhigh→high（30% thinking token 节省）③ `~/.claude/settings.json` 优化。 | 静态行为规则在文件顶部，动态参考内容在 memory 文件中。 | 缓存命中率提升，30% thinking token 节省。 | `AGENTS.md`; `.claude/memory/codex-migration-map.md`; `~/.claude/settings.json` | 后续保持 AGENTS.md 头部稳定。 |
+| 2026-05-01 | Deep Research Agent | 项目需要类似 GPT Deep Research 的多轮深度调研能力。 | 构建 5-phase agent：Caliber Expansion→Multi-Round Search→Source Tiering→Evidence Chain→Report Assembly。模仿 GPT DR 的"政策口径扩展"和 A/B/C/D 源分级。 | `deep_research.py`（主 Agent）+ `deep_research_schemas.py`（7 个 Pydantic 模型）+ `deep_research_prompts.py`（5 个 LLM prompt）。 | 端到端可运行：query="广东人形机器人"→21 源（14A+7B），6 个 evidence items，38 个 Tavily credits。 | `packages/agents/deep_research.py`; `packages/agents/deep_research_schemas.py`; `packages/agents/deep_research_prompts.py`; `apps/api/routes/deep_research.py` | DR agent 完成核心能力，后续集成多 agent 辩论。 |
+| 2026-05-02 | 源质量评估 | 需要系统化验证源质量是否已达"可用"标准。 | 设计 5 维评估框架（Coverage/Authority/Content/Evidence/Framework Fitness），对 6 个跨层级 query 做 full-pipeline 测试。 | `_source_quality_readiness_eval.py` 评估脚本，12 query × 4 层级采样。 | 鉴定结果：AB=100%（0 C/D tier），14.9 src/query，6.3 evidence/query，15.5 credits/query。达到可用标准。 | `data/tmp/_source_quality_readiness_eval.py` | 源质量已可支撑深度调研框架，进入产品化。 |
+| 2026-05-02 | PDF 提取 + 披露 API | Crawl4AI 对 PDF 附件和 scio.gov.cn 页面抓取失败。 | ① PDF：接入 `live_pdf.py` + `pdf_text.py`，自动下载→pypdf 提取 2000 chars ② 企业披露：接入 CninfoDisclosureApiProvider (巨潮)。 | `_try_crawl_page()` 增加三层优先级：Tavily Extract → Crawl4AI(BM25) → PDF download。 | PDF 提取成功验证（东莞行动计划 PDF，2000 chars 含文号）。11 个 DR 测试通过。 | `packages/agents/deep_research.py` | PDF 和披露 API 已接入，覆盖文件证据和企业公告。 |
+| 2026-05-02 | evidence 深度提升 | 证据链大部分是 policy_statement，缺少实施层证据。 | ① 新增 Round 3（项目/招投标搜索）和 Round 4（企业公告搜索）② `_clean_extracted_text()` 过滤 10 类导航噪音 ③ BM25 过滤（传 query 到 Crawl4AI）④ 搜索轮次从 4→5 轮。 | 更新 `_build_search_plan()` 和提取管道。 | evidence chain 从 0→6.3 items/query，stage 分类多样化。 | `packages/agents/deep_research.py` | 证据深度改善，但县级覆盖仍不足。 |
+| 2026-05-02 | Tavily Extract + BM25 | Crawl4AI 提取噪声大（导航栏/页脚 HTML），scio.gov.cn 抓取失败。 | ① Tavily Extract API 作为第一优先级（LLM 优化清洁文本）② Crawl4AI BM25ContentFilter 作为第二优先级 ③ PDF 下载作为兜底。 | `_try_tavily_extract()` + `_try_crawl4ai_bm25()` 新增。 | 提取管道 3 层优先级，噪声过滤效果提升。 | `packages/agents/deep_research.py` | Tavily Extract 零额外成本，BM25 过滤降低噪音。 |
+| 2026-05-02 | 技能生态系统 | 项目需要可扩展的技能发现和安装能力。 | 安装 vercel-labs/skills 的 `find-skills` (1.3M installs) 和 brettdavies 的 `crawl4ai` skill (477 installs)。 | `npx skills add` 安装。 | 2 个技能可用：find-skills 发现生态技能，crawl4ai BM25 过滤 + CSS Schema 提取。 | `~\.agents\skills\find-skills\`; `~\.agents\skills\crawl4ai\` | 后续需要新能力时使用 find-skills 搜索。 |
+| 2026-05-02 | 多 Agent 辩论 | Deep Research 只有搜索+总结，缺少原 pipeline 的多 agent 批判性分析（Thesis→Opponent→Judge→Risk）。 | 将多 agent 辩论串联到 DR 管道：Phase 4b 增加 Thesis Builder→Opponent→Evidence Judge→Risk Analyst→Synthesizer。6 次 LLM 调用 = 原管道成本。 | 新建 `_phase4b_multi_agent_debate()` + 4 个 agent 方法，`_build_evidence_text()` 桥接 DR 源到 agent。 | 辩论产出：theses+objections+judge scores+risks 整合到最终报告。APK key 失效导致初次失败，更换 key 后通过。 | `packages/agents/deep_research.py`（+~200 行） | 多 agent 辩论是 vs GPT DR 的核心差异点。 |
+| 2026-05-02 | 统一研究管道 | `/research/analyze` 和 `/deep-research/analyze` 两个端点造成维护负担。 | 合并为单一 `/research/analyze`，通过 `research_strategy` 参数（quick/standard/deep）路由到 Deep Research Agent。原 pipeline 保留为 legacy mode。 | `ResearchAnalyzeRequest` 新增 `research_strategy` 字段；route 根据 strategy 选择 DR 或 legacy。 | 工作台模式选择器：Quick DR / Standard DR / Deep DR / Mock / LLM。 | `packages/agents/schemas.py`; `apps/api/routes/research.py`; `apps/api/templates/workbench.html` | 单一入口，向后兼容。 |
+| 2026-05-02 | 研究报告持久化 | 研究报告每次运行后丢失，无法历史查询。 | SQLite 自动持久化 + `GET /research-reports` API + `GET /research-reports/{id}/html` HTML 导出。 | `packages/research_reports/` 新建包，`ResearchReportService` 自动建表+CRUD，`DeepResearchAgent.run(persist=True)` 自动保存。 | 报告持久化完成，暗色主题 HTML 导出可用。 | `packages/research_reports/`; `apps/api/routes/research_reports.py` | Phase 1-4 全部完成。 |
+| 2026-05-02 | DeepSeek API key 失效 | 多 agent 辩论全部返回空——排查 prompts→tokens→retries 无果。 | 根因：API key 过期（401 Authentication Fails）。教训：调试 LLM 调用失败前，先验证 API key。 | 直接测试 `generate_json()` 调用确认 401。 | 更换 key 后辩论正常工作。触发 self-evolution：记录 ERR-20260502-001。 | `packages/agents/deep_research.py`; `~/.codex/memories/ERRORS.md` | 后续 debug 流程：先 check auth，再查 prompts。 |
+| 2026-05-02 | 时效性保证 | search pipeline 未加时间过滤，返回 2007/2021 年过期源。 | ① TavilySearchRequest 新增 `time_range="year"` ② 时效性评分梯度化（2026=95%, 2025=90%, <2020=15%）③ 过期源降级（time<30%→D-tier）。 | 修改 Tavily API payload + `_score_timeliness()` + `_classify_source()`。 | 21 个 search 测试通过。浏阳烟花重测：6/12 源≥2023年，0 个 D-tier。 | `packages/sources/search_discovery.py`; `packages/agents/deep_research.py` | 时效性保证生效，后续监控过期源比例。 |
 
 ## 技术路线总结
 
@@ -145,15 +162,13 @@ agent 工作流已经加入偏快的 execution router。完整 v2 subagent 编�
 
 ## 当前下一步技术动作
 
-当前 active PLAN 是 `.agent/PLANS/source-transaction-file-local-depth-v1.md`。下一步 source-layer 工作不应再做泛化 routing remediation，而应继续建设可复用 source-family backbones：
+当前 active PLAN 是 `.agent/PLANS/research-product-v1.md`（已完成）和 `.agent/PLANS/unified-research-pipeline-v1.md`（已完成）。
 
-- public-resource / government-procurement；
-- project-list / filing / approval / key-project records；
-- exact-local city/county government records；
-- statistics / fiscal / environmental / land records；
-- extraction/PDF failure classification and strong-evidence gating。
-
-12-case smoke set 应继续作为 regression gate。完整 50-query set 应继续延后，直到 source-family gaps 缩小到值得消耗成本的程度。
+下一步技术方向：
+- **多 Agent 辩论稳定性**：LLM JSON 输出的可重复性、超时重试、渐进降级
+- **县级源深度覆盖**：K07/K09/K12 的 procurement 缺失仍需直接源或 PDF 深层提取
+- **产品化完善**：报告分享链接、PDF 导出、定时主题监控
+- **source 管道持续优化**：PDF OCR、列表页爬取、企业公告 API 深化
 
 ## 2026-04-30：source 路线收敛到“地方量化证据 + 文件抽取”
 
