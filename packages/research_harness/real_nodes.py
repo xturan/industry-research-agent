@@ -516,13 +516,12 @@ def plan_task_provider_backed(
             # truncate the gap rounds it was given.
             result["gap_min_search_rounds"] = len(gap_rounds)
 
-    # ── 收口：确保 10 个基础维度都有搜索轮 + 维度定向短语 ──
-    # 上面 caliber/rewrite/spec/gap 多条路径各自改写 search_rounds，导致被执行的轮次
-    # （collect_sources 取 search_rounds[:max_rounds]）常常仍是整句 query 变体，且
-    # LLM 的 search_groups 可能漏掉某些基础维度（如 market_scale/industry_chain/风险）。
-    # 这里在 plan 定稿前：① ensure_base_dimension_rounds 补齐 10 个规范基础维度的轮
-    # （插在锚点轮后，小预算内先执行）；② _enrich_round_phrases 把 query 变体短语
-    # 替换成维度定向短语（招标 中标 / 上市公司 公告 / 统计 公报）。
+    # ── 收口：LLM 一次生成 14 维度搜索词，作为维度轮的 search_phrases ──
+    # 2026-08-11 用户指示：一次 LLM 调用覆盖全部维度，搜索词体现 query 特点 +
+    # 维度定向词 + 数据来源。_build_dimension_search_terms 产出
+    # plan["dimension_search_terms"] = {dim_id: [词1,词2,词3]}。
+    # 奥卡姆剃刀：此机制覆盖全部维度，确定性 ensure_base_dimension_rounds /
+    # _enrich_round_phrases 对已被 LLM 词覆盖的维度轮跳过（保留 fallback 保底）。
     try:
         from packages.research_harness.plan_semantic import (
             _enrich_round_phrases,
@@ -530,6 +529,11 @@ def plan_task_provider_backed(
         )
 
         final_plan = dict(result.get("plan") or plan)
+        # ① LLM 生成维度搜索词（一次调用）
+        dim_terms = _build_dimension_search_terms(query=query, plan=final_plan)
+        if dim_terms:
+            final_plan["dimension_search_terms"] = dim_terms
+        # ② 确保 10 base + 4 cond 维度各有一轮（确定性 floor）
         final_rounds = [dict(r) for r in (final_plan.get("search_rounds") or [])]
         if final_rounds:
             final_rounds = ensure_base_dimension_rounds(
@@ -537,6 +541,19 @@ def plan_task_provider_backed(
                 list(final_plan.get("dimension_plan") or []),
                 query,
             )
+            # ③ 用 LLM 搜索词替换维度轮短语；未覆盖维度走确定性 _enrich_round_phrases
+            llm_dim_ids = set(dim_terms.keys()) if dim_terms else set()
+            for r in final_rounds:
+                tids = [str(t) for t in r.get("target_dimensions", []) if str(t)]
+                if not tids:
+                    continue
+                for tid in tids:
+                    terms = dim_terms.get(tid) or dim_terms.get(tid[2:] if tid.startswith("d_") else f"d_{tid}")
+                    if terms:
+                        r["search_phrases"] = terms[:2]
+                        r["search_terms_source"] = "llm_dimension_v1"
+                        break
+            # ④ 未被 LLM 覆盖的维度轮用确定性定向词补齐
             final_rounds = _enrich_round_phrases(
                 final_rounds,
                 list(final_plan.get("dimension_plan") or []),
@@ -544,10 +561,9 @@ def plan_task_provider_backed(
             )
             final_plan["search_rounds"] = final_rounds
             result["plan"] = final_plan
-            # 收口只补写 enrichment 键，不得用外层旧 planner_metadata 覆盖
-            # 前面写入的 spec_driven_first_pass / gap_targeted_rounds_added。
             pm_final = dict(result.get("planner_metadata") or {})
             pm_final["search_round_final_enrichment"] = "base_dims_v1"
+            pm_final["dimension_search_terms_llm"] = bool(dim_terms)
             result["planner_metadata"] = pm_final
     except Exception:  # noqa: BLE001 - 非致命：失败保留原 plan
         pass
@@ -724,6 +740,78 @@ def _inject_spec_driven_first_pass_rounds(
         }
     )
     return updated, meta, min_rounds
+
+def _build_dimension_search_terms(
+    *,
+    query: str,
+    plan: dict[str, Any],
+) -> dict[str, list[str]]:
+    """一次 LLM 调用：基于 query + 14 维度生成每个维度的搜索词（奥卡姆剃刀）。
+
+    用户指示（2026-08-11）：一次调用覆盖全部维度，搜索词要体现 query 特点 + 维度
+    定向词 + 数据来源。产出 {dimension_id: [词1,词2,词3]} 存进 plan。
+    LLM 失败回退：每维度用 search_key_fields 前 2 个（保底，不算冗余层）。
+    """
+    from packages.research_harness import research_taxonomy as _rt
+    from packages.research_harness.tooling.llm_agents import call_tooling_json
+
+    tokens = [t.strip() for t in str(query or "").split() if t.strip()]
+    core = tokens[0] if tokens else query
+    intent = " ".join(tokens[1:]) if len(tokens) > 1 else ""
+    intent_hint = f"（query 核心意图是「{intent}」，必须体现在搜索词中）" if intent else ""
+
+    lines: list[str] = [
+        f"研究主题（query）: {query}",
+        f"query 主题词: {core}",
+        f"query 意图词: {intent or '（无）'}{intent_hint}",
+        "",
+        "请为以下 14 个研究维度各生成 2-3 条中文搜索词。",
+    ]
+    lines.append("搜索词要求：")
+    lines.append(f"1. 每条必须包含 query 主题「{core}」，但不要每条都以 query 意图「{intent}」开头，混搭：")
+    lines.append(f"   a. query 意图切入：如「{core} {intent} 产业链环节」「{core} 中标企业 市场份额」")
+    lines.append(f"   b. 维度本身切入：如「{core} 产业链 上下游 代表企业」「{core} 安全 事故 监管处罚」")
+    lines.append("2. 覆盖该维度核心检索字段（产业链环节/竞争格局/应用场景/毛利率/订单/投资金额/风险等）")
+    lines.append("3. 每条 = query主题 + 维度核心词 + 数据来源类型（政策文件/统计公报/招标公告/交易所披露/行业报告）")
+    lines.append("4. 不同维度搜索词要有区分度；同维度内 a/b 混搭，建议 2 条 a + 1 条 b")
+    lines.append("")
+    for dim_id, meta in _rt.DIMENSIONS.items():
+        family = _rt.DIMENSION_PRIMARY_FAMILY.get(dim_id, "")
+        lines.append(f"- dimension_id: {dim_id}")
+        lines.append(f"  维度名: {meta['label']}")
+        lines.append(f"  要检索的关键字段: {'、'.join(meta['search_key_fields'][:8])}")
+        lines.append(f"  首选来源类型: {family}")
+        lines.append("")
+    lines.append("只输出 JSON，不要其他文字，格式：")
+    lines.append('{"dimensions": {"industry_scope": ["词1", "词2", "词3"], ...}}')
+    prompt = "\n".join(lines)
+
+    results: dict[str, list[str]] = {}
+    try:
+        res = call_tooling_json(
+            system_prompt="你是产业研究检索词生成器。为每个研究维度生成精准、可执行的中文搜索词，只输出 JSON。",
+            user_prompt=prompt,
+            enable_thinking=False,
+            max_tokens=4000,
+            trace_ctx=_get_trace_ctx(),
+            task_type="dimension_search_terms",
+        )
+        payload = res.payload if res else None
+    except Exception:
+        payload = None
+
+    if isinstance(payload, dict) and isinstance(payload.get("dimensions"), dict):
+        raw = payload["dimensions"]
+        for dim_id, meta in _rt.DIMENSIONS.items():
+            got = [str(x) for x in (raw.get(dim_id) or []) if str(x).strip()]
+            results[dim_id] = got[:3]
+    # 兜底：LLM 未覆盖的维度用 search_key_fields 前 2 个
+    for dim_id, meta in _rt.DIMENSIONS.items():
+        if dim_id not in results or not results[dim_id]:
+            terms = [f"{core} {f}".strip() for f in meta["search_key_fields"][:2]]
+            results[dim_id] = terms or [f"{core} {meta['label']}".strip()]
+    return results
+
 
 def _build_spec_driven_first_pass_rounds(
     *,

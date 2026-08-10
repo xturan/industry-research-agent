@@ -13,6 +13,11 @@ All work must preserve the integrity of:
 
 Favor controlled progress over wide, premature changes.
 
+## Design principles
+- **Occam's razor（奥卡姆剃刀）**: 若无必要，勿增实体。实现功能前先观察是否已有更简单的机制覆盖目标；能用一次调用/一个机制解决的，不要叠多层（确定性兜底 + LLM + 规则模板层层冗余）。
+- **Observe before building**: 设计新功能前，先跑通/观察现有机制的真实产出（如搜索词、evidence 数量、维度覆盖），确认缺口确实存在再动手；不要凭假设设计。
+- **Single source of truth**: 每个概念只保留一个权威实现，删除冗余路径（如某个 LLM 已全覆盖时，删除确定性兜底层的重复逻辑）。
+
 ## Product constraints
 - Do NOT position the product as direct securities investment advice.
 - Position it as industry intelligence, research assistance, and content production.
