@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from packages.capability_gateway import build_gateway_aware_search_provider
 from packages.sources.collectors import PdfArtifact, normalize_pdf_text_to_documents
 from packages.sources.crawl4ai_extraction import (
     Crawl4AIExtractionProvider,
@@ -46,7 +47,6 @@ from packages.sources.search_assisted_domestic import (
 )
 from packages.sources.search_discovery import (
     SearchDiscoveryProvider,
-    TavilySearchAdapter,
     TavilySearchRequest,
     TavilySearchResult,
 )
@@ -734,7 +734,7 @@ class DirectStructuredLaneExecutor:
             "file_candidate_kinds": {},
             "stop_reason": None,
         }
-        search_provider = self.project_search_provider or TavilySearchAdapter()
+        search_provider = self.project_search_provider or build_gateway_aware_search_provider()
         extraction_provider = self.project_extraction_provider or Crawl4AIExtractionService()
         candidate_inputs: list[SearchUrlCandidate] = []
         pdf_candidate_inputs: list[SearchUrlCandidate] = []
@@ -1064,7 +1064,9 @@ class DirectStructuredLaneExecutor:
             "file_candidate_kinds": {},
             "stop_reason": None,
         }
-        search_provider = self.data_metrics_search_provider or TavilySearchAdapter()
+        search_provider = (
+            self.data_metrics_search_provider or build_gateway_aware_search_provider()
+        )
         extraction_provider = self.data_metrics_extraction_provider or Crawl4AIExtractionService()
         candidate_inputs: list[SearchUrlCandidate] = []
         pdf_candidate_inputs: list[SearchUrlCandidate] = []
@@ -1393,7 +1395,9 @@ class DirectStructuredLaneExecutor:
             "estimated_tavily_credits": 0,
             "stop_reason": None,
         }
-        search_provider = self.official_record_search_provider or TavilySearchAdapter()
+        search_provider = (
+            self.official_record_search_provider or build_gateway_aware_search_provider()
+        )
         extraction_provider = (
             self.official_record_extraction_provider or Crawl4AIExtractionService()
         )

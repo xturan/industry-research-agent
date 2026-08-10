@@ -1,0 +1,80 @@
+version: 1
+
+default:
+  decision: warn
+  message: "No workflow stage matched; use normal Codex judgment."
+
+stages:
+  brainstorm:
+    allowed_write:
+      - "docs/prd/**"
+      - "examples/**/brainstorm.md"
+    forbidden_write:
+      - "packages/**"
+      - "apps/**"
+      - "tests/**"
+      - ".agent/PLANS/**"
+      - ".agent/STATUS.md"
+      - ".codex/agents/**"
+
+  prd_html_review:
+    allowed_write:
+      - "docs/prd/**"
+      - "examples/**/prd_review.*"
+      - "examples/**/assets/**"
+    forbidden_write:
+      - "packages/**"
+      - "apps/**"
+      - "tests/**"
+      - ".agent/PLANS/**"
+      - ".agent/STATUS.md"
+
+  plan_from_prd:
+    allowed_write:
+      - ".agent/PLANS/**"
+      - ".agent/STATUS.md"
+      - "examples/**/plan.md"
+    forbidden_write:
+      - "packages/**"
+      - "apps/**"
+      - "tests/**"
+
+  group2_design:
+    allowed_write:
+      - "docs/**/group2*.md"
+      - "examples/**/group2_design.md"
+      - "plugins/**/templates/group2_design.md"
+    forbidden_write:
+      - "packages/**"
+      - "apps/**"
+      - "tests/**"
+      - ".agent/PLANS/**"
+      - ".agent/STATUS.md"
+
+  group2_implementation:
+    allowed_write_from_plan: true
+    forbidden_write:
+      - ".agent/PLANS/**"
+      - ".agent/STATUS.md"
+      - ".codex/agents/**"
+
+  group3_validation:
+    allowed_write:
+      - "docs/**/validation*.md"
+      - "data/tmp/**"
+      - "examples/**/validation.md"
+    forbidden_write:
+      - "packages/**"
+      - "apps/**"
+      - ".agent/PLANS/**"
+      - ".agent/STATUS.md"
+
+  summarizer:
+    allowed_write:
+      - ".agent/PLANS/**"
+      - ".agent/STATUS.md"
+      - "docs/**/summary*.md"
+    forbidden_write:
+      - "packages/**"
+      - "apps/**"
+      - "tests/**"

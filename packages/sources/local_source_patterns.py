@@ -28,6 +28,186 @@ LocalRegionMatchType = Literal[
     "unknown",
 ]
 
+# ── ADR 0002: Unified source_family taxonomy ──
+# Canonical 16-value source_family (research-taxonomy refactor Phase 1). All
+# producers should normalize raw/legacy family strings through
+# canonical_source_family() so read sites see a regular value. The old 8-value
+# families are folded to their new equivalents (official_policy->policy_document,
+# official_news->local_official, public_resource_transaction->tender_procurement,
+# statistics->official_statistics); environmental_land is retained for backward
+# compatibility. family maps both to source_role (credibility) and to
+# LocalEvidenceBackbone (local targeting).
+CanonicalSourceFamily = Literal[
+    "policy_document",
+    "local_official",
+    "official_statistics",
+    "tender_procurement",
+    "exchange_disclosure",
+    "company_disclosure",
+    "company_material",
+    "certification_database",
+    "standard_document",
+    "patent_database",
+    "association_thinktank",
+    "broker_research",
+    "industry_research",
+    "commercial_media",
+    "operator_data",
+    "environmental_land",
+]
+
+# Legacy / synonym string -> canonical family.
+_FAMILY_ALIAS_TO_CANONICAL: dict[str, str] = {
+    # policy_document (was official_policy)
+    "official_policy": "policy_document",
+    "provincial_policy": "policy_document",
+    "policy": "policy_document",
+    "financial_subsidy_notice": "policy_document",
+    "policy_document": "policy_document",
+    "policy_basis": "policy_document",
+    # local_official (was official_news / local_government)
+    "official_news": "local_official",
+    "official_news_or_interpretation": "local_official",
+    "local_government": "local_official",
+    "local_government_notice": "local_official",
+    "local_official": "local_official",
+    # tender_procurement (was public_resource_transaction)
+    "public_resource_transaction": "tender_procurement",
+    "project_public_resource": "tender_procurement",
+    "project_transaction": "tender_procurement",
+    "project_list": "tender_procurement",
+    "project_execution": "tender_procurement",
+    "local_project_tender": "tender_procurement",
+    "tender_or_procurement": "tender_procurement",
+    "procurement": "tender_procurement",
+    "tender_procurement": "tender_procurement",
+    # exchange_disclosure (new)
+    "exchange_disclosure": "exchange_disclosure",
+    "exchange_announcement": "exchange_disclosure",
+    "exchange_filing": "exchange_disclosure",
+    # company_disclosure
+    "company_disclosure": "company_disclosure",
+    "disclosure": "company_disclosure",
+    # company_material (new)
+    "company_material": "company_material",
+    "company_website": "company_material",
+    "company_brochure": "company_material",
+    # official_statistics (was statistics)
+    "statistics": "official_statistics",
+    "statistics_or_data": "official_statistics",
+    "statistics_or_data_release": "official_statistics",
+    "statistics_corroboration": "official_statistics",
+    "statistics_fiscal": "official_statistics",
+    "industry_data": "official_statistics",
+    "trade_data": "official_statistics",
+    "energy_constraint_data": "official_statistics",
+    "official_statistics": "official_statistics",
+    "statistical_bulletin": "official_statistics",
+    # certification_database (new)
+    "certification_database": "certification_database",
+    "certification": "certification_database",
+    "airworthiness_certification": "certification_database",
+    # standard_document (new)
+    "standard_document": "standard_document",
+    "standard": "standard_document",
+    "industry_standard": "standard_document",
+    # patent_database (new)
+    "patent_database": "patent_database",
+    "patent": "patent_database",
+    # association_thinktank (new)
+    "association_thinktank": "association_thinktank",
+    "industry_association": "association_thinktank",
+    "thinktank": "association_thinktank",
+    # broker_research (new)
+    "broker_research": "broker_research",
+    "broker_report": "broker_research",
+    "sell_side_research": "broker_research",
+    # industry_research
+    "industry_research": "industry_research",
+    "industry_association_context": "industry_research",
+    "industry_report": "industry_research",
+    "industry_topic": "industry_research",
+    "research_or_think_tank_context": "industry_research",
+    # commercial_media
+    "commercial_media": "commercial_media",
+    "commercial_media_context": "commercial_media",
+    "media": "commercial_media",
+    "aggregator": "commercial_media",
+    "aggregator_or_unknown": "commercial_media",
+    # operator_data (new)
+    "operator_data": "operator_data",
+    "operator_platform": "operator_data",
+    "operations_data": "operator_data",
+    # environmental_land (retained)
+    "environmental_land": "environmental_land",
+    "environmental_land_record": "environmental_land",
+    "environmental_or_land_record": "environmental_land",
+    "environmental_record": "environmental_land",
+}
+
+_FAMILY_TO_BACKBONE: dict[str, str | None] = {
+    "policy_document": "local_government",
+    "local_official": "local_government",
+    "official_statistics": "statistics_fiscal",
+    "tender_procurement": "project_public_resource",
+    "exchange_disclosure": None,
+    "company_disclosure": None,
+    "company_material": None,
+    "certification_database": None,
+    "standard_document": None,
+    "patent_database": None,
+    "association_thinktank": None,
+    "broker_research": None,
+    "industry_research": None,
+    "commercial_media": None,
+    "operator_data": None,
+    "environmental_land": "environmental_land_record",
+}
+
+_FAMILY_TO_ROLE: dict[str, str] = {
+    "policy_document": "official_policy_original",
+    "local_official": "official_news_or_interpretation",
+    "official_statistics": "statistics_or_data_release",
+    "tender_procurement": "public_resource_transaction",
+    "exchange_disclosure": "exchange_disclosure",
+    "company_disclosure": "company_disclosure",
+    "company_material": "company_material",
+    "certification_database": "certification_database",
+    "standard_document": "standard_document",
+    "patent_database": "patent_database",
+    "association_thinktank": "industry_association_context",
+    "broker_research": "broker_research",
+    "industry_research": "industry_association_context",
+    "commercial_media": "commercial_media_context",
+    "operator_data": "operator_data",
+    "environmental_land": "statistics_or_data_release",
+}
+
+_DEFAULT_CANONICAL_FAMILY = "local_official"
+
+
+def canonical_source_family(raw: str | None) -> str:
+    """ADR 0002: normalize a raw/legacy source_family string to one of the 16
+    canonical values. Unknown/empty falls back to a conservative default."""
+    if not raw:
+        return _DEFAULT_CANONICAL_FAMILY
+    key = str(raw).strip().lower()
+    if key in _FAMILY_ALIAS_TO_CANONICAL:
+        return _FAMILY_ALIAS_TO_CANONICAL[key]
+    return _DEFAULT_CANONICAL_FAMILY
+
+
+def family_to_backbone(family: str | None) -> str | None:
+    """Map a (canonical or legacy) family to its LocalEvidenceBackbone, or None
+    when the family has no local-targeting backbone (disclosure/research/media)."""
+    return _FAMILY_TO_BACKBONE.get(canonical_source_family(family))
+
+
+def family_to_role(family: str | None) -> str:
+    """Map a (canonical or legacy) family to its source_role."""
+    return _FAMILY_TO_ROLE.get(canonical_source_family(family), "aggregator_or_unknown")
+
+
 _GENERIC_LOCAL_REGION_STOP_TERMS = {
     "\u4e0a\u5e02",
     "\u57ce\u5e02",

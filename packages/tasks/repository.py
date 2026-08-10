@@ -30,6 +30,7 @@ class TaskRepository:
         priority: int,
         max_attempts: int,
         available_in_seconds: int,
+        source_run_id: int | None = None,
     ) -> tuple[TaskJob, bool]:
         if idempotency_key:
             existing = self.get_by_idempotency(task_type=task_type, idempotency_key=idempotency_key)
@@ -45,6 +46,7 @@ class TaskRepository:
             payload_json=payload_json,
             max_attempts=max_attempts,
             available_at=available_at,
+            source_run_id=source_run_id,
         )
         self.session.add(row)
 
@@ -62,6 +64,37 @@ class TaskRepository:
         self.session.refresh(row)
         return row, True
 
+    def enqueue_task_no_commit(
+        self,
+        *,
+        task_type: TaskType,
+        payload_json: dict[str, Any],
+        idempotency_key: str | None,
+        priority: int,
+        max_attempts: int,
+        available_in_seconds: int,
+        source_run_id: int | None = None,
+    ) -> TaskJob:
+        """Create a TaskJob WITHOUT committing — the caller owns the transaction.
+
+        Used by the Gateway submit path (G1.3.1) where admission + Run + Task must
+        commit atomically in one transaction.
+        """
+        available_at = datetime.now(UTC) + timedelta(seconds=available_in_seconds)
+        row = TaskJob(
+            task_type=task_type,
+            status=TaskJobStatus.QUEUED,
+            priority=priority,
+            idempotency_key=idempotency_key,
+            payload_json=payload_json,
+            max_attempts=max_attempts,
+            available_at=available_at,
+            source_run_id=source_run_id,
+        )
+        self.session.add(row)
+        self.session.flush()  # materialize task id, no commit
+        return row
+
     def get_by_idempotency(self, *, task_type: TaskType, idempotency_key: str) -> TaskJob | None:
         return self.session.scalar(
             self._task_with_attempts_stmt().where(
@@ -72,6 +105,14 @@ class TaskRepository:
 
     def get_task(self, task_id: int) -> TaskJob | None:
         return self.session.scalar(self._task_with_attempts_stmt().where(TaskJob.id == task_id))
+
+    def get_task_by_run_id(
+        self, run_id: int, *, statuses: set[TaskJobStatus] | None = None
+    ) -> TaskJob | None:
+        stmt = self._task_with_attempts_stmt().where(TaskJob.source_run_id == run_id)
+        if statuses:
+            stmt = stmt.where(TaskJob.status.in_(statuses))
+        return self.session.scalar(stmt.order_by(TaskJob.id.asc()).limit(1))
 
     def claim_next(self, *, worker_id: str) -> tuple[TaskJob, TaskAttempt] | None:
         now = datetime.now(UTC)
@@ -134,6 +175,22 @@ class TaskRepository:
         task_job.locked_by = None
         attempt.finished_at = now
         attempt.error_message = error_message[:4000]
+        self.session.add(task_job)
+        self.session.add(attempt)
+        self.session.commit()
+        return self.get_task(task_job.id)
+
+    def cancel_claimed_task(
+        self, *, task_job: TaskJob, attempt: TaskAttempt
+    ) -> TaskJob:
+        """Cancel a task that was already claimed (RUNNING) — cooperative stop."""
+        now = datetime.now(UTC)
+        task_job.status = TaskJobStatus.CANCELLED
+        task_job.locked_at = None
+        task_job.locked_by = None
+        task_job.error_message = task_job.error_message or "Cancelled by user request."
+        attempt.status = TaskAttemptStatus.CANCELLED
+        attempt.finished_at = now
         self.session.add(task_job)
         self.session.add(attempt)
         self.session.commit()

@@ -1,6 +1,6 @@
 # 技术路线演进记录
 
-最后更新：2026-05-02
+最后更新：2026-07-15
 
 ## 文档目的
 
@@ -205,3 +205,42 @@ Agent 工作流已从”手动执行 PLAN”进化为”自动跨 phase 继续�
 - 采取的方法：从 `batch_eval.json` 和 `source_roadmap.json` 中抽象出可复用 blocker family：`local_statistics_energy_fiscal_trade`、`exact_local_regional_precision`、`regional_homonym_disambiguation`、`local_project_procurement_residual`、`sector_quantitative_supplement`。
 - 得到的产出：`.agent/PLANS/source-local-statistics-regional-precision-v1.md`，以及 `data/tmp/source_quality_stress_eval/source_local_statistics_regional_precision_phase0/blocker_matrix.json` / `.md`。
 - 后续动作：先做 exact-local 与同名地域消歧，再建设地方统计、财政、能源、电力、贸易/海关等量化源 profile；继续把 12-case 作为 smoke/regression gate，完整 50-query live 继续延期。
+
+## 2026-07-15：搜索提供方评测从“通用相关性”升级为“强证据家族”对照
+
+- 领域：source discovery / provider evaluation / strong evidence。
+- 遇到的问题：通用搜索相关性和正文长度无法判断工具能否找到项目落地、企业披露、招投标、环评/土地等产业实施证据；AnySearch 的垂类能力也不能被笼统总分代表。
+- 做出的决策：安装官方 AnySearch Skill，但不直接替换 Tavily；先按证据家族比较强证据命中率、官方来源率、实体/地域匹配、实施细节和时延。
+- 采取的方法：建立 8 个具体且可获取的难例；企业披露使用 AnySearch `finance.news/announcement` 加通用搜索，其他家族使用通用 Skill 搜索，与 Tavily basic 对照；禁止用长文本抵消官方强证据缺失。
+- 得到的产出：`data/evals/search_skill_strong_evidence_v1.json`、`scripts/compare_search_skill_strong_evidence.py`、完整 live artifact `data/tmp/search_skill_strong_evidence/full_8_20260715/`。结果显示 AnySearch 在企业披露、地方招采、环评记录上更强，Tavily 在项目落地上更稳，两者共同弱项仍是县级项目清单。
+- 后续动作：AnySearch 仅作为候选补充 lane；如需进入生产，另建 PLAN 处理 provider 路由、预算、失败回退和 research harness 验证，避免把本轮 8 题结论直接硬编码进生产逻辑。
+
+## 2026-07-15：默认搜索发现层切换为 AnySearch
+
+- 领域：provider layer / source discovery / research workflow。
+- 遇到的问题：Tavily 在项目落地、企业披露、招投标和环评/土地等强证据场景中，返回深度与成本不够稳定；对照评测显示 AnySearch 的相关性和原文返回深度更好，但尚未进入生产发现链路。
+- 做出的决策：将 AnySearch 设为默认搜索发现 provider；保留 Tavily 作为显式、可关闭、可回滚的 fallback；搜索正文标记为 `search_discovery`，不冒充 Crawl4AI 抽取或已验证原文；不改变 EvidenceBundle、citation、source quality、dossier/final-report 和任务状态等受保护契约。
+- 采取的方法：建立 provider-neutral discovery factory，接入 AnySearch JSON-RPC、垂直搜索、域名后过滤、原始正文保留和结构化诊断；将国内搜索辅助、lane execution、deep research 与真实 LangGraph 节点统一接入 factory；用项目落地、企业披露、招投标、环评/土地场景验证 source-quality 联动。
+- 得到的产出：AnySearch 已成为授权生产路径的默认发现引擎，Tavily fallback 可配置；官方环评页面可被识别为 primary evidence candidate，聚合站和媒体仍被降级为 context-only；target source-family 与 observed source-family 保持分离。
+- 验证与风险：RW1-RW7 已通过；RW8 暴露出既有 dossier/final-report 持久化缺陷，需要独立 remediation PLAN，未与 provider 切换混修。
+- 可溯源证据：`.agent/PLANS/anysearch-production-discovery-integration-v1.md`、`packages/sources/search_discovery.py`、`tests/test_sources_search_discovery.py`。
+
+## 2026-07-15：恢复 final-report 正常持久化链路
+
+- 领域：research workflow / report persistence / eval。
+- 遇到的问题：8-case 压测中 P04、C07、K07、K12 已完成研究图计算，却因 `ResearchReportService.update_dossier_path` 和 schema 字段回退而在正常落盘阶段失败，只能依赖 recovery 脚本补 dossier 与 final report；AnySearch RW8 也被同一问题阻塞。
+- 做出的决策：将问题定义为既有契约恢复，而不是新增公共响应字段；恢复 `dossier_path` 的 schema、旧表迁移、save/list/get/update 一致性，并让 smoke runner 只从真实 `report_preview.report_markdown` 导出 `FINAL_REPORT.md`。
+- 采取的方法：增加历史 JSON 路径兼容、SQLAlchemy 加法补列、精确回归测试；复用 8-case 中的 P04 与 K12 做受限 live 对比，不运行完整 50-query。
+- 得到的产出：P04 与 K12 均通过正常路径直接生成 summary、response、dossier 和 final report，无 recovery；AnySearch 生产接入 RW8 随之关闭。
+- 剩余风险：K12 地域解析精度仅 0.2，逐 claim 引用仍弱，context pack 严重超预算，独立 SQLite 的 `run_id=1` 可能导致全局 dossier 路径碰撞。这些不属于持久化修复，应单独规划。
+- 可溯源证据：`data/tmp/anysearch_final_report_remediation/COMPARISON.md`、`.agent/PLANS/report-final-artifact-persistence-remediation-v1.md`。
+
+## 2026-07-16：报告叙事与 Context Budget 从“形式通过”升级为“真实输入与诚实等级”
+
+- 领域：research workflow / provider context / report quality。
+- 遇到的问题：P04、K12 虽能生成 final report，但后续轮次会用 evidence ledger 或重复泛化章节覆盖先前叙事；context pack 把全图 state footprint 当作 prompt usage，并在 IO snapshot 中复制 full state，使单个响应膨胀到约 67 MB；证据 obligation 未覆盖时仍可能显示 `level_3`。
+- 做出的决策：不靠提高 token 上限或隐藏证据缺口解决；以 Editor1 实际输入 pack 作为预算对象，以 canonical/structured/impl 三类候选的 narrative quality gate 选择正文，并把 chief-gate obligation coverage 传到 finalizer。
+- 采取的方法：实现 1600-token actual-input hard budget、selected/dropped telemetry、state-footprint 分离、full-state snapshot 瘦身、`narrative_v2` ledger/重复/泛化标题检测、中英文 claim-family 章节映射、canonical 保优与确定性重建、evidence blocker 的 `level_2` 降级。
+- 得到的产出：P04 与 K12 均形成执行摘要、方法边界、主题分析、传导链、风险和结论完整正文；K12 response 约 620 KB，Editor1 两轮为 1573/1600 与 1592/1600；两例因 `obl_location_precision` 未覆盖均诚实保持 `level_2`。
+- 可溯源证据：`.agent/PLANS/archive/report-narrative-context-budget-remediation-v1.md`、`data/tmp/report_narrative_context_budget_live/P04_final_v3/`、`data/tmp/report_narrative_context_budget_live/K12_final_v2/`。
+- 后续动作：另行治理通用 location parser 与 exact-local obligation routing；K12 当前把整段 query 误拆为地域列表，不能在本轮报告格式修复中混改。

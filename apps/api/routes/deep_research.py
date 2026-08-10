@@ -8,7 +8,7 @@ router = APIRouter(prefix="/deep-research", tags=["deep-research"])
 
 class DeepResearchRequest(BaseModel):
     query: str = Field(min_length=1, max_length=500, description="Research query")
-    max_rounds: int = Field(default=3, ge=1, le=6, description="Max search rounds")
+    max_rounds: int = Field(default=12, ge=1, le=12, description="Max search rounds")
 
 
 @router.post("/analyze")

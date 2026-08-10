@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RPD: {Feature Name}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; color: #1f2937; }
+    h1, h2 { color: #111827; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
+    th { background: #f3f4f6; }
+    .gate { border-left: 4px solid #2563eb; padding: 8px 12px; background: #eff6ff; }
+    .risk { border-left: 4px solid #dc2626; padding: 8px 12px; background: #fef2f2; }
+    code, pre { background: #f3f4f6; padding: 2px 4px; }
+  </style>
+</head>
+<body>
+  <h1>RPD: {Feature Name}</h1>
+  <p class="gate">Human PRD review is required before PLAN creation.</p>
+
+  <h2>Background And Problem</h2>
+  <p>{Concrete user problem.}</p>
+
+  <h2>Goals</h2>
+  <ol>
+    <li>{Goal 1}</li>
+    <li>{Goal 2}</li>
+    <li>{Goal 3}</li>
+  </ol>
+
+  <h2>Non-Goals</h2>
+  <ol>
+    <li>{Non-goal 1}</li>
+    <li>{Non-goal 2}</li>
+  </ol>
+
+  <h2>Workflow</h2>
+  <pre>Gate A -> Gate B -> Gate C -> Human PRD Review -> PLAN Creation -> Human PLAN Review</pre>
+
+  <h2>Functional Requirements</h2>
+  <table>
+    <thead>
+      <tr><th>Module</th><th>Feature</th><th>Priority</th><th>Acceptance</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>{Module}</td><td>{Feature}</td><td>P0</td><td>{Acceptance}</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Risks</h2>
+  <p class="risk">{Risk summary and mitigation.}</p>
+
+  <h2>Human Review Questions</h2>
+  <ol>
+    <li>{Question 1}</li>
+    <li>{Question 2}</li>
+  </ol>
+</body>
+</html>

@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from packages.capability_gateway import build_gateway_aware_search_provider
 from packages.sources.citation import normalize_evidence_item
 from packages.sources.coverage_judge import (
     CoverageBudgetState,
@@ -46,7 +47,6 @@ from packages.sources.schemas import (
 )
 from packages.sources.search_discovery import (
     SearchDiscoveryProvider,
-    TavilySearchAdapter,
     TavilySearchResponse,
     TavilySearchResult,
 )
@@ -336,7 +336,7 @@ class SearchAssistedDomesticOrchestrator:
         base_round_policy = RoundPolicy()
         if round_policy_overrides:
             base_round_policy = base_round_policy.model_copy(update=round_policy_overrides)
-        self.search_adapter = search_adapter or TavilySearchAdapter()
+        self.search_adapter = search_adapter or build_gateway_aware_search_provider()
         self.extraction_service = extraction_service or Crawl4AIExtractionService()
         self.round_policy = base_round_policy
         self.stop_conditions = stop_conditions or StopConditions()

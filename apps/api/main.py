@@ -18,6 +18,7 @@ from apps.api.routes.ops import router as ops_router
 from apps.api.routes.registry import router as registry_router
 from apps.api.routes.research import router as research_router
 from apps.api.routes.research_reports import router as research_reports_router
+from apps.api.routes.research_runs import router as research_runs_router
 from apps.api.routes.search import router as search_router
 from apps.api.routes.tasks import router as tasks_router
 from apps.api.routes.themes import router as themes_router
@@ -26,6 +27,7 @@ from packages.core.config import get_settings
 from packages.core.logging import bind_log_context, clear_log_context, configure_logging
 from packages.core.utils import utc_now_iso
 from packages.db.session import SessionLocal
+from packages.research_gateway.errors import GatewayError
 from packages.tasks.metrics import metrics_content_type, metrics_payload, record_api_request
 
 LOGGER = logging.getLogger(__name__)
@@ -55,6 +57,19 @@ app.include_router(themes_router)
 app.include_router(workbench_router)
 app.include_router(deep_research_router)
 app.include_router(research_reports_router)
+app.include_router(research_runs_router)
+
+
+@app.exception_handler(GatewayError)
+async def _gateway_error_handler(request: Request, exc: GatewayError) -> JSONResponse:
+    headers = {}
+    if exc.retry_after_seconds:
+        headers["Retry-After"] = str(exc.retry_after_seconds)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=exc.to_response(),
+        headers=headers,
+    )
 
 
 def _request_path_template(request: Request) -> str:

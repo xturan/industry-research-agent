@@ -81,7 +81,7 @@ def classify_data_adapter_candidate(
             reason="Weak context sources should not become direct structured data adapters.",
         )
 
-    if normalized_class == "official_policy":
+    if normalized_class in {"official_policy", "policy_document"}:
         return _candidate(
             source_name_or_type=source_name_or_type,
             source_class=source_class,

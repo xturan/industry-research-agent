@@ -11,7 +11,15 @@ from packages.core.config import get_settings
 @lru_cache
 def get_engine(database_url: str | None = None) -> Engine:
     url = database_url or get_settings().database_url
-    return create_engine(url, pool_pre_ping=True)
+    settings = get_settings()
+    return create_engine(
+        url,
+        pool_pre_ping=True,
+        pool_size=settings.db_pool_size,
+        max_overflow=settings.db_pool_max_overflow,
+        pool_timeout=settings.db_pool_timeout,
+        pool_recycle=settings.db_pool_recycle,
+    )
 
 
 @lru_cache

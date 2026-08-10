@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+from datetime import datetime, timezone
 from typing import Any
 
 from packages.agents.deep_research_prompts import (
@@ -19,6 +21,13 @@ from packages.agents.deep_research_schemas import (
 from packages.core.config import get_settings
 from packages.providers import DeepSeekProviderClient, ProviderConfigError
 
+LOGGER = logging.getLogger(__name__)
+
+try:
+    UTC = datetime.UTC
+except AttributeError:  # pragma: no cover - Python < 3.11 fallback
+    UTC = timezone.utc
+
 
 class DeepResearchAgent:
     """Multi-round agent that mimics GPT Deep Research methodology.
@@ -33,31 +42,67 @@ class DeepResearchAgent:
         max_rounds: int = 6,
         max_sources_per_round: int = 5,
         deepseek_client: Any | None = None,
+        strategy: str | None = None,
     ) -> None:
         self.max_rounds = max_rounds
         self.max_sources_per_round = max_sources_per_round
         self._client = deepseek_client
+        self.strategy = strategy
+        self._last_run_id: int | None = None
+        self._active_run_id: int | None = None
         self._collected_sources: list[dict[str, Any]] = []
         self._round_log: list[dict[str, Any]] = []
         self._total_credits = 0
 
-    def run(self, query: str, *, persist: bool = True) -> DeepResearchReport:
-        """Execute the full deep research pipeline."""
+    def run(
+        self,
+        query: str,
+        *,
+        run_id: int | None = None,
+        persist: bool = True,
+        expected_generation: int | None = None,
+    ) -> DeepResearchReport:
+        """Execute the full deep research pipeline.
+
+        When `run_id` is provided (the Gateway flow), the Run lifecycle is owned
+        by the worker (QUEUED -> RUNNING -> SUCCEEDED/FAILED) and this method only
+        updates it. When `run_id` is None (standalone call), a Run is created here.
+
+        `expected_generation`（G3）：Worker 在 claim 时持有 execution_generation；
+        报告落库时若 Run 已被人 reclaim（generation 变更），跳过 stale publish。
+        """
         if self._client is None:
             self._client = self._make_client()
+        self._active_run_id = run_id
 
-        # Phase 1: Query Understanding
+        # G1.5 cooperative cancellation at each expensive stage boundary.
+        self._check_cancelled()
+        # G1.4 stage events (best-effort; never fail the pipeline).
+        self._emit("PLANNER_STARTED", "planning", "started",
+                   "Planning research dimensions.")
         understanding = self._phase1_query_understanding(query)
+        self._emit("PLANNER_COMPLETED", "planning", "completed",
+                   "Research dimensions planned.",
+                   payload={"dimensions": len(understanding.research_dimensions)})
 
-        # Phase 2: Multi-Round Search
+        self._check_cancelled()
+        self._emit("SEARCH_STARTED", "search", "started",
+                   "Starting multi-round search.")
         search_plan = self._build_search_plan(understanding)
         self._phase2_multi_round_search(query, search_plan)
+        self._emit("SEARCH_COMPLETED", "search", "completed",
+                   "Search rounds completed.",
+                   payload={"source_count": len(self._collected_sources)})
 
         # Phase 3: Source Tiering
         source_assessments = self._phase3_source_tiering()
 
+        self._check_cancelled()
         # Phase 4: Evidence Chain (structured, always runs)
         evidence_items = self._phase4_evidence_chain(query, source_assessments)
+        self._emit("EVIDENCE_BUILT", "evidence", "completed",
+                   "Evidence chain built.",
+                   payload={"evidence_count": len(evidence_items)})
 
         # Phase 4b: Multi-Agent Debate (Thesis→Opponent→Judge→Risk)
         debate = self._phase4b_multi_agent_debate(
@@ -65,11 +110,16 @@ class DeepResearchAgent:
             source_assessments=source_assessments,
             evidence_items=evidence_items,
         )
+        self._emit("CLAIMS_BUILT", "claims", "completed",
+                   "Claims synthesized after debate.")
 
         # Phase 4c: Counter-evidence search
         counter_evidence = self._phase4b_counter_evidence(query, evidence_items)
 
+        self._check_cancelled()
         # Phase 5: Report Assembly (with debate output)
+        self._emit("EDITOR_STARTED", "editor", "started",
+                   "Assembling final report.")
         report = self._phase5_report_assembly(
             query=query,
             understanding=understanding,
@@ -78,6 +128,8 @@ class DeepResearchAgent:
             source_assessments=source_assessments,
             debate=debate,
         )
+        self._emit("EDITOR_COMPLETED", "editor", "completed",
+                   "Report assembled.")
 
         # Local ML quality prediction (free, no API call)
         try:
@@ -118,9 +170,14 @@ class DeepResearchAgent:
         except Exception:
             pass
 
-        # Auto-persist
+        # Auto-persist business artifacts (Report). Run lifecycle is owned by the
+        # worker; the agent only creates a Run for the deprecated run_id=None path.
+        # G3：expected_generation 用于 stale artifact publish 保护。
         if persist:
-            _persist_report(query=query, report=report)
+            self._persist_report_for_run(
+                query=query, report=report, run_id=run_id,
+                expected_generation=expected_generation,
+            )
 
         return report
 
@@ -345,13 +402,13 @@ class DeepResearchAgent:
         plan: MultiRoundSearchPlan,
     ) -> None:
         """Execute multi-round search using Tavily + Crawl4AI."""
+        from packages.capability_gateway import build_gateway_aware_search_provider
         from packages.sources.search_discovery import (
             SearchDiscoveryProvider,
-            TavilySearchAdapter,
             TavilySearchRequest,
         )
 
-        search_adapter: SearchDiscoveryProvider = TavilySearchAdapter()
+        search_adapter: SearchDiscoveryProvider = build_gateway_aware_search_provider()
         seen_urls: set[str] = set()
 
         for round_plan in plan.rounds[: self.max_rounds]:
@@ -692,12 +749,12 @@ severity: 1=edge case, 3=meaningful, 5=central failure mode.
             return []
 
         # Search for counter-evidence (limited: 3 Tavily searches)
+        from packages.capability_gateway import build_gateway_aware_search_provider
         from packages.sources.search_discovery import (
             SearchDiscoveryProvider,
-            TavilySearchAdapter,
             TavilySearchRequest,
         )
-        adapter: SearchDiscoveryProvider = TavilySearchAdapter()
+        adapter: SearchDiscoveryProvider = build_gateway_aware_search_provider()
         counter_items: list[EvidenceItem] = []
         seen_urls: set[str] = set()
 
@@ -863,6 +920,128 @@ severity: 1=edge case, 3=meaningful, 5=central failure mode.
             }
         except Exception:
             return {"json_data": {}, "content_text": ""}
+
+    def _check_cancelled(self) -> None:
+        """G1.5 cooperative cancellation check (best-effort). Raises
+        ResearchRunCancelled if a cancel was requested; never fails otherwise."""
+        run_id = self._active_run_id
+        if run_id is None:
+            return
+        try:
+            from packages.db.models import Run
+            from packages.db.session import SessionLocal
+            from packages.research_gateway.errors import ResearchRunCancelled
+
+            with SessionLocal() as session:
+                run = session.get(Run, run_id)
+                if run is not None and run.cancel_requested_at is not None:
+                    raise ResearchRunCancelled()
+        except ResearchRunCancelled:
+            raise
+        except Exception:
+            pass
+
+    def _emit(
+        self,
+        event_type: str,
+        stage: str,
+        status: str,
+        message: str | None = None,
+        payload: dict[str, Any] | None = None,
+    ) -> None:
+        """G1.4 best-effort stage event. Never fails the pipeline; only emits when
+        running under a Gateway-run (run_id is present)."""
+        run_id = self._active_run_id
+        if run_id is None:
+            return
+        try:
+            from packages.research_gateway.events import RunEventRecorder
+
+            RunEventRecorder().record(
+                run_id=run_id,
+                event_type=event_type,
+                stage=stage,
+                status=status,
+                message=message,
+                payload=payload,
+            )
+        except Exception:
+            pass
+
+    def _persist_report_for_run(
+        self, *, query: str, report: DeepResearchReport, run_id: int | None = None,
+        expected_generation: int | None = None,
+    ) -> None:
+        """Persist business artifacts (ResearchReport) only.
+
+        Run lifecycle (QUEUED/RUNNING/SUCCEEDED/FAILED) is owned by the worker —
+        this method NEVER touches Run status when run_id is provided.
+
+        When `run_id` is None (deprecated legacy/standalone path) a Run is created
+        here as a compatibility fallback; the formal Gateway path always passes an
+        existing run_id. Best-effort: failures never break the pipeline.
+
+        G3 fencing：当 `expected_generation` 提供时，若 Run 当前 execution_generation
+        已变更（被另一个 Worker reclaim），则跳过落库（stale artifact 保护）。
+        """
+        try:
+            from packages.db.models import Run
+            from packages.db.models.enums import RunStatus, RunType
+            from packages.db.session import SessionLocal
+            from packages.research_reports.schemas import ResearchReportCreate
+            from packages.research_reports.service import ResearchReportService
+
+            now = datetime.now(UTC)
+            report_json = report.model_dump(mode="json")
+            with SessionLocal() as session:
+                if run_id is not None and expected_generation is not None:
+                    run_row = session.get(Run, run_id)
+                    if run_row is None or (
+                        getattr(run_row, "execution_generation", 0) != expected_generation
+                    ):
+                        LOGGER.warning(
+                            "STALE_ARTIFACT_PUBLISH_SKIPPED run_id=%s "
+                            "expected_generation=%s", run_id, expected_generation,
+                        )
+                        return
+                if run_id is None:
+                    # Deprecated legacy fallback — formal path always passes run_id.
+                    LOGGER.warning("LEGACY_AGENT_CREATED_RUN strategy=%s", self.strategy)
+                    run = Run(
+                        run_type=RunType.RESEARCH,
+                        status=RunStatus.SUCCEEDED,
+                        started_at=now,
+                        finished_at=now,
+                        input_json={
+                            "pipeline": "deep_research_graph_v2",
+                            "query": query,
+                            "strategy": self.strategy,
+                            "max_rounds": self.max_rounds,
+                            "max_sources_per_round": self.max_sources_per_round,
+                        },
+                        output_json=report_json,
+                    )
+                    session.add(run)
+                    session.flush()
+                    self._last_run_id = run.id
+                else:
+                    self._last_run_id = run_id
+
+                service = ResearchReportService(session)
+                service.save(
+                    ResearchReportCreate(
+                        query=query,
+                        report_json=report_json,
+                        source_count=len(report.source_assessments),
+                        evidence_count=len(report.evidence_chain),
+                        overall_confidence=report.overall_confidence,
+                        search_rounds=report.search_rounds_executed,
+                        tavily_credits=report.estimated_tavily_credits,
+                    )
+                )
+                session.commit()
+        except Exception:
+            pass  # Non-critical — don't break the pipeline for persistence
 
 
 def _persist_report(*, query: str, report: DeepResearchReport) -> None:

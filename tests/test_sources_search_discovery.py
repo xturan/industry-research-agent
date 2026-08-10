@@ -8,12 +8,96 @@ from packages.core.config import Settings
 from packages.sources.enums import ToolErrorCode, ToolStatus
 from packages.sources.query_decomposition import decompose_query
 from packages.sources.search_discovery import (
+    AnySearchSearchAdapter,
+    AnySearchSettings,
+    FallbackSearchDiscoveryAdapter,
     TavilySearchAdapter,
     TavilySearchRequest,
     TavilySearchSettings,
+    build_search_discovery_provider,
     tavily_settings_from_app_settings,
 )
 
+
+def _anysearch_payload(text: str) -> dict[str, Any]:
+    return {"result": {"content": [{"type": "text", "text": text}]}}
+
+
+def test_anysearch_parses_original_content_and_post_filters_domains() -> None:
+    captured: dict[str, Any] = {}
+
+    def transport(endpoint, payload, headers, timeout):
+        captured.update(payload=payload, headers=headers)
+        return _anysearch_payload(
+            "### 1. 官方公告\n- **URL**: https://www.szse.cn/a.html\n正文原文\n"
+            "### 2. 媒体转载\n- **URL**: https://example.com/b.html\n转载正文"
+        )
+
+    adapter = AnySearchSearchAdapter(
+        settings=AnySearchSettings(api_key=None),
+        transport=transport,
+    )
+    response = adapter.search(
+        TavilySearchRequest(
+            query="上市公司公告",
+            include_domains=["szse.cn"],
+            max_results=5,
+        )
+    )
+
+    assert response.status == ToolStatus.SUCCESS
+    assert len(response.results) == 1
+    assert response.results[0].raw_content == "正文原文"
+    assert response.results[0].content_origin == "search_discovery"
+    assert response.results[0].route == "general"
+    assert response.raw_response_metadata["provider_used"] == "anysearch"
+    assert response.raw_response_metadata["filtered_result_count"] == 1
+    assert "site:szse.cn" in captured["payload"]["params"]["arguments"]["query"]
+    assert "Authorization" not in captured["headers"]
+
+
+def test_fallback_uses_tavily_on_anysearch_parser_error_but_not_empty_result() -> None:
+    fallback_calls = 0
+
+    def fallback_transport(endpoint, payload, headers, timeout):
+        nonlocal fallback_calls
+        fallback_calls += 1
+        return {"query": payload["query"], "results": []}
+
+    fallback = TavilySearchAdapter(
+        settings=TavilySearchSettings(api_key="test-secret"),
+        transport=fallback_transport,
+    )
+    broken = AnySearchSearchAdapter(
+        settings=AnySearchSettings(),
+        transport=lambda *args: _anysearch_payload("unexpected response"),
+    )
+    adapter = FallbackSearchDiscoveryAdapter(broken, fallback)
+    response = adapter.search(TavilySearchRequest(query="test"))
+    assert response.raw_response_metadata["fallback_used"] is True
+    assert fallback_calls == 1
+
+    empty = AnySearchSearchAdapter(
+        settings=AnySearchSettings(),
+        transport=lambda *args: _anysearch_payload("No results found"),
+    )
+    response = FallbackSearchDiscoveryAdapter(empty, fallback).search(
+        TavilySearchRequest(query="empty")
+    )
+    assert response.status == ToolStatus.SUCCESS
+    assert response.results == []
+    assert fallback_calls == 1
+
+
+def test_provider_factory_defaults_to_anysearch_with_explicit_tavily_fallback() -> None:
+    provider = build_search_discovery_provider(
+        Settings(TAVILY_API_KEY="test-secret"),
+        anysearch_transport=lambda *args: _anysearch_payload("No results found"),
+    )
+
+    assert isinstance(provider, FallbackSearchDiscoveryAdapter)
+    assert isinstance(provider.primary, AnySearchSearchAdapter)
+    assert isinstance(provider.fallback, TavilySearchAdapter)
 
 def test_tavily_missing_api_key_returns_structured_failure() -> None:
     adapter = TavilySearchAdapter(settings=TavilySearchSettings(api_key=None))
