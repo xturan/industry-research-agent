@@ -41,6 +41,25 @@
 - **分章节并行生成**：每维度独立 LLM 调用（ThreadPool 并行），3 万字深度研报
 - **本地可部署**：Ollama 本地 reranker + DeepSeek/任意 OpenAI 兼容 LLM，无需远程 GPU
 - **维度覆盖 gate**：按维度 evidence 覆盖度判定 PASS/HUMAN_REVIEW，允许空缺并标注
+- **智能网关**：LLM/Search Provider 路由 + 电路熔断 + 并发预算 + 健康观测 API
+
+## 🛡 智能网关（Capability Gateway）
+
+搜索与 LLM 请求经智能网关路由，提供生产级可靠性：
+
+- **Provider 路由**：AnySearch/Tavily 搜索、DeepSeek LLM 的路由与 fallback 链
+- **电路熔断**（G2.4）：连续失败自动 OPEN，避免雪崩；恢复探测
+- **并发预算**（G2.3）：按 provider 配额并发，防止过载
+- **健康观测 API**：
+  - `GET /api/gateway/health` — 网关综合健康（各 provider 快照 + circuit 状态）
+  - `GET /api/gateway/providers` — 各 provider 详细快照（成功率/超时/限流/5xx/延迟 p50/p95/fallback）
+
+```
+GET /api/gateway/providers
+→ {"anysearch.primary": {"attempt_count": 120, "success_count": 118,
+    "transport_success_rate": 0.98, "latency_p95_ms": 420,
+    "dimensions": {"availability": "healthy", "latency": "normal", ...}}}
+```
 
 ## 🏗 架构
 

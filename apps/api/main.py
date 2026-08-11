@@ -12,6 +12,7 @@ from apps.api.routes.deep_research import router as deep_research_router
 from apps.api.routes.delivery import router as delivery_router
 from apps.api.routes.documents import router as documents_router
 from apps.api.routes.evals import router as evals_router
+from apps.api.routes.gateway import router as gateway_router
 from apps.api.routes.ingestion import router as ingestion_router
 from apps.api.routes.memory import router as memory_router
 from apps.api.routes.ops import router as ops_router
@@ -51,6 +52,7 @@ app.include_router(memory_router)
 app.include_router(delivery_router)
 app.include_router(tasks_router)
 app.include_router(evals_router)
+app.include_router(gateway_router)
 app.include_router(ops_router)
 app.include_router(registry_router)
 app.include_router(themes_router)
