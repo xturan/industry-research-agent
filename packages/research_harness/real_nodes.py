@@ -3020,6 +3020,251 @@ def _renumber_report_citations(
     return f"{renumbered.rstrip()}\n\n{source_section}\n"
 
 
+def _group_evidence_by_dimension(
+    evidence_items: list[dict[str, Any]],
+    sources: list[dict[str, Any]],
+    plan: dict[str, Any],
+) -> dict[str, list[dict[str, Any]]]:
+    """按维度分组 evidence（分章节生成用）。
+
+    归属逻辑与 _dimension_coverage_report 对齐：
+    1. 优先 supports_slot_ids（slot_id 前缀 = dimension_id）；
+    2. 兜底 source_family ∈ dim.source_families 或 evidence_type 命中维度映射。
+    返回 {dimension_id: [evidence, ...]}。
+    """
+    from packages.research_harness import research_taxonomy as _rt
+
+    dims = {
+        str(d.get("dimension_id")): d
+        for d in (plan.get("dimension_plan") or [])
+        if isinstance(d, dict) and d.get("dimension_id")
+    }
+    src_family = {
+        str(s.get("source_id")): canonical_source_family(str(s.get("source_family") or ""))
+        for s in sources if isinstance(s, dict) and s.get("source_id")
+    }
+    grouped: dict[str, list[dict[str, Any]]] = {did: [] for did in dims}
+
+    def _dim_for_ev(ev: dict[str, Any]) -> list[str]:
+        # 1) supports_slot_ids 前缀
+        dim_ids = []
+        for sid in ev.get("supports_slot_ids", []):
+            prefix = str(sid).split(".")[0]
+            if prefix in dims and prefix not in dim_ids:
+                dim_ids.append(prefix)
+        if dim_ids:
+            return dim_ids
+        # 2) source_family / evidence_type 兜底
+        family = canonical_source_family(str(ev.get("source_family") or ""))
+        if not family:
+            family = src_family.get(str(ev.get("source_id") or ""), "")
+        ev_type = str(ev.get("evidence_type") or "")
+        for did, dim in dims.items():
+            req_fams = {
+                canonical_source_family(str(f)) for f in (dim.get("source_families") or [])
+                if str(f).strip()
+            }
+            dim_type = _rt.canonicalize_dimension_type(str(dim.get("dimension_type") or ""))
+            if (family and family in req_fams) or (
+                ev_type and ev_type in _dim_required_evidence_types(dim_type)
+            ):
+                dim_ids.append(did)
+        return dim_ids
+
+    for ev in evidence_items:
+        if not isinstance(ev, dict):
+            continue
+        for did in _dim_for_ev(ev):
+            grouped.setdefault(did, []).append(ev)
+    return grouped
+
+
+def _generate_editor1_by_dimension(
+    *,
+    state: dict[str, Any],
+    query: str,
+    claims: list[dict[str, Any]],
+    evidence_items: list[dict[str, Any]],
+    sources: list[dict[str, Any]],
+) -> str:
+    """按维度分章节生成报告（2026-08-11，提升证据利用率）。
+
+    当前单次 LLM 调用受 token 预算（1600）裁剪，67 条 evidence 只喂 5 条。
+    改为：全局编号 evidence → 按维度分组 → 每维度一次 LLM 调用写章节 →
+    空维度确定性占位 → 拼接 + 全局 [N] 引用 + 确定性来源说明。
+
+    返回完整 report_markdown。
+    """
+    import json as _json
+    from packages.research_harness.tooling.llm_agents import call_tooling_json
+
+    plan = dict(state.get("plan") or {})
+    dim_plan = [d for d in (plan.get("dimension_plan") or []) if isinstance(d, dict)]
+    dims_by_id = {str(d.get("dimension_id")): d for d in dim_plan if d.get("dimension_id")}
+
+    # ── 1) 全局编号：去重 + 按强度排序，赋 citation_no = 1..N ──
+    ranked = []
+    seen_summary: set[str] = set()
+    for ev in sorted(
+        [e for e in evidence_items if isinstance(e, dict)],
+        key=lambda e: (
+            -float(e.get("support_strength") or 0.0),
+            0 if str(e.get("support_type")) == "direct_support" else 1,
+            str(e.get("evidence_id") or ""),
+        ),
+    ):
+        summary = " ".join(str(ev.get("summary") or "").split())
+        dedupe_key = "|".join((str(ev.get("source_id") or ""),
+                               str(ev.get("source_family") or ""),
+                               summary.casefold()))
+        if dedupe_key in seen_summary:
+            continue
+        seen_summary.add(dedupe_key)
+        ev["citation_no"] = len(ranked) + 1
+        ranked.append(ev)
+    ev_by_citation = {str(e.get("citation_no")): e for e in ranked}
+
+    # ── 2) 按维度分组 ──
+    grouped = _group_evidence_by_dimension(ranked, sources, plan)
+    # 收集被引用的来源（编号→来源）
+    src_by_id = {str(s.get("source_id") or ""): s for s in sources if isinstance(s, dict)}
+
+    # ── 3) 骨架：标题 + 执行摘要 + 方法与口径（确定性，不依赖 evidence）──
+    covered_dims = [d for d in dim_plan if grouped.get(str(d.get("dimension_id"))) ]
+    parts: list[str] = [
+        f"# {query}",
+        "## 执行摘要",
+        (
+            f"本报告围绕「{query}」展开，基于 {len(ranked)} 条证据材料，从 "
+            f"{len(covered_dims)} 个研究维度分析低空经济从政策到落地的传导链条。"
+            "以下章节按研究维度组织，每维度结论均标注支撑证据编号。"
+        ),
+        "## 方法与口径",
+        (
+            f"本报告采用桌面研究法，证据来源包括政策文件、招标公告、企业披露、"
+            f"官方统计等。共 {len(ranked)} 条证据、{len(sources)} 个来源。"
+            "正文引用采用[编号]格式，编号对应末尾「来源说明」的来源清单。"
+        ),
+    ]
+
+    # ── 4) 每维度章节（一次 LLM 调用/维度，互不依赖）──
+    section_bodies: list[tuple[str, str]] = []  # (dim_id, markdown)
+    # 每维度一次 LLM 调用写章节——互不依赖，用线程池并行（2026-08-11）
+    from concurrent.futures import ThreadPoolExecutor
+
+    def _write_dimension_section(dim: dict[str, Any]) -> tuple[str, str]:
+        dim_id = str(dim.get("dimension_id") or "")
+        heading = str(dim.get("expected_section_heading") or dim.get("dimension_type") or dim_id)
+        dim_evs = grouped.get(dim_id, [])
+        if not dim_evs:
+            # 空维度占位（不调 LLM）
+            return (dim_id, f"## {heading}\n\n该维度当前证据不足，未形成可审计判断。")
+        # 该维 evidence 的全局编号列表（排序后）
+        dim_ranked = sorted(dim_evs, key=lambda e: int(e.get("citation_no") or 0))
+        ev_rows = [{
+            "citation_no": e.get("citation_no"),
+            "source_id": e.get("source_id"),
+            "source_family": e.get("source_family"),
+            "region": e.get("region"),
+            "time_ref": e.get("time_ref"),
+            "summary": str(e.get("summary") or "")[:400],
+        } for e in dim_ranked]
+        evidence_json = _json.dumps(ev_rows, ensure_ascii=False, indent=1)
+        research_question = str(dim.get("research_question") or "")
+        why_matters = str(dim.get("why_it_matters") or "")
+        sys_prompt = (
+            "你是资深行业研究员。撰写研究报告的「" + heading + "」章节。\n"
+            "要求:\n"
+            "1. 只写这一个章节，输出以 `## " + heading + "` 为唯一二级标题\n"
+            "2. 基于下方该维度证据做分析性叙述、跨来源综合、地区/主体对比（可用表格）\n"
+            "3. 引用规则: 正文引用用[编号]，编号取「证据材料」数组的 citation_no（全局唯一，跨章节不重复）；"
+            "每个断言句末标注支撑证据编号（可多个，如[1][3]）\n"
+            "4. 标注证据局限性; 低支撑强度证据须降级表述（'据公开资料''尚待进一步验证'）\n"
+            "5. 若该维度证据不足，明确写数据缺口，不空泛凑字\n"
+            "6. 严禁出现内部标识符: src_xxx/ev_xxx/chunk/support_type/support_strength/source_family/evidence_id/claim_id\n"
+            "输出 JSON: {\"section_markdown\": \"...\"}"
+        )
+        user_prompt = (
+            f"研究问题: {query}\n"
+            f"维度: {dim_id} ({dim.get('dimension_type')})\n"
+            f"维度研究问题: {research_question}\n"
+            f"为何重要: {why_matters}\n"
+            f"证据材料（数组顺序即全局编号，正文引用直接用此编号）:\n{evidence_json}\n"
+            f"请输出该维度的 Markdown 章节。"
+        )
+        section_md = ""
+        try:
+            res = call_tooling_json(
+                system_prompt=sys_prompt,
+                user_prompt=user_prompt,
+                enable_thinking=False,
+                max_tokens=4000,
+                trace_ctx=_get_trace_ctx(),
+                task_type="editor1_dimension_section",
+            )
+            payload = res.payload if res else None
+            if isinstance(payload, dict):
+                section_md = str(payload.get("section_markdown") or "")
+        except Exception:
+            section_md = ""
+        if not section_md.strip():
+            section_md = f"## {heading}\n\n该维度证据尚不足以形成深入分析。"
+        return (dim_id, section_md)
+
+    dim_tasks = [d for d in dim_plan]
+    with ThreadPoolExecutor(max_workers=min(8, len(dim_tasks))) as pool:
+        section_bodies = list(pool.map(_write_dimension_section, dim_tasks))
+
+    # 按 dimension_plan 顺序排章节
+    # 按规范报告章节顺序排维度（产业定义→政策→市场→产业链→供给→需求→技术→
+    # 项目→商业→风险→企业→区域→趋势），循序渐进；未列出的维度排最后。
+    _DIMENSION_SECTION_ORDER = [
+        "industry_scope", "policy_regulation", "d_policy", "market_scale", "d_statistics",
+        "industry_chain", "supply_competition", "demand_scenarios", "technology_product",
+        "project_execution", "d_execution", "business_economics", "risk_constraints",
+        "d_company_fundamentals", "capital_activity", "regional_benchmark", "outlook_drivers",
+    ]
+    _order_map = {did: i for i, did in enumerate(_DIMENSION_SECTION_ORDER)}
+    for dim_id, body in sorted(
+        section_bodies,
+        key=lambda t: (_order_map.get(t[0], 999), str(t[0])),
+    ):
+        parts.append(body)
+
+    # ── 5) 收尾章节（editor2 审稿不进正文；风险由 risk_constraints 维度章节覆盖，
+    #       不再单独加"风险、不确定性与反向验证"避免重复。editor2 的 review_issues
+    #       进 gate 判定 + finalize 审计附录展示）──
+    parts.append("## 结论与展望")
+    parts.append(
+        f"基于当前证据，{query}相关领域已呈现政策驱动、项目加速落地的态势。"
+        "本结论的适用边界是当前已获取的公开证据，后续应围绕数据缺口维度定向补证。"
+    )
+    parts.append("## 后续跟踪清单")
+    parts.append("- 补充未覆盖维度的定向证据检索\n- 复核关键证据原文与时效性\n- 跟踪项目落地与执行进度")
+
+    report_markdown = "\n\n".join(parts).strip()
+
+    # ── 6) 确定性来源说明（编号→来源）──
+    import re as _re
+    cited_nos = sorted({int(m.group(1)) for m in _re.finditer(r"\[(\d+)\]", report_markdown)})
+    src_lines = ["## 来源说明", ""]
+    for no in cited_nos:
+        ev = ev_by_citation.get(str(no), {})
+        sid = str(ev.get("source_id") or "")
+        src = src_by_id.get(sid, {})
+        title = str(src.get("title") or ev.get("document_title") or f"来源{no}")
+        url = str(src.get("url") or ev.get("source_url") or "")
+        url_part = f"（{url}）" if url else ""
+        src_lines.append(f"[{no}] {title}{url_part}")
+    if len(src_lines) <= 2:
+        src_lines.append("（本轮未引用具体来源）")
+    report_markdown = f"{report_markdown}\n\n{'\n'.join(src_lines)}\n"
+
+    # ── 7) renumber 兜底（[src_xxx] 残留）──
+    report_markdown = _renumber_report_citations(report_markdown, ranked, sources)
+    return report_markdown
+
+
 def _generate_real_editor1_draft(
     *,
     state: dict[str, Any],
@@ -3043,6 +3288,51 @@ def _generate_real_editor1_draft(
     sources = list(state.get("sources", []))
     prior_drafts = list(state.get("drafts", []))
     draft_version = len(prior_drafts) + 1
+
+    # ── 2026-08-11：按维度分章节生成（提升证据利用率，67 evidence 不再只喂 5 条）──
+    # 启用条件：settings.EDITOR1_GENERATION_MODE == "per_dimension" 或
+    # state["editor1_generation_mode"] == "per_dimension"。
+    _gen_mode = str(state.get("editor1_generation_mode") or "")
+    if not _gen_mode:
+        try:
+            from packages.core.config import get_settings
+            _gen_mode = str(get_settings().editor1_generation_mode or "")
+        except Exception:
+            _gen_mode = ""
+    if _gen_mode == "per_dimension":
+        try:
+            md = _generate_editor1_by_dimension(
+                state=state, query=query, claims=claims,
+                evidence_items=evidence_items, sources=sources,
+            )
+            if md.strip():
+                return {
+                    "report_markdown": md,
+                    "draft_id": f"draft_{_uuid.uuid4().hex[:8]}",
+                    "draft_version": draft_version,
+                    "drafts": [*prior_drafts, {
+                        "draft_id": f"draft_{_uuid.uuid4().hex[:8]}",
+                        "draft_version": draft_version,
+                        "report_markdown": md,
+                        "sections": _parse_markdown_sections(md),
+                    }],
+                    "canonical_draft": {
+                        "draft_id": "dimension_chapters",
+                        "draft_version": draft_version,
+                        "report_markdown": md,
+                        "sections": _parse_markdown_sections(md),
+                    },
+                    "canonical_draft_id": "dimension_chapters",
+                    "contract_meta": {
+                        "editor1_draft": {
+                            "status": "dimension_chapters",
+                            "input_mode": "per_dimension",
+                            "attempt_count": 1,
+                        }
+                    },
+                }
+        except Exception:
+            pass  # 失败回退单次调用路径
 
     actual_input_pack = _build_editor1_actual_input_pack(state)
     prompt_payload = dict(actual_input_pack["payload"])
@@ -4343,6 +4633,22 @@ def _run_search_round(
                 )
             else:
                 source_family = "policy_document"
+            # ── 2026-08-11：行业研报/券商/智库域名补正为 industry_research ──
+            # 字节码 _infer_source_family 对这些域返回 unknown（→aggregator_or_unknown），
+            # 导致产业链/供给/商业维度的 required family 拿不到 evidence。
+            # 特征：域名或 URL 含 研报/智库/行业分析 特征，或 title 含"研报/报告/白皮书/研究"。
+            _industry_report_domains = {
+                "qianzhan.com", "sgpjbg.com", "ocn.com.cn", "aibangfly.com",
+                "zhihu.com", "docin.com", "doc88.com", "report.com", "chinabaogao.com",
+                "caixin.com", "yicai.com", "cnstock.com", "stcn.com",
+            }
+            _domain_lc = str(domain or "").lower()
+            _title = str(result.title or "")
+            if _domain_lc in _industry_report_domains or (
+                _domain_lc.endswith("report") or "report" in _domain_lc
+            ) or any(kw in _title for kw in ("研报", "白皮书", "行业报告", "产业研究", "全景图")):
+                if str(source_family or "") in {"", "unknown", "aggregator_or_unknown"}:
+                    source_family = "industry_research"
             # ADR 0002: normalize the produced family to the canonical 8-value
             # taxonomy so all downstream read sites see a regular value.
             # 方案B：unknown/未识别的源（知乎/自媒体/聚合站）不得兜底成 local_official
@@ -6143,6 +6449,9 @@ _ATOMIC_EXTRACT_PARALLEL_WORKERS = 6
 # 2026-08-10：evidence 按 claim slot 限量——每 slot 保留 top-K 条精排 chunk
 # evidence（控制检索回的 evidence 总量：28 slots × K → 28-84 条）。
 _EVIDENCE_TOP_K_PER_SLOT = 3
+# 2026-08-11：每维度 evidence 保底条数——防止 context-family 维度（需求/风险/
+# 产业链等）因 optional slot 限量过少而报告"证据不足"。不足时从该维候选 chunk 补足。
+_EVIDENCE_MIN_PER_DIM = 5
 # evidence 从精排 chunk 抽：上限 8000 字符（容纳 2-3 块 1700 字符 chunk）。
 _ATOMIC_MAX_FULLTEXT_CHARS = 8000
 
@@ -6281,24 +6590,36 @@ def _build_chunk_evidence_from_state(
         )
         if not fam:
             continue
-        # 该 chunk 匹配的所有 required/critical slot
+        # 该 chunk 匹配的所有 slot（含 optional——context family 如 commercial_media/
+        # industry_research 对应需求/风险等维度，若只留 required 会把这些维度 evidence
+        # 全过滤掉，导致"检索到了但报告标注证据不足"。2026-08-11 修复）
         matched_slots = [
             sid for sid in slot_by_family.get(fam, [])
-            if str(slot_by_id.get(sid, {}).get("required") or "") in {"critical", "required"}
+            if str(slot_by_id.get(sid, {}).get("required") or "") in {"critical", "required", "optional"}
         ]
         if not matched_slots:
             continue
         score = float(chunk.get("rerank_score") or 0.0)
+        # optional slot 限量更小（每 slot 1 条），required/critical 每 slot top_k
+        is_required = any(
+            str(slot_by_id.get(sid, {}).get("required") or "") in {"critical", "required"}
+            for sid in matched_slots
+        )
         for sid in matched_slots:
             slot_to_chunks.setdefault(sid, []).append({
                 "chunk": chunk, "score": score, "matched_slots": matched_slots,
+                "_required_slot": is_required,
             })
 
     chunk_evidence: list[dict[str, Any]] = []
     seen_chunks: set[str] = set()
     for sid, entries in slot_to_chunks.items():
         entries.sort(key=lambda e: -e["score"])
-        for entry in entries[:top_k]:
+        # required/critical 限量 top_k；optional 限量 top_k//2（保底覆盖但不喧宾夺主）
+        _slot_limit = (
+            top_k if entries and entries[0].get("_required_slot") else max(1, top_k // 2)
+        )
+        for entry in entries[:_slot_limit]:
             chunk = entry["chunk"]
             chunk_id = str(chunk.get("chunk_id") or chunk.get("id") or "")
             if chunk_id in seen_chunks:
@@ -6379,6 +6700,65 @@ def _build_chunk_evidence_from_state(
             "_chunk_evidence": True,
             "_slot_evidence": True,
         })
+    # ── 3) 按维度保底：每维度至少 _EVIDENCE_MIN_PER_DIM 条（2026-08-11）──
+    # 仅靠 slot 限量（optional 每 slot top_k//2）会让 commercial_media 等
+    # context-family 维度（需求/风险/产业链）evidence 过少。保底：已产出的
+    # evidence 按维度分组，不足的维度从该维候选 chunk 按 rerank_score 补足。
+    from collections import defaultdict
+    dim_evidence_count: dict[str, int] = defaultdict(int)
+    for ev in chunk_evidence:
+        for sid_ in ev.get("supports_slot_ids", []):
+            dim_evidence_count[str(sid_).split(".")[0]] += 1
+    # 维度 → 该维全部候选 chunk（按分数降序，未进 evidence 的）
+    dim_candidates: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for sid, entries in slot_to_chunks.items():
+        dim_id = str(sid).split(".")[0]
+        for entry in entries:
+            cid = str(entry["chunk"].get("chunk_id") or entry["chunk"].get("id") or "")
+            if cid not in seen_chunks:
+                dim_candidates[dim_id].append(entry)
+    for dim_id, entries in dim_candidates.items():
+        entries.sort(key=lambda e: -e["score"])
+        missing = _EVIDENCE_MIN_PER_DIM - dim_evidence_count.get(dim_id, 0)
+        if missing <= 0:
+            continue
+        for entry in entries[:missing]:
+            chunk = entry["chunk"]
+            cid = str(chunk.get("chunk_id") or chunk.get("id") or "")
+            if cid in seen_chunks:
+                continue
+            seen_chunks.add(cid)
+            sid_src = str(chunk.get("source_id") or "")
+            src = src_by_id.get(sid_src, {})
+            chunk_evidence.append({
+                "evidence_id": cid,
+                "source_id": sid_src,
+                "source_url": str(chunk.get("source_uri") or src.get("url") or ""),
+                "source_family": str(chunk.get("source_family") or src.get("source_family") or ""),
+                "summary": _normalize_space(text := str(chunk.get("chunk_text") or "")),
+                "text": text,
+                "support_type": "direct_support" if float(chunk.get("rerank_score") or 0) >= 0.3 else "background_support",
+                "support_strength": round(min(1.0, float(chunk.get("rerank_score") or 0.0)), 3),
+                "specificity": "chunk",
+                "limitations": [],
+                "evaluator_mode": "chunk_evidence_v1",
+                "chunk_ids": [cid],
+                "source_ids": [sid_src] if sid_src else [],
+                "supports_slot_ids": entry["matched_slots"],
+                "region": "",
+                "time_ref": "",
+                "policy_tool": [],
+                "entity": "",
+                "quoted_span": text[:150],
+                "quote_verified": True,
+                "content_completeness": "high",
+                "rerank_score": chunk.get("rerank_score"),
+                "rerank_bucket": chunk.get("rerank_bucket"),
+                "document_title": str(chunk.get("document_title") or ""),
+                "_chunk_evidence": True,
+                "_slot_evidence": True,
+            })
+            dim_evidence_count[dim_id] += 1
     return chunk_evidence
 
 

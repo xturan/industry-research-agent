@@ -136,6 +136,8 @@ class Settings(BaseSettings):
         default="http://localhost:8000/v1/chat/completions", alias="RERANK_ENDPOINT"
     )
     rerank_model: str = Field(default="rerank-lora", alias="RERANK_MODEL")
+    # ── 2026-08-11：editor1 报告生成模式（空=单次调用；per_dimension=按维度分章节）──
+    editor1_generation_mode: str = Field(default="", alias="EDITOR1_GENERATION_MODE")
     # ── G1.3.1 Research Gateway admission (global QUEUED-run capacity) ──
     admission_max_queued_runs: int = Field(
         default=200, ge=1, alias="ADMISSION_MAX_QUEUED_RUNS"
