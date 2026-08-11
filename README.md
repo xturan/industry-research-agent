@@ -1,9 +1,92 @@
-﻿# Invest Agent Monorepo
+﻿# Industry Research Agent（产业调研 Agent）
 
-Production-oriented engineering scaffold for an AI application focused on industry-report mining,
-evidence-based research workflows, multi-agent orchestration, and multi-channel content generation.
+**生产级中文产业调研 Agent**——基于固定研究维度框架，自动完成「检索 → 证据构建 → 多章节研报生成」的端到端产业调研，输出带编号引用、可审计的中文深度研报。
 
-This repository is positioned for industry intelligence and content production, not direct securities investment advice.
+专为**产业调研**设计：给定一个产业主题（如"低空经济""动力电池"），Agent 按 14 个研究维度（产业定义/政策/市场/产业链/供给/需求/技术/项目/商业/风险/企业/资本/区域/趋势）自动检索、构建证据、分章节撰写报告。
+
+> 定位为行业情报与研究辅助，不构成证券投资建议。
+
+## ✨ 核心能力
+
+- **固定研究维度框架**：14 维（10 基础 + 4 条件）覆盖产业调研全链路，跨产业可复用
+- **证据驱动**：每条结论标注证据编号 `[N]`，末尾来源说明列编号→来源，可审计
+- **两阶段检索**：固定维度基本搜索 → 未覆盖维度深度补搜，少而精
+- **LLM 生成维度搜索词**：一次调用生成 14 维定向检索词，贴合 query 语义
+- **精排 chunk 构建 evidence**：本地 LLM reranker（Ollama + LoRA）精排，evidence 按 slot 限量 + 维度保底
+- **分章节并行生成**：每维度独立 LLM 调用（ThreadPool 并行），3 万字深度研报
+- **本地可部署**：Ollama 本地 reranker + DeepSeek/任意 OpenAI 兼容 LLM，无需远程 GPU
+- **维度覆盖 gate**：按维度 evidence 覆盖度判定 PASS/HUMAN_REVIEW，允许空缺并标注
+
+## 🏗 架构
+
+```
+plan_task ──► collect_sources ──► parse_sources ──► score_sources
+    │              │                    │
+    │       LLM 生成 14 维       粗排→chunk→Ollama精排
+    │       搜索词                 (662 chunks)
+    ▼              ▼                    ▼
+build_evidence ──► editor1_draft ──► editor2_review ──► chief_gate ──► finalize_report
+    │              │                    │                  │
+ 精排chunk按    分章节并行生成      审稿(review_issues)   维度覆盖判定   3万字研报+审计
+ slot限量+保底    每维度LLM章节        进gate+审计
+```
+
+**关键组件**：
+- `research_taxonomy.py` — 14 维产业研究框架（单一事实源）
+- `plan_semantic.py` — LLM 维度搜索词生成 + 搜索轮规划
+- `retrieval_rank.py` — 粗排 BM25+向量 RRF → chunk → LLM 精排
+- `real_nodes.py` — evidence 构建（slot 限量 + 维度保底）+ 分章节报告生成
+- `rag/rerankers.py` — Ollama/vLLM 精排（0-4 分档 + logprobs）
+
+## 🚀 快速开始
+
+1. 创建环境并安装依赖：
+   ```bash
+   make install
+   ```
+2. 配置环境变量：
+   ```bash
+   cp .env.example .env
+   # 填入 DEEPSEEK_API_KEY（报告 LLM）、ANYSEARCH_API_KEY（搜索）
+   # RERANK_ENDPOINT=http://localhost:11434/v1/chat/completions（Ollama 本地精排）
+   # RERANK_MODEL=invest-rerank-v6（Qwen2.5-3B + v6 LoRA）
+   # EDITOR1_GENERATION_MODE=per_dimension（分章节报告）
+   ```
+3. 本地 Ollama 精排模型（可选，无则回退确定性精排）：
+   ```bash
+   ollama pull qwen2.5:3b-instruct
+   cd data/rerank_cloud_train/output/ollama_rerank_v6_qwen25_3b
+   ollama create invest-rerank-v6 -f Modelfile
+   ```
+4. 运行产业调研：
+   ```bash
+   python -c "from packages.research_harness.runner import ResearchGraphRunner; ..."
+   ```
+   或通过 API：`POST /api/deep_research`
+
+## 📊 验证效果
+
+| 产业主题 | 结果 | 报告 | evidence |
+|---|---|---|---|
+| 低空经济 中标公告 | PASS（13/14 维）| 30,338 字符 | 142 |
+| 动力电池 产业链 | PASS（18/20 维）| 28,067 字符 | 65 |
+
+## ⚙ 主要配置
+
+| 配置 | 说明 | 默认 |
+|---|---|---|
+| `SEARCH_DISCOVERY_PROVIDER` | 搜索 provider | anysearch |
+| `RERANK_ENDPOINT` | 本地精排端点 | Ollama :11434 |
+| `RERANK_MODEL` | 精排模型 | invest-rerank-v6 |
+| `EDITOR1_GENERATION_MODE` | 报告生成模式 | per_dimension |
+| `MAX_ROUNDS` | 搜索轮数上限 | 12 |
+
+## 🗺 技术栈
+
+- **语言**：Python 3.11+
+- **框架**：LangGraph（研究图编排）、FastAPI（API）
+- **存储**：PostgreSQL / SQLite、pgvector
+- **LLM**：DeepSeek（报告撰写）、Ollama + LoRA（本地精排）、AnySearch（搜索）
 
 ## Monorepo Layout
 
