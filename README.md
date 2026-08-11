@@ -20,7 +20,7 @@
 | 产业 | 报告 | 指标 |
 |---|---|---|
 | **低空经济** | [低空经济中标公告深度研究报告](examples/reports/低空经济中标公告深度研究报告.html) | 30,338 字 · 142 条证据 · evidence_coverage 0.93 |
-| **动力电池** | [动力电池产业链调研](examples/reports/动力电池产业链调研.html) | 32,964 字 · evidence_coverage 0.90 |
+| **动力电池** | [动力电池产业链调研](examples/reports/动力电池产业链调研.html) | 32,964 字 · 69 条证据 · evidence_coverage 0.90 |
 | **智能网联汽车** | [智能网联汽车产业链调研](examples/reports/智能网联汽车产业链调研.html) | 19,055 字 · 44 条证据 · evidence_coverage 0.67 |
 
 ### 不同地域
