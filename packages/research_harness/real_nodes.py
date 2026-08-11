@@ -3152,9 +3152,21 @@ def _generate_editor1_by_dimension(
     # 每维度一次 LLM 调用写章节——互不依赖，用线程池并行（2026-08-11）
     from concurrent.futures import ThreadPoolExecutor
 
+    # ── 标题去重（2026-08-11）：dimension_plan 可能出现标题相同的变体维度
+    #    （如 supply_competition 和 d_supply_competition 都是"供给与竞争格局"），
+    #    生成章节时给重复标题加序号后缀，避免报告出现同名章节。──
+    heading_count: dict[str, int] = {}
+    unique_heading: dict[str, str] = {}
+    for dim in dim_plan:
+        dim_id = str(dim.get("dimension_id") or "")
+        h = str(dim.get("expected_section_heading") or dim.get("dimension_type") or dim_id)
+        n = heading_count.get(h, 0)
+        heading_count[h] = n + 1
+        unique_heading[dim_id] = h if n == 0 else f"{h}（{n + 1}）"
+
     def _write_dimension_section(dim: dict[str, Any]) -> tuple[str, str]:
         dim_id = str(dim.get("dimension_id") or "")
-        heading = str(dim.get("expected_section_heading") or dim.get("dimension_type") or dim_id)
+        heading = unique_heading.get(dim_id) or str(dim.get("expected_section_heading") or dim.get("dimension_type") or dim_id)
         dim_evs = grouped.get(dim_id, [])
         if not dim_evs:
             # 空维度占位（不调 LLM）
