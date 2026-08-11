@@ -15,10 +15,19 @@
 
 ## 📄 示例报告
 
+### 不同产业
+
 | 产业 | 报告 | 指标 |
 |---|---|---|
 | **低空经济** | [低空经济中标公告深度研究报告](examples/reports/低空经济中标公告深度研究报告.html) | 30,338 字 · 142 条证据 · evidence_coverage 0.93 |
 | **动力电池** | [动力电池产业链调研](examples/reports/动力电池产业链调研.html) | 28,067 字 · 65 条证据 · evidence_coverage 0.90 |
+| **智能网联汽车** | [智能网联汽车产业链调研](examples/reports/智能网联汽车产业链调研.html) | 19,055 字 · evidence_coverage 0.67 |
+
+### 不同地域
+
+| 地域 | 报告 | 指标 |
+|---|---|---|
+| **合肥（市级）** | [合肥低空经济产业调研](examples/reports/合肥低空经济产业调研.html) | 25,057 字 · evidence_coverage 0.93 |
 
 > 报告由 Agent 自动生成：检索 → 精排 chunk → 分章节撰写 → 编号引用，可直接打开浏览。
 
@@ -35,16 +44,43 @@
 
 ## 🏗 架构
 
-```
-plan_task ──► collect_sources ──► parse_sources ──► score_sources
-    │              │                    │
-    │       LLM 生成 14 维       粗排→chunk→Ollama精排
-    │       搜索词                 (662 chunks)
-    ▼              ▼                    ▼
-build_evidence ──► editor1_draft ──► editor2_review ──► chief_gate ──► finalize_report
-    │              │                    │                  │
- 精排chunk按    分章节并行生成      审稿(review_issues)   维度覆盖判定   3万字研报+审计
- slot限量+保底    每维度LLM章节        进gate+审计
+```mermaid
+flowchart TD
+    A[plan_task] --> B[collect_sources]
+    B --> C[parse_sources]
+    C --> D[score_sources]
+    D --> E[build_evidence]
+    E --> F[advisory_gap_backfill]
+    F --> G[editor1_draft]
+    G --> H[editor2_review]
+    H --> I{chief_gate}
+    I -->|PASS| J[finalize_report]
+    I -->|ADD_EVIDENCE| A
+    I -->|REVISE_TEXT| G
+    I -->|HUMAN_REVIEW| K[human_review]
+    I -->|REVIEW_RISK| H
+    J --> L[3万字研报 + 审计附录]
+
+    subgraph 检索
+        B
+        C
+    end
+    subgraph 证据
+        E
+    end
+    subgraph 报告
+        G
+        H
+        I
+        J
+    end
+
+    classDef search fill:#e3f2fd,stroke:#1565c0;
+    classDef evidence fill:#e8f5e9,stroke:#2e7d32;
+    classDef report fill:#fff3e0,stroke:#ef6c00;
+    class B,C search;
+    class E evidence;
+    class G,H,I,J report;
 ```
 
 **关键组件**：
@@ -53,6 +89,15 @@ build_evidence ──► editor1_draft ──► editor2_review ──► chief_
 - `retrieval_rank.py` — 粗排 BM25+向量 RRF → chunk → LLM 精排
 - `real_nodes.py` — evidence 构建（slot 限量 + 维度保底）+ 分章节报告生成
 - `rag/rerankers.py` — Ollama/vLLM 精排（0-4 分档 + logprobs）
+
+**生成流程**：
+```
+LLM 生成 14 维搜索词 → 两阶段检索（基本搜索 + 未覆盖补搜）
+→ 粗排 → chunk → Ollama 精排（662 chunks，0-4 分档）
+→ evidence（slot 限量 + 维度保底 5 条）
+→ 分章节并行生成（每维度独立 LLM，ThreadPool 8）
+→ 维度覆盖 gate → 3 万字研报 + 审计附录
+```
 
 ## 🚀 快速开始
 
