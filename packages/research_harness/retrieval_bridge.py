@@ -115,12 +115,15 @@ def build_graph_retrieval_artifacts(
     from packages.research_harness.retrieval_rank import rank_retrieved_sources
 
     search_phrases = _collect_search_phrases(plan or {})
+    # 2026-08-11：LLM 维度搜索词优先作为精排 query（语义完整查询式，比短语拼接精准）
+    dimension_terms = (plan or {}).get("dimension_search_terms") or None
     ranked = rank_retrieved_sources(
         sources,
         query,
         search_phrases,
         coarse_top_n=_RETRIEVAL_COARSE_TOP_N,
         rerank_top_k=_RETRIEVAL_RERANK_TOP_K,
+        dimension_terms=dimension_terms,
     )
     reranked_chunks = ranked.get("source_chunks", [])
     items = _items_from_ranked_chunks(reranked_chunks)

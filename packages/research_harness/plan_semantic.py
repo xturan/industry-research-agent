@@ -465,9 +465,11 @@ def _enrich_round_phrases(
     topic = _short_topic(query)
     q = str(query or "").strip()
     for r in rounds:
+        # 跳过 LLM 已生成的维度搜索词轮（2026-08-11）：这类轮 search_phrases 已是
+        # query特点+维度词+来源 的精准词，不该被确定性定向词重写。
         # gap 补搜轮（_gap_targeted）和段二维度补搜轮（_second_pass_dim_backfill）
-        # 的短语是缺口 family/维度专用定向词，不该被重写成维度词。跳过。
-        if r.get("_gap_targeted") or r.get("_second_pass_dim_backfill"):
+        # 的短语是缺口 family/维度专用定向词，也不该被重写。
+        if r.get("_gap_targeted") or r.get("_second_pass_dim_backfill") or r.get("search_terms_source") == "llm_dimension_v1":
             continue
         target_ids = [str(t) for t in r.get("target_dimensions", []) if str(t)]
         if not target_ids:

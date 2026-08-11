@@ -41,6 +41,9 @@ class ResearchGraphState(TypedDict, total=False):
     planner_replan_request: dict[str, Any] | None
     gate_reason: str | None
     gate_route_to: str | None
+    # 2026-08-11：chief_gate 产出的维度 evidence 覆盖报告，供 finalize 标注未覆盖维度
+    # （必须声明在 TypedDict 里，否则 langgraph 按 state schema 过滤丢弃）。
+    dimension_coverage: dict[str, Any]
     contract_meta: dict[str, Any]
     final_report: dict[str, Any]
     human_review: dict[str, Any] | None

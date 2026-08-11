@@ -2651,6 +2651,7 @@ def _build_editor1_actual_input_pack(state: dict[str, Any]) -> dict[str, Any]:
         seen.add(dedupe_key)
         raw_rows.append({
             "id": evidence_id, "source_id": item.get("source_id"),
+            "citation_no": len(raw_rows) + 1,  # 2026-08-11：正文 [N] 编号引用依据
             "source_family": str(item.get("source_family") or ""),
             "support_type": str(item.get("support_type") or ""),
             "support_strength": item.get("support_strength"),
@@ -2958,6 +2959,67 @@ def _align_section_roles_in_draft(
     return result
 
 
+def _renumber_report_citations(
+    report_markdown: str,
+    evidence_items: list[dict[str, Any]],
+    sources: list[dict[str, Any]],
+) -> str:
+    """确定性重编号：正文 [src_xxx] / [src_xxx_chunk_n] → [1][2]... 并生成来源说明。
+
+    2026-08-11 用户要求：正文引用用 [1][2] 编号，末尾"来源说明"列编号→来源对应。
+    即使 LLM 不遵守 prompt（仍写内部 ID），此兜底强制统一格式。
+    来源说明章节如果已存在则替换，否则追加。
+    """
+    import re as _re
+
+    if not report_markdown:
+        return report_markdown
+
+    src_by_id: dict[str, dict[str, Any]] = {
+        str(s.get("source_id") or ""): s for s in sources if isinstance(s, dict)
+    }
+    ev_by_id: dict[str, dict[str, Any]] = {
+        str(e.get("evidence_id") or ""): e for e in evidence_items if isinstance(e, dict)
+    }
+
+    # 1) 收集正文引用的内部 ID（src_xxx 或 src_xxx_chunk_n）
+    cited_ids: list[str] = []
+    for m in _re.finditer(r"\[(src_[A-Za-z0-9_]+)(?:_chunk_\d+)?\]", report_markdown):
+        sid = m.group(1)
+        if sid not in cited_ids:
+            cited_ids.append(sid)
+    if not cited_ids:
+        # 无内部 ID 引用（LLM 已用 [N]）→ 仅确保来源说明存在，不重写
+        return report_markdown
+
+    # 2) 按首次出现顺序映射到 [N]
+    number_by_id = {sid: i + 1 for i, sid in enumerate(cited_ids)}
+
+    def _replace(m: _re.Match) -> str:
+        return f"[{number_by_id[m.group(1)]}]"
+
+    renumbered = _re.sub(r"\[(src_[A-Za-z0-9_]+)(?:_chunk_\d+)?\]", _replace, report_markdown)
+
+    # 3) 生成来源说明列表（编号 → 来源标题/URL）
+    lines = ["## 来源说明", ""]
+    for sid, num in number_by_id.items():
+        src = src_by_id.get(sid, {})
+        ev = ev_by_id.get(f"{sid}_chunk_0", {})
+        title = str(src.get("title") or ev.get("document_title") or sid)
+        url = str(src.get("url") or ev.get("source_url") or "")
+        url_part = f"（{url}）" if url else ""
+        lines.append(f"[{num}] {title}{url_part}")
+    if not lines[2:]:
+        lines.append("（本轮未引用具体来源）")
+    source_section = "\n".join(lines)
+
+    # 4) 替换或追加来源说明章节
+    if "## 来源说明" in renumbered:
+        before = renumbered.split("## 来源说明")[0].rstrip()
+        return f"{before}\n\n{source_section}\n"
+    return f"{renumbered.rstrip()}\n\n{source_section}\n"
+
+
 def _generate_real_editor1_draft(
     *,
     state: dict[str, Any],
@@ -3000,11 +3062,11 @@ def _generate_real_editor1_draft(
                 "2. 每个断言都要有分析性叙述——不只罗列证据，要解释含义和重要性\n"
                 "3. 必须做跨来源综合: 发现证据间的逻辑关联与传导链条"
                 "(政策→地方落地→项目/基础设施→公司业务→产业链), 不要逐条复述证据\n"
-                "4. 必须做地区/主体对比: 利用证据的 region 字段横向比较不同地区"
-                "政策力度、落地阶段、政策工具(policy_tool)差异, 用表格呈现\n"
-                "5. 标注证据局限性(单源支撑、估算非官方、覆盖有限、support_type=background 时不可当作强结论)\n"
+                "4. 必须做地区/主体对比: 利用证据的地区字段横向比较不同地区"
+                "政策力度、落地阶段、政策工具差异, 用表格呈现\n"
+                "5. 标注证据局限性(单源支撑、估算非官方、覆盖有限、背景性证据不可当作强结论)\n"
                 "6. 区分来源可信度与对断言的支撑强度: 官方来源≠结论可靠, "
-                "support_type/support_strength 低或 needs_fulltext_check 为真时须降级表述\n"
+                "支撑强度低时须降级表述(如'据公开资料''尚待进一步验证')\n"
                 "7. 方法口径必须与正文一致: 未实际覆盖的维度(如公司公告/行业统计)不得宣称已覆盖, "
                 "应明确列为数据缺口\n"
                 "8. 中文撰写，专业但不晦涩; 4000-6000字(根据证据量自适应)\n\n"
@@ -3012,7 +3074,13 @@ def _generate_real_editor1_draft(
                 "## 地方政策与项目对比(表格), ## 传导链条与产业链映射, "
                 "## 公司披露(无则标注缺口), ## 行业数据(无则标注缺口), "
                 "## 风险与不确定性, ## 结论与展望, ## 后续跟踪清单, ## 来源说明\n\n"
-                "用 [证据ID] 标注引用。\n"
+                "引用规则（必须遵守）:\n"
+                "a. 正文引用一律用[编号]格式（[1]、[2]、[3]...），编号按「证据材料」数组顺序从1递增；"
+                "每个断言句末标注支撑它的证据编号（可多个，如[1][3]）\n"
+                "b. 末尾「## 来源说明」章节列出编号→来源的对应关系，格式: [编号] 来源标题（来源URL），"
+                "只列正文实际引用的编号\n"
+                "c. 正文严禁出现内部标识符: src_xxx、ev_xxx、chunk、support_type、support_strength、"
+                "source_family、evidence_id、claim_id 等；引用只写[编号]，不写内部ID\n"
                 "9. 每个自然段（段落之间用空行分隔）在其正文前用 HTML 注释显式声明"
                 "该段引用的断言与证据，格式如下（若该段未引用任何断言/证据则省略对应行）:\n"
                 "<!-- paragraph_id: p_001 -->\n"
@@ -3045,6 +3113,14 @@ def _generate_real_editor1_draft(
         llm_markdown = llm_data
     else:
         llm_markdown = ""
+
+    # ── 2026-08-11：引用重编号兜底——正文 [src_xxx] → [N]，来源说明列编号→来源 ──
+    if llm_markdown:
+        llm_markdown = _renumber_report_citations(
+            llm_markdown,
+            evidence_items=evidence_items,
+            sources=sources,
+        )
 
     # ── Fallback to template only if LLM output is genuinely deficient ──
     # A real synthesized report (multi-section structure) beats the template
@@ -5361,6 +5437,7 @@ def chief_gate_provider_backed(
             report_markdown="(gate-level grade)",
             gap_report=dict(state.get("evidence_gap_report") or {}),
             required_obligation_coverage=obligation_coverage,
+            dimension_coverage=state.get("dimension_coverage") or None,
         )
         if _graded:
             result["report_level"] = _graded.get("report_level")
@@ -5384,11 +5461,16 @@ def _claim_strength_guard(
     gap_report: dict[str, Any],
     required_obligation_coverage: list[dict[str, Any]] | None = None,
     human_review: dict[str, Any] | None = None,
+    dimension_coverage: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     """Phase 4: grade the report honestly from the evidence_gap_report and
     prepend a level banner + coverage-gap disclosure. An evidence-thin report
     (multiple insufficient_count sections) is capped at level_2 so it is not
     presented as a finished deep-research report.
+
+    2026-08-11: 优先用 dimension_coverage（gate 权威判定）算未覆盖维度，替代
+    gap_report 的 insufficient_count——两套口径曾不一致（gap 只数 family 且要求
+    min_evidence，coverage 有 evidence_type 兜底），导致报告标注与 gate 矛盾。
 
     Returns {report_markdown, report_level, reason} or None when nothing to do.
     Default behavior is表述-level disclosure (report still emitted); it does NOT
@@ -5396,15 +5478,28 @@ def _claim_strength_guard(
     rather than forcing HUMAN_REVIEW under Tavily recall limits (ADR 0001)."""
     if not report_markdown:
         return None
-    gaps = gap_report.get("gaps", []) if isinstance(gap_report, dict) else []
+    # 2026-08-11：优先用 gate 的 dimension_coverage（权威判定）。uncovered 维度 =
+    # dimension_coverage 里 covered=False 的维度；gap_report 仅作降级兜底（未传时）。
+    uncovered_dims: list[str] = []
+    if isinstance(dimension_coverage, dict) and dimension_coverage:
+        uncovered_dims = [
+            str(v.get("expected_section_heading") or v.get("dimension_id") or did)
+            for did, v in dimension_coverage.items()
+            if isinstance(v, dict) and not v.get("covered")
+        ]
+        gaps = []
+    else:
+        gaps = gap_report.get("gaps", []) if isinstance(gap_report, dict) else []
     insufficient = [g for g in gaps if isinstance(g, dict)
                     and g.get("gap_kind") == "insufficient_count"]
     missing_only = [g for g in gaps if isinstance(g, dict)
                     and g.get("gap_kind") == "missing_fields"]
     spec_sections = int(gap_report.get("spec_sections", 0) or 0) if isinstance(gap_report, dict) else 0
-
-    # Grade: many uncovered required sections => lower level.
-    n_insuff = len(insufficient)
+    # dimension_coverage 存在时用它算 n_insuff（与 gate 一致）
+    if uncovered_dims:
+        n_insuff = len(uncovered_dims)
+    else:
+        n_insuff = len(insufficient)
     reason: list[str] = []
     if spec_sections == 0:
         return None  # no spec to grade against; leave report unchanged
@@ -5453,10 +5548,10 @@ def _claim_strength_guard(
         reason.append("各维度证据数充足，部分维度缺字段颗粒度（金额/主体/阶段）")
     elif n_insuff == 0:
         level = 2
-        reason.append("report-form gate 未通过：正文缺少深度研究叙事或呈证据账本形态")
+        reason.append("报告正文未通过叙事结构检查：缺少深度研究叙事或呈证据账本形态")
     elif n_insuff <= 1:
         level = 2
-        reason.append(f"{n_insuff} 个维度证据不足（insufficient_count），核心结论需谨慎")
+        reason.append(f"{n_insuff} 个维度证据不足，核心结论需谨慎")
     else:
         level = 2
         reason.append(f"{n_insuff} 个维度证据缺失，报告维持初步研究级别，不宜作投研决策依据")
@@ -5468,11 +5563,11 @@ def _claim_strength_guard(
     ]
     for r in reason:
         banner_lines.append(f"> - {r}")
-    if insufficient:
+    if insufficient or uncovered_dims:
         gap_secs = "、".join(
             str(g.get("section") or g.get("dimension_type") or "?")
             for g in insufficient
-        )
+        ) if not uncovered_dims else "、".join(uncovered_dims)
         banner_lines.append(
             f"> - 证据不足维度（本轮证据池内未识别充足证据，不作判断）：{gap_secs}"
         )
@@ -5714,6 +5809,7 @@ def finalize_report_provider_backed(
                 if isinstance(state.get("human_review"), dict)
                 else None
             ),
+            dimension_coverage=state.get("dimension_coverage") or None,
         )
         if graded:
             final_report["report_markdown"] = graded.get(

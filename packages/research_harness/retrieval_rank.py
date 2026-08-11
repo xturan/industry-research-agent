@@ -320,7 +320,9 @@ def _phrase_new_info(phrase: str, query: str, query_terms: set[str]) -> str:
     """返回一个 search phrase 相对 query 的「独特信息」：
     - 已被 query 完全包含（子串）→ 无新信息；
     - phrase 包含 query（整句 query 变体 + 尾巴）→ 只取 query 未覆盖的词段；
-    - 短短语（<=40 字符，多为 dimension caliber_terms）→ 整体加入（清洗标点）；
+    - 短短语（<=40 字符，多为 dimension caliber_terms 或 LLM 维度搜索词）→
+      剥离 query 首个主题词前缀（如'低空经济'）后整体加入（2026-08-11 优化：
+      避免 LLM 维度词因带 query 主题前缀而重复）；
     - 其余长短语 → 只取 query 未覆盖的词段。"""
     if not phrase or phrase in query:
         return ""
@@ -328,35 +330,65 @@ def _phrase_new_info(phrase: str, query: str, query_terms: set[str]) -> str:
         new_terms = [t for t in _phrase_terms(phrase) if t not in query_terms]
         return " ".join(new_terms)
     if len(phrase) <= 40:
-        info = _clean_info(phrase)
+        stripped = phrase
+        first = str(query).split()[0] if query.split() else ""
+        if first and stripped.startswith(first):
+            stripped = stripped[len(first):].strip()
+            stripped = _clean_info(stripped)
+        if not stripped:
+            stripped = phrase
+        info = _clean_info(stripped)
         return info if _CJK_TERM_RE.search(info) or _ASCII_TERM_RE.search(info) else ""
     new_terms = [t for t in _phrase_terms(phrase) if t not in query_terms]
     return " ".join(new_terms)
 
 
-def _build_rerank_query(query: str, search_phrases: list[str] | None) -> str:
+def _build_rerank_query(
+    query: str,
+    search_phrases: list[str] | None,
+    *,
+    dimension_terms: dict[str, list[str]] | None = None,
+) -> str:
     """构建覆盖全部搜索词的紧凑 rerank query。
 
-    旧实现只取前 6 个 phrase（且多为 query 重复变体），漏掉维度独特词。新实现：
-    1. 归一化 + 精确去重全部 phrase；
-    2. 提取每个 phrase 相对 query 的独特信息（短词整体、长变体取 delta）；
-    3. 按信息长度升序优先加入（短独特词先放，能在长度上限内塞进更多）；
-    4. 截断到 `_RERANK_QUERY_MAX_CHARS`。
+    设计（2026-08-11 优化）：
+    1. 优先用 LLM 维度搜索词（dimension_terms，语义完整查询式如
+       '低空经济 中标公告 竞争格局 企业名单'）——它们是 query特点+维度词+来源；
+    2. 把 query + 所有来源（维度词、搜索短语）的词合并成**去重独特信息集合**
+       （相对 query 的 delta），按长度升序排列，优先塞短独特词；
+    3. 截断到 `_RERANK_QUERY_MAX_CHARS`。
+
+    对比旧实现（51 短语拼接成松散词表），新 query 以语义完整的维度查询式为主，
+    且去除重复的 query 前缀（'低空经济 中标公告'只保留一次在 base）。
     """
     base = str(query or "").strip()
     query_terms = set(_phrase_terms(base))
-    parts = [base]
-    seen: set[str] = set()
-    candidates: list[str] = []
+    # 收集所有候选源（维度词优先在前）
+    all_phrases: list[str] = []
+    seen_raw: set[str] = set()
+    if dimension_terms:
+        for terms in dimension_terms.values():
+            for phrase in terms[:2]:
+                t = _normalize_text(str(phrase or ""))
+                if t and t not in seen_raw:
+                    seen_raw.add(t)
+                    all_phrases.append(t)
     for raw in search_phrases or []:
-        text = _normalize_text(str(raw or ""))
-        if not text or text in seen:
-            continue
-        seen.add(text)
+        t = _normalize_text(str(raw or ""))
+        if t and t not in seen_raw:
+            seen_raw.add(t)
+            all_phrases.append(t)
+
+    # 提取去重独特信息（相对 query 的 delta）
+    candidates: list[str] = []
+    seen_info: set[str] = set()
+    for text in all_phrases:
         info = _phrase_new_info(text, base, query_terms)
-        if info:
+        if info and info not in seen_info:
+            seen_info.add(info)
             candidates.append(info)
     candidates.sort(key=len)
+    parts = [base]
     for info in candidates:
         if len(" ".join(parts)) + len(info) + 1 > _RERANK_QUERY_MAX_CHARS:
             break
@@ -370,13 +402,18 @@ def rerank_chunks_llm(
     chunks: list[dict[str, Any]],
     *,
     top_k: int = 24,
+    dimension_terms: dict[str, list[str]] | None = None,
+    max_workers: int = 4,
 ) -> tuple[list[dict[str, Any]], str]:
     """Rerank chunks with the LLM reranker (query = search phrases + query).
     Falls back to deterministic (chunk quality + coarse score) when the model is
-    unavailable. Returns (sorted_chunks, rerank_mode)."""
+    unavailable. Returns (sorted_chunks, rerank_mode).
+
+    dimension_terms（LLM 生成的维度搜索词）优先作为精排 query——语义完整查询式
+    比短语拼接更精准（2026-08-11）。"""
     if not chunks:
         return [], "no_chunks"
-    rerank_query = _build_rerank_query(query, search_phrases)
+    rerank_query = _build_rerank_query(query, search_phrases, dimension_terms=dimension_terms)
     rerank_mode = "llm_reranker_v1"
     score_by_id: dict[str, float] = {}
     bucket_by_id: dict[str, int | None] = {}
@@ -390,7 +427,7 @@ def rerank_chunks_llm(
         pass
     try:
         scores = rerank_with_llm(
-            rerank_query, chunks, top_k=max(top_k * 3, 15)
+            rerank_query, chunks, top_k=max(top_k * 3, 15), max_workers=max_workers
         )
         score_by_id = {
             str(item.get("chunk_id") or ""): float(item.get("rerank_score") or 0.0)
@@ -458,6 +495,8 @@ def rank_retrieved_sources(
     coarse_top_n: int = 30,
     chunk_chars: int = 1700,
     rerank_top_k: int = 24,
+    dimension_terms: dict[str, list[str]] | None = None,
+    max_workers: int = 4,
 ) -> dict[str, Any]:
     """End-to-end: dedup -> coarse rank -> chunk -> rerank. Returns
     {source_chunks, coarse_meta, rerank_mode, ranked_sources}.
@@ -466,14 +505,16 @@ def rank_retrieved_sources(
     chunk），rerank 只负责排序。返回的 source_chunks 覆盖所有粗排源的 chunk（不只是
     rerank_top_k 个），这样 _inject_chunk_text_into_sources 能让每个 source 都拿到
     自己的精排后 chunk，而非只有 top-24 落入少数源。rerank_top_k 仅用于标记 top-k 排序。
-    """
+
+    dimension_terms（LLM 维度搜索词）优先作为精排 query（2026-08-11）。"""
     deduped = dedup_sources(sources)
     coarse = coarse_rank_bm25_vector_rrf(
         deduped, query, search_phrases, top_n=coarse_top_n
     )
     chunks = chunk_documents(coarse, max_chars=chunk_chars)
     reranked, rerank_mode = rerank_chunks_llm(
-        query, search_phrases, chunks, top_k=max(rerank_top_k, len(chunks))
+        query, search_phrases, chunks, top_k=max(rerank_top_k, len(chunks)),
+        dimension_terms=dimension_terms, max_workers=max_workers,
     )
     return {
         "source_chunks": reranked,
