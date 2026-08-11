@@ -63,44 +63,7 @@ GET /api/gateway/providers
 
 ## 🏗 架构
 
-```mermaid
-flowchart TD
-    A[plan_task] --> B[collect_sources]
-    B --> C[parse_sources]
-    C --> D[score_sources]
-    D --> E[build_evidence]
-    E --> F[advisory_gap_backfill]
-    F --> G[editor1_draft]
-    G --> H[editor2_review]
-    H --> I{chief_gate}
-    I -->|PASS| J[finalize_report]
-    I -->|ADD_EVIDENCE| A
-    I -->|REVISE_TEXT| G
-    I -->|HUMAN_REVIEW| K[human_review]
-    I -->|REVIEW_RISK| H
-    J --> L[3万字研报 + 审计附录]
-
-    subgraph 检索
-        B
-        C
-    end
-    subgraph 证据
-        E
-    end
-    subgraph 报告
-        G
-        H
-        I
-        J
-    end
-
-    classDef search fill:#e3f2fd,stroke:#1565c0;
-    classDef evidence fill:#e8f5e9,stroke:#2e7d32;
-    classDef report fill:#fff3e0,stroke:#ef6c00;
-    class B,C search;
-    class E evidence;
-    class G,H,I,J report;
-```
+![系统架构图](docs/assets/architecture.png)
 
 **关键组件**：
 - `research_taxonomy.py` — 14 维产业研究框架（单一事实源）
@@ -108,6 +71,7 @@ flowchart TD
 - `retrieval_rank.py` — 粗排 BM25+向量 RRF → chunk → LLM 精排
 - `real_nodes.py` — evidence 构建（slot 限量 + 维度保底）+ 分章节报告生成
 - `rag/rerankers.py` — Ollama/vLLM 精排（0-4 分档 + logprobs）
+- `capability_gateway/` — Provider 路由 + 并发预算 + 电路熔断 + 健康观测
 
 **生成流程**：
 ```
