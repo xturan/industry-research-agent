@@ -1,10 +1,26 @@
 ﻿# Industry Research Agent（产业调研 Agent）
 
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![LangGraph](https://img.shields.io/badge/framework-LangGraph-purple.svg)](https://langchain-ai.github.io/langgraph/)
+[![FastAPI](https://img.shields.io/badge/API-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
+[![Ollama](https://img.shields.io/badge/reranker-Ollama%2FLoRA-orange.svg)](https://ollama.com/)
+[![DeepSeek](https://img.shields.io/badge/LLM-DeepSeek-blueviolet.svg)](https://deepseek.com/)
+
 **生产级中文产业调研 Agent**——基于固定研究维度框架，自动完成「检索 → 证据构建 → 多章节研报生成」的端到端产业调研，输出带编号引用、可审计的中文深度研报。
 
 专为**产业调研**设计：给定一个产业主题（如"低空经济""动力电池"），Agent 按 14 个研究维度（产业定义/政策/市场/产业链/供给/需求/技术/项目/商业/风险/企业/资本/区域/趋势）自动检索、构建证据、分章节撰写报告。
 
 > 定位为行业情报与研究辅助，不构成证券投资建议。
+
+## 📄 示例报告
+
+| 产业 | 报告 | 指标 |
+|---|---|---|
+| **低空经济** | [低空经济中标公告深度研究报告](examples/reports/低空经济中标公告深度研究报告.html) | 30,338 字 · 142 条证据 · evidence_coverage 0.93 |
+| **动力电池** | [动力电池产业链调研](examples/reports/动力电池产业链调研.html) | 28,067 字 · 65 条证据 · evidence_coverage 0.90 |
+
+> 报告由 Agent 自动生成：检索 → 精排 chunk → 分章节撰写 → 编号引用，可直接打开浏览。
 
 ## ✨ 核心能力
 
