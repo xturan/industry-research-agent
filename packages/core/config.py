@@ -218,6 +218,11 @@ class Settings(BaseSettings):
     capability_gateway_llm_mode: str = Field(
         default="off", alias="CAPABILITY_GATEWAY_LLM_MODE"
     )
+    # Redis-backed budget/circuit store（G2.3/G2.4 迁移，2026-08-13）。
+    # 默认 False = 维持现有 PG 行为；True 且配了 REDIS_URL → budget/circuit 走 Redis。
+    capability_gateway_redis_enabled: bool = Field(
+        default=False, alias="CAPABILITY_GATEWAY_REDIS_ENABLED"
+    )
 
 
 @lru_cache

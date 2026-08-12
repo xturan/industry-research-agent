@@ -70,6 +70,10 @@ from packages.capability_gateway.llm_tasks import (
     llm_capability_request,
 )
 from packages.capability_gateway.plan import RoutingPlan, RoutingStep, RoutingTrace
+from packages.capability_gateway.redis_stores import (
+    RedisCircuitStateStore,
+    RedisLeaseConcurrencyBudget,
+)
 from packages.capability_gateway.registry import CapabilityRegistry, default_registry
 from packages.capability_gateway.router import (
     CapabilityRouter,
@@ -200,5 +204,8 @@ __all__ = [
     "build_gateway_runtime",
     "ensure_gateway_tables",
     "get_gateway_runtime_cached",
+    # redis-backed budget/circuit stores (G2.8 迁移)
+    "RedisLeaseConcurrencyBudget",
+    "RedisCircuitStateStore",
 ]
 

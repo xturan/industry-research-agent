@@ -62,6 +62,53 @@ def test_sqlite_dialect_falls_back_to_inmemory():
     assert isinstance(rt["circuit"]._store, InMemoryCircuitStateStore)
 
 
+def test_redis_enabled_uses_redis_stores(monkeypatch):
+    """Redis 开关打开 + REDIS_URL → budget/circuit 走 Redis，recorder 仍按方言。"""
+    import fakeredis
+
+    from packages.capability_gateway.redis_stores import (
+        RedisCircuitStateStore,
+        RedisLeaseConcurrencyBudget,
+    )
+
+    fake = fakeredis.FakeRedis(decode_responses=True)
+    monkeypatch.setattr("packages.capability_gateway.wiring._redis_client", lambda s: fake)
+
+    rt = build_gateway_runtime(
+        Settings(
+            _env_file=None,
+            DATABASE_URL="postgresql+psycopg://u:p@h/db",
+            REDIS_URL="redis://localhost:6379/0",
+            CAPABILITY_GATEWAY_REDIS_ENABLED=True,
+        )
+    )
+    assert isinstance(rt["budget"], RedisLeaseConcurrencyBudget)
+    assert isinstance(rt["circuit"]._store, RedisCircuitStateStore)
+    # recorder 独立于 budget/circuit 后端，仍按 PG 方言
+    assert isinstance(rt["recorder"], PostgresProviderAttemptRecorder)
+
+
+def test_redis_enabled_but_down_falls_back(monkeypatch):
+    """Redis 配了但 ping 失败 → 告警 + 回退 PG 分支（进程必须能起）。"""
+
+    class _DownRedis:
+        def ping(self):
+            raise OSError("connection refused")
+
+    monkeypatch.setattr("packages.capability_gateway.wiring._redis_client", lambda s: _DownRedis())
+
+    rt = build_gateway_runtime(
+        Settings(
+            _env_file=None,
+            DATABASE_URL="postgresql+psycopg://u:p@h/db",
+            REDIS_URL="redis://localhost:6379/0",
+            CAPABILITY_GATEWAY_REDIS_ENABLED=True,
+        )
+    )
+    assert isinstance(rt["budget"], PostgresLeaseConcurrencyBudget)
+    assert isinstance(rt["circuit"]._store, PostgresCircuitStateStore)
+
+
 def test_ensure_gateway_tables_noop_on_sqlite(tmp_path):
     """SQLite 方言下 ensure_gateway_tables 是 no-op（InMemory store 不依赖 DB 表）。"""
     from sqlalchemy import create_engine

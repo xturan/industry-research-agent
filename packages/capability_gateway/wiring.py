@@ -24,6 +24,7 @@ G2.5 recorder 一次性装配成进程级单例，供 workflow 的 search/LLM �
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from functools import lru_cache
 from typing import Any
@@ -31,10 +32,35 @@ from typing import Any
 from packages.core.config import Settings, get_settings
 from packages.db.session import get_session_factory
 
+LOGGER = logging.getLogger(__name__)
+
 
 def _is_postgres(database_url: str) -> bool:
     """方言判断：仅 postgresql(+driver) 使用共享 DB store。"""
     return str(database_url or "").strip().lower().startswith("postgres")
+
+
+def _redis_enabled(settings: Settings) -> bool:
+    """Redis-backed budget/circuit 是否启用：显式开关 + REDIS_URL 已配置。"""
+    return bool(settings.capability_gateway_redis_enabled) and bool(settings.redis_url)
+
+
+def _redis_client(settings: Settings) -> Any:
+    """同步 redis.Redis client（短超时保证故障时快速降级）。
+
+    用同步版：SearchCapabilityService/LLMCapabilityService 是 sync 方法内部
+    asyncio.run，redis.asyncio client 连接池绑定创建时 loop，跨 asyncio.run 复用
+    会抛错。同步 client + asyncio.to_thread 与 PostgresLease 现状同构。
+    """
+    import redis
+
+    return redis.Redis.from_url(
+        settings.redis_url,
+        decode_responses=True,
+        socket_timeout=0.5,
+        socket_connect_timeout=0.5,
+        retry_on_timeout=False,
+    )
 
 
 def _budget_policies() -> dict[str, Any]:
@@ -89,15 +115,45 @@ def build_gateway_runtime(
 
     policies = _budget_policies()
 
-    if _is_postgres(app.database_url):
+    # ── 三分支：Redis → Postgres → InProcess/InMemory ──────────────────────
+    # G2.8 迁移（2026-08-13）：显式开关 CAPABILITY_GATEWAY_REDIS_ENABLED 控制
+    # budget/circuit 后端。recorder 独立选型（遥测审计日志始终留 PG/SQLite）。
+    budget = None
+    circuit = None
+    if _redis_enabled(app):
+        client = _redis_client(app)
+        try:
+            if not client.ping():
+                raise ConnectionError("redis ping failed")
+        except (Exception, OSError) as exc:  # noqa: BLE001 - 启动 sanity check
+            LOGGER.warning(
+                "GATEWAY_REDIS_BOOTSTRAP_FAILED fallback_to_pg err=%s", exc
+            )
+            client = None
+        if client is not None:
+            from packages.capability_gateway.redis_stores import (
+                RedisCircuitStateStore,
+                RedisLeaseConcurrencyBudget,
+            )
+
+            budget = RedisLeaseConcurrencyBudget(client, policies)
+            circuit = CircuitBreaker(
+                RedisCircuitStateStore(client, record_ttl_seconds=120.0)
+            )
+
+    if budget is None and _is_postgres(app.database_url):
         budget = PostgresLeaseConcurrencyBudget(sf, policies)
         circuit = CircuitBreaker(PostgresCircuitStateStore(sf))
-        recorder = PostgresProviderAttemptRecorder(sf)
-    else:
-        # SQLite / dev / test：进程内语义验证，非跨进程生产保证。
+    if budget is None:
+        # SQLite / dev / test / Redis 降级后：进程内语义验证。
         budget = InProcessConcurrencyBudget(policies)
         circuit = CircuitBreaker(InMemoryCircuitStateStore())
-        recorder = InMemoryProviderAttemptRecorder()
+
+    recorder = (
+        PostgresProviderAttemptRecorder(sf)
+        if _is_postgres(app.database_url)
+        else InMemoryProviderAttemptRecorder()
+    )
 
     return {
         "budget": budget,
@@ -106,17 +162,18 @@ def build_gateway_runtime(
     }
 
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=4)
 def get_gateway_runtime_cached(
     database_url: str | None = None,
+    redis_url: str | None = None,
+    capability_gateway_redis_enabled: bool | None = None,
 ) -> dict[str, Any]:
-    """进程级单例网关运行时（按 database_url 缓存）。
+    """进程级单例网关运行时（按 database_url + redis 配置缓存）。
 
-    生产（api + worker 两个进程）各持一个单例；budget 靠 Postgres lease 跨进程
-    保证真实全局上限，recorder 靠 Postgres 表共享 attempt 记录。
+    生产（api + worker 两个进程）各持一个单例；budget 靠 Postgres lease / Redis
+    zset 跨进程保证真实全局上限，recorder 靠 Postgres 表共享 attempt 记录。
 
-    注意：仅用 database_url 做缓存 key——若进程内切换 database_url（测试场景
-    reset_db_session_state），需显式 cache_clear()。
+    缓存 key 含 redis_url + enabled 开关——否则进程内切换 Redis 配置会拿到旧单例。
     """
     app = get_settings()
     return build_gateway_runtime(app, session_factory=get_session_factory())
