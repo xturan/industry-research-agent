@@ -1168,13 +1168,23 @@ def _merge_dimension_plan(
         type; otherwise emit a synthetic default from the taxonomy."""
         if _has_dim_type(dim_type):
             return
+        # ── 2026-08-11：同标题去重（维度变体合并）──
+        # LLM planner 生成的维度（如 supply_competition，dimension_type='基础'）和
+        # 确定性补的 d_* 维度（d_supply_competition）expected_section_heading 相同，
+        # 但 canonical dimension_type 不同（'基础' 无法 canonicalize 成 supply_competition），
+        # 导致 _has_dim_type 识别不到 → 重复维度。这里按标题兜底去重：若已有同标题
+        # 维度（含 LLM 生成的完整维度），不再补 d_* 兜底。
+        meta = research_taxonomy.DIMENSIONS.get(dim_type, {})
+        synth_heading = meta.get("expected_section_heading", dim_type)
+        for existing in by_id.values():
+            if isinstance(existing, dict) and str(existing.get("expected_section_heading") or "") == synth_heading:
+                return
         for item in fallback:
             if research_taxonomy.canonicalize_dimension_type(
                 str(item.get("dimension_type") or "")
             ) == research_taxonomy.canonicalize_dimension_type(dim_type):
                 by_id[str(item.get("dimension_id"))] = dict(item)
                 return
-        meta = research_taxonomy.DIMENSIONS.get(dim_type, {})
         primary_family = research_taxonomy.DIMENSION_PRIMARY_FAMILY.get(
             dim_type, "industry_research"
         )
