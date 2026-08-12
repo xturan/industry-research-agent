@@ -90,6 +90,14 @@ def _set_trace_ctx(state: dict[str, Any] | None, node_name: str) -> None:
 
 def _get_trace_ctx() -> dict[str, Any] | None:
     return _trace_ctx
+
+
+def _get_trace_ctx_run_id() -> str | None:
+    """从节点线程上下文解析当前 run_id（G2.5a telemetry 归因）。"""
+    ctx = _trace_ctx or {}
+    return ctx.get("run_id")
+
+
 _GENERIC_QUERY_SUFFIXES = (
     "通知",
     "公告",
@@ -177,11 +185,23 @@ def _sync_impl_dependencies() -> None:
     _impl.build_editor1_draft_prompts = _fixed_build_editor1_draft_prompts  # noqa: B010
     _impl.ToolExecutor = _FixedToolExecutor  # noqa: B010
     from packages.capability_gateway import build_gateway_aware_search_provider
+    from packages.capability_gateway.fallback import FallbackPolicy
+    from packages.capability_gateway.wiring import get_gateway_runtime_cached
     from packages.sources.search_discovery import SearchDiscoveryRequest
 
     _impl.TavilySearchRequest = SearchDiscoveryRequest
     if _search_provider_override is None:
-        _impl._search_provider = build_gateway_aware_search_provider
+        # G2.8 正式接线：注入 budget/circuit/recorder + run_id（来自 trace_ctx），
+        # 使 search=gateway 模式的 G2.3/G2.4/G2.5 真实生效（2026-08-12 审计修复）。
+        runtime = get_gateway_runtime_cached()
+        _impl._search_provider = lambda: build_gateway_aware_search_provider(
+            None,
+            budget=runtime["budget"],
+            circuit=runtime["circuit"],
+            fallback_policy=FallbackPolicy(),
+            recorder=runtime["recorder"],
+            run_id_provider=_get_trace_ctx_run_id,
+        )
     else:
         _impl._search_provider = lambda: _search_provider_override
 

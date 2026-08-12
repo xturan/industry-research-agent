@@ -101,6 +101,23 @@ class Settings(BaseSettings):
         default=False,
         alias="DEEPSEEK_STORE_REASONING_CONTENT",
     )
+    # ── OpenRouter fallback（best-effort 任务的免费兜底） ──
+    openrouter_api_key: str | None = Field(default=None, alias="OPENROUTER_API_KEY")
+    openrouter_base_url: str = Field(
+        default="https://openrouter.ai/api/v1",
+        alias="OPENROUTER_BASE_URL",
+    )
+    # 免费 fallback 模型：固定 openai/gpt-oss-20b:free（测试 3/3 JSON 稳定；
+    # 不用 openrouter/free 动态路由——每次选不同模型导致 JSON 输出漂移）。
+    openrouter_free_model: str = Field(
+        default="openai/gpt-oss-20b:free",
+        alias="OPENROUTER_FREE_MODEL",
+    )
+    openrouter_timeout_seconds: int = Field(
+        default=120, alias="OPENROUTER_TIMEOUT_SECONDS"
+    )
+    openrouter_max_retries: int = Field(default=1, alias="OPENROUTER_MAX_RETRIES")
+    openrouter_max_tokens: int = Field(default=2000, alias="OPENROUTER_MAX_TOKENS")
     source_http_timeout_seconds: int = Field(default=20, alias="SOURCE_HTTP_TIMEOUT_SECONDS")
     source_http_retry_count: int = Field(default=2, alias="SOURCE_HTTP_RETRY_COUNT")
     source_http_backoff_seconds: float = Field(default=0.3, alias="SOURCE_HTTP_BACKOFF_SECONDS")

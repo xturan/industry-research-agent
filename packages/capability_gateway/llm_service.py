@@ -89,6 +89,7 @@ class LLMCapabilityService:
         invoker: Any | None = None,
         adapter_registry: Any | None = None,
         legacy_factory: Any | None = None,
+        run_id_provider: Any | None = None,
     ) -> None:
         self._settings = settings
         self._router = router
@@ -96,9 +97,20 @@ class LLMCapabilityService:
         self._adapter_registry = adapter_registry
         self._legacy_factory = legacy_factory
         self._legacy_client = None
+        # G2.5a：run_id 来源（callable 返回 str|None）。从 real_nodes._trace_ctx
+        # 解析；测试可注入固定值或 None。
+        self._run_id_provider = run_id_provider
 
     def mode(self) -> str:
         return llm_routing_mode(self._settings)
+
+    def _run_id(self) -> str | None:
+        if self._run_id_provider is not None:
+            try:
+                return self._run_id_provider()
+            except Exception:  # noqa: BLE001 - telemetry 辅助，fail-open
+                return None
+        return None
 
     def _legacy(self):
         if self._legacy_client is None:
@@ -181,16 +193,19 @@ class LLMCapabilityService:
         mode = self.mode()
         if mode == "gateway":
             return self._gateway_generate(
-                task_type, output, system_prompt, user_prompt, model, enable_thinking
+                task_type, output, system_prompt, user_prompt, model, enable_thinking,
+                **kwargs,
             )
-        response = self._legacy_call(output, system_prompt, user_prompt, model, enable_thinking)
+        response = self._legacy_call(
+            output, system_prompt, user_prompt, model, enable_thinking, **kwargs
+        )
         if mode == "shadow":
             self._attach_shadow(response, task_type)
         return response
 
     def _legacy_call(
         self, output: str, system_prompt: str, user_prompt: str,
-        model: str | None, enable_thinking: bool,
+        model: str | None, enable_thinking: bool, **kwargs: Any,
     ) -> Any:
         client = self._legacy()
         if client is None:
@@ -200,7 +215,7 @@ class LLMCapabilityService:
         if output == "json":
             return client.generate_json(
                 system_prompt=system_prompt, user_prompt=user_prompt,
-                model=model, enable_thinking=enable_thinking,
+                model=model, enable_thinking=enable_thinking, **kwargs,
             )
         return client.generate_text(
             system_prompt=system_prompt, user_prompt=user_prompt,
@@ -209,7 +224,7 @@ class LLMCapabilityService:
 
     def _gateway_generate(
         self, task_type: Any, output: str, system_prompt: str, user_prompt: str,
-        model: str | None, enable_thinking: bool,
+        model: str | None, enable_thinking: bool, **kwargs: Any,
     ) -> Any:
         import asyncio
 
@@ -223,8 +238,16 @@ class LLMCapabilityService:
             "model": model,
             "enable_thinking": enable_thinking,
             "output": output,
+            # G2-M1 修复：透传 max_tokens/temperature 等，供 adapter 按需处理。
+            "max_tokens": kwargs.get("max_tokens"),
+            "temperature": kwargs.get("temperature"),
+            "top_p": kwargs.get("top_p"),
+            "presence_penalty": kwargs.get("presence_penalty"),
+            "frequency_penalty": kwargs.get("frequency_penalty"),
         }
-        result = asyncio.run(self._invoker.invoke(plan, payload))
+        result = asyncio.run(
+            self._invoker.invoke(plan, payload, run_id=self._run_id())
+        )
         if result.success and result.data is not None:
             return result.data
         from packages.providers import ProviderError
@@ -256,11 +279,12 @@ def build_llm_capability_service(
     budget: Any | None = None,
     circuit: Any | None = None,
     recorder: Any | None = None,
+    run_id_provider: Any | None = None,
 ) -> LLMCapabilityService:
     """构建 LLM 服务（plan + 执行 facade）。settings=None → get_settings()。
 
     默认不注入 budget/circuit/recorder（off/shadow 不受影响）；gateway 模式若要
-    完整保护，由调用方注入。
+    完整保护，由调用方注入（G2.8 wiring）。
     """
     from packages.capability_gateway.fallback import FallbackPolicy
     from packages.core.config import get_settings
@@ -282,16 +306,34 @@ def build_llm_capability_service(
     return LLMCapabilityService(
         settings=app, router=router, invoker=invoker,
         adapter_registry=adapter_registry, legacy_factory=_legacy_factory,
+        run_id_provider=run_id_provider,
     )
 
 
-def build_gateway_aware_llm_client(settings: Any = None, *, task_type: Any = None) -> Any:
+def build_gateway_aware_llm_client(
+    settings: Any = None,
+    *,
+    task_type: Any = None,
+    budget: Any | None = None,
+    circuit: Any | None = None,
+    recorder: Any | None = None,
+    run_id_provider: Any | None = None,
+) -> Any:
     """返回一个带 generate_json/generate_text 的 client 形状对象（绑定 task_type）。
 
     off/shadow → Legacy DeepSeek；gateway → Gateway 执行。作为 `call_tooling_json`
     等生产 call site 的 drop-in client。
+
+    budget/circuit/recorder/run_id_provider 透传到 RoutingInvoker（G2.3/G2.4/G2.5），
+    由 G2.8 wiring 注入。
     """
-    svc = build_llm_capability_service(settings)
+    svc = build_llm_capability_service(
+        settings,
+        budget=budget,
+        circuit=circuit,
+        recorder=recorder,
+        run_id_provider=run_id_provider,
+    )
 
     class _GatewayAwareClient:
         def generate_json(self, **kwargs: Any) -> Any:

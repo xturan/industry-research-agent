@@ -329,3 +329,50 @@ def test_request_fingerprint_stable_route_execution_id_unique():
     eid2 = r2.raw_response_metadata["capability_routing"]["route_execution_id"]
     assert fp1 == fp2  # 同请求 → 同指纹（确定性）
     assert eid1 != eid2  # 每次调用 → 唯一 route_execution_id
+
+
+# ── G2.8 修复回归：full protection stack + fallback + telemetry ──────────────
+
+def test_gateway_search_full_protection_fallback_records_telemetry():
+    """G2.8：budget/circuit/recorder/run_id + FallbackPolicy 全套注入时，
+    AnySearch ERROR → Tavily SUCCESS 真实回退，且 telemetry 记录两次 attempt
+    （run_id 归因 + fallback 标志 + 顶层 provider_used 元数据）。"""
+    from packages.capability_gateway import (
+        CircuitBreaker,
+        FallbackPolicy,
+        InMemoryCircuitStateStore,
+        InMemoryProviderAttemptRecorder,
+        policy_from_instance,
+    )
+    from packages.capability_gateway.budget import InProcessConcurrencyBudget
+
+    settings = _settings(enabled=True, search_mode="gateway")
+    recorder = InMemoryProviderAttemptRecorder()
+    policies = {
+        inst.instance_id: policy_from_instance(inst) for inst in default_registry().all()
+    }
+    provider = build_gateway_aware_search_provider(
+        settings,
+        anysearch_transport=_any_error,
+        tavily_transport=_tavily_success,
+        budget=InProcessConcurrencyBudget(policies),
+        circuit=CircuitBreaker(InMemoryCircuitStateStore()),
+        fallback_policy=FallbackPolicy(),
+        recorder=recorder,
+        run_id_provider=lambda: "run-42",
+    )
+    resp = provider.search(_request())
+    assert resp.status == ToolStatus.SUCCESS
+    # 顶层回退元数据（与 legacy _provider_metadata 同构）
+    assert resp.raw_response_metadata["provider_used"] == "tavily.fallback"
+    assert resp.raw_response_metadata["fallback_used"] is True
+    assert "tavily.fallback" in resp.raw_response_metadata["provider_attempted"]
+    # telemetry：2 次 attempt，主失败 + fallback 成功，run_id 归因
+    recs = recorder.all()
+    assert len(recs) == 2
+    assert recs[0].provider_instance_id == "anysearch.primary"
+    assert recs[0].outcome == "failed"
+    assert recs[1].provider_instance_id == "tavily.fallback"
+    assert recs[1].outcome == "success"
+    assert recs[0].run_id == recs[1].run_id == "run-42"
+    assert recs[1].fallback_used is True

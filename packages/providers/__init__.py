@@ -13,9 +13,11 @@ from packages.providers.base import (
     TextProviderResponse,
 )
 from packages.providers.deepseek import DeepSeekProviderClient
+from packages.providers.openrouter import OpenRouterProviderClient
 
 __all__ = [
     "DeepSeekProviderClient",
+    "OpenRouterProviderClient",
     "JsonProviderClient",
     "JsonProviderResponse",
     "ProviderAuthError",

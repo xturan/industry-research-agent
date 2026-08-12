@@ -45,21 +45,54 @@
 
 ## 🛡 智能网关（Capability Gateway）
 
-搜索与 LLM 请求经智能网关路由，提供生产级可靠性：
+搜索与 LLM 请求经智能网关路由，提供生产级可靠性。G2.8 已将网关与 workflow 正式接线：
+真实 run 的搜索/LLM 调用全部经网关的 路由 → 熔断 → 预算 → fallback → 遥测 全链路。
 
-- **Provider 路由**：AnySearch/Tavily 搜索、DeepSeek LLM 的路由与 fallback 链
+- **Provider 路由**（G2.2）：AnySearch/Tavily 搜索、DeepSeek LLM 的路由与 fallback 链
+- **LLM fallback**（G2.4b）：best-effort 任务（查询扩写/检索短语）DeepSeek 失败 →
+  OpenRouter 免费模型兜底（当前 `openai/gpt-oss-20b:free`，成本 $0）；STRICT 任务
+  设计上不 fallback（DeepSeek 失败 → 确定性模板降级）
 - **电路熔断**（G2.4）：连续失败自动 OPEN，避免雪崩；恢复探测
-- **并发预算**（G2.3）：按 provider 配额并发，防止过载
+- **并发预算**（G2.3）：按 provider 配额并发，跨进程共享 lease，防止过载
+- **遥测**（G2.5）：每次 provider attempt 记录可追踪事实（run_id 归因、token/result 用量、fallback 标志）
 - **健康观测 API**：
-  - `GET /api/gateway/health` — 网关综合健康（各 provider 快照 + circuit 状态）
-  - `GET /api/gateway/providers` — 各 provider 详细快照（成功率/超时/限流/5xx/延迟 p50/p95/fallback）
+  - `GET /gateway/health` — 网关综合健康（各 provider 快照 + circuit 状态）
+  - `GET /gateway/providers` — 各 provider 详细快照（成功率/超时/限流/5xx/延迟 p50/p95/fallback）
 
 ```
-GET /api/gateway/providers
+GET /gateway/providers
 → {"anysearch.primary": {"attempt_count": 120, "success_count": 118,
     "transport_success_rate": 0.98, "latency_p95_ms": 420,
     "dimensions": {"availability": "healthy", "latency": "normal", ...}}}
 ```
+
+**启用方式**（在 `.env` 追加后重启 api/worker）：
+
+```
+CAPABILITY_GATEWAY_ENABLED=true
+CAPABILITY_GATEWAY_SEARCH_MODE=gateway
+CAPABILITY_GATEWAY_LLM_MODE=gateway      # 或 off，仅启用搜索网关
+```
+
+三个开关齐设才生效：总开关 `ENABLED=false` 会压过任何 mode。Postgres 方言自动启用
+共享 store（PostgresLease 预算 / PostgresCircuit / PostgresRecorder）；SQLite/dev
+自动回退进程内 store，本地开发不崩。
+
+## 🧪 负载压测（Load Acceptance）
+
+并发上限与保护机制由 `scripts/` 下的压测脚本验证（需真实 PostgreSQL）：
+
+| 脚本 | 覆盖 | 实测结论（2026-08-12） |
+|---|---|---|
+| `g2_3_concurrency_acceptance.py` | 并发预算 G2.3b | PASS：overshoot=0、permit 无泄漏 |
+| `gateway_provider_load_acceptance.py` | Provider 编排 P1-P5 | PASS：50 并发守界、circuit 熔断恢复 |
+| `gateway_execution_load_acceptance.py` | 执行面 E1-E4 | PASS：200 tasks×50 workers、stale fencing 0 |
+| `gateway_network_load_acceptance.py` | 控制面 S1-S7 | PASS（DB 池扩容后） |
+| `gateway_workflow_load_acceptance.py` | workflow 端到端 W1-W4 | PASS：预算守界、run_id 归因、8 run 并发 |
+
+**关键发现**：`gateway_network_load_acceptance` 在默认 `DB_POOL_SIZE=5 + OVERFLOW=5`（共 10
+连接）下，60 并发 burst 后 cancel 请求会连接池饥饿阻塞 20-30s。扩容到 `20+20` 后 S1-S7
+全 PASS。`.env` 已按此校准。多进程部署时须满足 `N_procs × (size+overflow) << PG max_connections`。
 
 ## 🏗 架构
 
@@ -72,6 +105,7 @@ GET /api/gateway/providers
 - `real_nodes.py` — evidence 构建（slot 限量 + 维度保底）+ 分章节报告生成
 - `rag/rerankers.py` — Ollama/vLLM 精排（0-4 分档 + logprobs）
 - `capability_gateway/` — Provider 路由 + 并发预算 + 电路熔断 + 健康观测
+- `capability_gateway/wiring.py` — G2.8 生产接线（budget/circuit/recorder 装配 + 方言守卫）
 
 **生成流程**：
 ```

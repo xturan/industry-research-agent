@@ -64,7 +64,7 @@ def test_all_taxonomy_types_covered():
     from packages.capability_gateway import LLM_TASK_PROFILES
 
     assert set(LLM_TASK_PROFILES) == set(LLMTaskType)
-    assert len(LLM_TASK_PROFILES) == 10  # 9 + source_tier_classification
+    assert len(LLM_TASK_PROFILES) == 12  # 10 基础 + source_tier + 2 workflow 调用点
 
 
 def test_requirements_centralized():

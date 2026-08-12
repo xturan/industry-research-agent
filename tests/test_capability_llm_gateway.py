@@ -147,6 +147,51 @@ def test_gateway_best_effort_falls_back_to_openrouter():
     assert recs[0].route_execution_id == recs[1].route_execution_id  # 同 fallback chain
 
 
+def test_gateway_best_effort_max_tokens_rebuilds_openrouter_client():
+    """best-effort 任务带 max_tokens 时，OpenRouter adapter 按 payload 重建 client。
+
+    DeepSeek/OpenRouter 的 max_tokens 是构造时固定（generate_json 无 per-call 参数），
+    所以 max_tokens 传给 client_factory(max_tokens) 重建 client，而不是传给
+    generate_json。验证 factory 收到正确的 max_tokens。
+    """
+    import asyncio
+
+    from packages.capability_gateway.adapters import (
+        CapabilityInvocation,
+        _LlmClientAdapter,
+    )
+    from packages.capability_gateway.schemas import CapabilityType
+
+    factory_calls: list[int] = []
+
+    class _FakeORProbe:
+        def generate_json(self, **kwargs):
+            return _FakeResp(json_data={"ok": True}, provider="openrouter")
+
+        def generate_text(self, **kwargs):
+            return self.generate_json(**kwargs)
+
+    def _fake_or_factory(max_tokens):
+        factory_calls.append(max_tokens)
+        return _FakeORProbe()
+
+    adapter = _LlmClientAdapter(
+        "openrouter.free.best_effort", _FakeORProbe(), client_factory=_fake_or_factory
+    )
+    invocation = CapabilityInvocation(
+        capability=CapabilityType.LLM,
+        task_type="query_expansion",
+        provider_id="openrouter.free.best_effort",
+        payload={
+            "system_prompt": "s", "user_prompt": "u", "model": "m",
+            "enable_thinking": False, "output": "json", "max_tokens": 800,
+        },
+    )
+    result = asyncio.run(adapter.invoke(invocation))
+    assert result.success
+    assert factory_calls == [800]  # max_tokens 传给重建 factory
+
+
 # ── gateway：circuit OPEN 跳过 provider ──────────────────────────────────────
 
 def test_gateway_circuit_open_skips_to_fallback():

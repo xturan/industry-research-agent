@@ -419,6 +419,21 @@ def build_search_adapter_registry(
         def _invoke(invocation: CapabilityInvocation) -> CapabilityResult:
             request = invocation.payload.get("request")
             resp: SearchDiscoveryResponse = client.search(request)
+            failure_class = None
+            if resp.status != ToolStatus.SUCCESS:
+                # AnySearch/Tavily adapter 把 provider 错误吞成 ERROR response
+                #（不是抛异常），因此这里从 response errors 的 detail.status_code
+                # 还原 failure_class——否则 FailureClassifier 只能看到 success=False
+                # → OUTPUT_INVALID → FallbackPolicy 不允许 fallback，search 回退失效。
+                from packages.capability_gateway.circuit import _from_status_code
+
+                status_code = None
+                for err in resp.errors:
+                    detail = getattr(err, "detail", None) or {}
+                    status_code = detail.get("status_code") if isinstance(detail, dict) else None
+                    if status_code is not None:
+                        break
+                failure_class = _from_status_code(status_code) if status_code is not None else None
             return CapabilityResult(
                 provider_id=instance_id,
                 success=resp.status == ToolStatus.SUCCESS,
@@ -430,6 +445,7 @@ def build_search_adapter_registry(
                 # G2.5a 用量：Search 记录 result_count（透传，不记录 raw content）
                 result_count=len(resp.results),
                 request_count=1,
+                failure_class=failure_class,
             )
         return _invoke
 
@@ -480,11 +496,23 @@ class _LlmClientAdapter:
 
     异常原样抛出 → 由 Invoker 的 FailureClassifier 分类 + FallbackPolicy 决定
     是否尝试下一个 Provider（保持错误语义）。
+
+    max_tokens 处理（2026-08-12 审计修复）：DeepSeek client 的 max_tokens 是
+    构造时设定（providers/deepseek.py:69），generate_json 无 per-call 参数。
+    client_factory 允许按 payload.max_tokens 重建 client（大 prompt 如 editor1
+    喂 67 条 evidence 需要 max_tokens=4000-8000，默认 1200 会截断）。
     """
 
-    def __init__(self, instance_id: str, client: Any) -> None:
+    def __init__(
+        self,
+        instance_id: str,
+        client: Any,
+        *,
+        client_factory: Any | None = None,
+    ) -> None:
         self._instance_id = instance_id
         self._client = client
+        self._client_factory = client_factory
 
     async def invoke(self, invocation: CapabilityInvocation) -> CapabilityResult:
         payload = invocation.payload
@@ -494,11 +522,19 @@ class _LlmClientAdapter:
             "user_prompt": payload.get("user_prompt", ""),
             "model": payload.get("model"),
             "enable_thinking": payload.get("enable_thinking", False),
+            "temperature": payload.get("temperature"),
+            "top_p": payload.get("top_p"),
+            "presence_penalty": payload.get("presence_penalty"),
+            "frequency_penalty": payload.get("frequency_penalty"),
         }
+        client = self._client
+        max_tokens = payload.get("max_tokens")
+        if max_tokens and self._client_factory is not None:
+            client = self._client_factory(max_tokens=int(max_tokens))
         if output == "json":
-            resp = self._client.generate_json(**kwargs)
+            resp = client.generate_json(**kwargs)
         else:
-            resp = self._client.generate_text(**kwargs)
+            resp = client.generate_text(**kwargs)
         in_tok, out_tok = _usage_tokens(
             getattr(getattr(resp, "metadata", None), "usage", None)
         )
@@ -512,7 +548,11 @@ class _LlmClientAdapter:
 
 
 class _OpenRouterUnavailableClient:
-    """OpenRouter 未配置时的占位 client：invoke 即抛 ProviderConfigError。"""
+    """OpenRouter 未配置（无 key）时的占位 client：invoke 即抛 ProviderConfigError。
+
+    被 _build_openrouter_client 选用：key 存在 → 真实 client；key 缺失 →
+    占位（fallback 尝试时抛错，FailureClassifier 归类后决定是否继续 fallback）。
+    """
 
     def generate_json(self, **kwargs):  # noqa: ARG002
         from packages.providers import ProviderConfigError
@@ -521,6 +561,25 @@ class _OpenRouterUnavailableClient:
 
     def generate_text(self, **kwargs):  # noqa: ARG002
         return self.generate_json(**kwargs)
+
+
+def _build_openrouter_client(settings: Any = None, *, max_tokens: int | None = None):
+    """构造 OpenRouterProviderClient（settings 缺 key → 占位抛错 client）。"""
+    from packages.core.config import get_settings
+    from packages.providers import OpenRouterProviderClient, ProviderConfigError
+
+    app = settings or get_settings()
+    try:
+        return OpenRouterProviderClient(
+            api_key=app.openrouter_api_key,
+            base_url=app.openrouter_base_url,
+            model=app.openrouter_free_model,
+            timeout_seconds=app.openrouter_timeout_seconds,
+            max_retries=app.openrouter_max_retries,
+            max_tokens=max_tokens or app.openrouter_max_tokens,
+        )
+    except ProviderConfigError:
+        return _OpenRouterUnavailableClient()
 
 
 def build_llm_adapter_registry(
@@ -532,17 +591,42 @@ def build_llm_adapter_registry(
     """把现有同步 LLM client 桥接为 CapabilityAdapter。
 
     - deepseek_client 可注入（测试 fake）；默认从 settings 构造。
-    - openrouter_client 可注入；默认占位（未配置 → invoke 抛错）。
+    - openrouter_client 可注入；默认从 settings 构造真实 client
+      （key 缺失 → 占位抛错，best-effort fallback 路径真实兜底）。
+    - DeepSeek adapter 绑定 client_factory：按 payload.max_tokens 重建 client
+      （大 prompt 不被默认 1200 截断）。注入的 fake client 不重建（测试场景）。
+    - OpenRouter adapter 同样支持按 payload.max_tokens 重建（免费模型 context 小，
+      max_tokens 上限更严格）。
     """
     registry = ProviderAdapterRegistry()
     ds = deepseek_client if deepseek_client is not None else _build_deepseek_client(settings)
+
+    def _ds_with_max_tokens(max_tokens: int):
+        if deepseek_client is not None:
+            return deepseek_client  # 注入的 fake：已处理 kwargs，不重建
+        return _build_deepseek_client(settings, max_tokens=max_tokens)
+
     if ds is not None:
-        registry.register("deepseek.chat.primary", _LlmClientAdapter("deepseek.chat.primary", ds))
+        registry.register(
+            "deepseek.chat.primary",
+            _LlmClientAdapter("deepseek.chat.primary", ds, client_factory=_ds_with_max_tokens),
+        )
     or_client = (
-        openrouter_client if openrouter_client is not None else _OpenRouterUnavailableClient()
+        openrouter_client
+        if openrouter_client is not None
+        else _build_openrouter_client(settings)
     )
+
+    def _or_with_max_tokens(max_tokens: int):
+        if openrouter_client is not None:
+            return openrouter_client  # 注入的 fake：不重建
+        return _build_openrouter_client(settings, max_tokens=max_tokens)
+
     registry.register(
-        "openrouter.free.best_effort", _LlmClientAdapter("openrouter.free.best_effort", or_client)
+        "openrouter.free.best_effort",
+        _LlmClientAdapter(
+            "openrouter.free.best_effort", or_client, client_factory=_or_with_max_tokens
+        ),
     )
     return registry
 

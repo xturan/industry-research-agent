@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC
 from typing import Any
 
 from packages.capability_gateway.health import ProviderHealthSnapshot, build_health_snapshot
@@ -74,10 +75,10 @@ def build_provider_health(
     limit: int = 500,
 ) -> dict[str, dict[str, Any]]:
     """聚合各 provider 的健康快照（按 provider_instance_id 分组）。"""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     records = load_recent_attempts(session, limit=limit)
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=window_hours)
+    cutoff = datetime.now(UTC) - timedelta(hours=window_hours)
     by_provider: dict[str, list[ProviderAttemptRecord]] = {}
     for r in records:
         # sqlite 可能返回 ISO 字符串；解析为 datetime（naive 视为 UTC）
@@ -89,7 +90,7 @@ def build_provider_health(
                 started = None
         if started:
             if started.tzinfo is None:
-                started = started.replace(tzinfo=timezone.utc)
+                started = started.replace(tzinfo=UTC)
             if started < cutoff:
                 continue
         by_provider.setdefault(r.provider_instance_id, []).append(r)
@@ -122,19 +123,28 @@ def build_provider_health(
 def build_gateway_summary(session: Any, *, window_hours: float = 24.0) -> dict[str, Any]:
     """网关综合健康概览：各 provider 状态 + 电路 + 预算。"""
     providers = build_provider_health(session, window_hours=window_hours)
-    # circuit 状态（进程内 store 或默认 CLOSED）
+    # circuit 状态：优先读 G2.8 进程级 runtime 的共享 store（生产 Postgres，
+    # 与真实熔断状态一致）；读取失败回退 CLOSED。
     circuit_states: dict[str, str] = {}
+    store = None
     try:
-        from packages.capability_gateway.circuit import InMemoryCircuitStateStore
+        from packages.capability_gateway.wiring import get_gateway_runtime_cached
 
-        store = InMemoryCircuitStateStore()
-        for pid in providers:
-            try:
-                circuit_states[pid] = str(store.get(pid).state)
-            except Exception:
-                circuit_states[pid] = "CLOSED"
+        store = get_gateway_runtime_cached()["circuit"]._store
     except Exception:
-        circuit_states = {pid: "CLOSED" for pid in providers}
+        store = None
+    for pid in providers:
+        state = "CLOSED"
+        try:
+            if store is not None:
+                state = str(store.get(pid).state)
+            else:
+                from packages.capability_gateway.circuit import InMemoryCircuitStateStore
+
+                state = str(InMemoryCircuitStateStore().get(pid).state)
+        except Exception:
+            state = "CLOSED"
+        circuit_states[pid] = state
     return {
         "provider_count": len(providers),
         "providers": providers,

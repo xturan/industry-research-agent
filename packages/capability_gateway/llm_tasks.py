@@ -44,6 +44,10 @@ class LLMTaskType(StrEnum):
     CONSTRAINED_SYNTHESIS = "constrained_synthesis"
     STRUCTURED_REPAIR = "structured_repair"
 
+    # workflow 真实调用点（2026-08-12 审计修复：gateway 分类缺口 → KeyError 静默降级）
+    DIMENSION_SEARCH_TERMS = "dimension_search_terms"
+    EDITOR1_DIMENSION_SECTION = "editor1_dimension_section"
+
     # 本地 source-tier 分类（Ollama，strict）——验证 Gateway 是 provider-agnostic，
     # 不只是 DeepSeek+OpenRouter。
     SOURCE_TIER_CLASSIFICATION = "source_tier_classification"
@@ -109,6 +113,14 @@ LLM_TASK_PROFILES: dict[LLMTaskType, LLMTaskProfile] = {
         LLMTaskType.CONSTRAINED_SYNTHESIS, "受约束综合（严格 JSON）"),
     LLMTaskType.STRUCTURED_REPAIR: _strict(
         LLMTaskType.STRUCTURED_REPAIR, "结构化校验修复/retry（严格 JSON）"),
+    LLMTaskType.DIMENSION_SEARCH_TERMS: _strict(
+        LLMTaskType.DIMENSION_SEARCH_TERMS,
+        "一次 LLM 调用生成全部维度的搜索词（严格 JSON，stride 是检索质量）",
+    ),
+    LLMTaskType.EDITOR1_DIMENSION_SECTION: _strict(
+        LLMTaskType.EDITOR1_DIMENSION_SECTION,
+        "Editor1 按维度分章节生成（严格 JSON，stride 是报告质量）",
+    ),
     LLMTaskType.SOURCE_TIER_CLASSIFICATION: LLMTaskProfile(
         task_type=LLMTaskType.SOURCE_TIER_CLASSIFICATION,
         routing_policy=RoutingPolicy.STRICT,

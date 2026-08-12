@@ -193,6 +193,8 @@ def default_registry() -> CapabilityRegistry:
             CapabilityInstance(
                 # 不要把 openrouter/free 当成稳定"模型"——它是 Provider 内部的
                 # 动态免费模型路由入口，只是一种 best-effort fallback capability。
+                # 实际 model 由 settings.openrouter_free_model 决定（当前固定
+                # openai/gpt-oss-20b:free，见 config.py）。
                 instance_id="openrouter.free.best_effort",
                 capability=CapabilityType.LLM,
                 provider="openrouter",

@@ -104,6 +104,11 @@ from packages.capability_gateway.telemetry import (
     ProviderAttemptRecorder,
     create_attempt_tables,
 )
+from packages.capability_gateway.wiring import (
+    build_gateway_runtime,
+    ensure_gateway_tables,
+    get_gateway_runtime_cached,
+)
 
 __all__ = [
     # contract
@@ -191,5 +196,9 @@ __all__ = [
     "LLMShadowResult",
     "build_llm_capability_service",
     "build_gateway_aware_llm_client",
+    # production wiring (G2.8)
+    "build_gateway_runtime",
+    "ensure_gateway_tables",
+    "get_gateway_runtime_cached",
 ]
 

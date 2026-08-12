@@ -178,15 +178,30 @@ def call_tooling_json(
     task_type: str | None = None,
 ) -> StructuredLlmCallResult:
     settings = get_settings()
+    _gateway_aware = False
     if client is None:
         from packages.capability_gateway.llm_service import build_gateway_aware_llm_client
         from packages.capability_gateway.router import llm_routing_mode
+        from packages.capability_gateway.wiring import get_gateway_runtime_cached
 
         if llm_routing_mode(settings) == "gateway":
             # G2-M1：gateway 模式 → LLM 正式走 Capability Gateway（STRICT → DeepSeek）。
+            # G2.8 接线：注入 budget/circuit/recorder + run_id（来自 trace_ctx），
+            # 使 G2.3/G2.4/G2.5 真实生效（2026-08-12 审计修复）。
+            runtime = get_gateway_runtime_cached()
+            run_id_provider = None
+            if trace_ctx is not None and trace_ctx.get("run_id"):
+                def run_id_provider():  # noqa: E306
+                    return trace_ctx.get("run_id")
             resolved_client = build_gateway_aware_llm_client(
-                settings, task_type=task_type or "structured_draft"
+                settings,
+                task_type=task_type or "structured_draft",
+                budget=runtime["budget"],
+                circuit=runtime["circuit"],
+                recorder=runtime["recorder"],
+                run_id_provider=run_id_provider,
             )
+            _gateway_aware = True
         else:
             resolved_client = build_tooling_llm_client(max_tokens=max_tokens)
     else:
@@ -201,16 +216,22 @@ def call_tooling_json(
         )
 
     try:
-        response = resolved_client.generate_json(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            model=model or settings.deepseek_research_model,
-            enable_thinking=(
+        gen_kwargs: dict[str, Any] = {
+            "system_prompt": system_prompt,
+            "user_prompt": user_prompt,
+            "model": model or settings.deepseek_research_model,
+            "enable_thinking": (
                 settings.deepseek_enable_thinking
                 if enable_thinking is None
                 else enable_thinking
             ),
-        )
+        }
+        if _gateway_aware:
+            # max_tokens 只在 gateway 路径透传（adapter 按 payload 重建 client）；
+            # legacy DeepSeek client 的 max_tokens 在构造时固定，generate_json
+            # 不接受该参数（providers/deepseek.py:78）。
+            gen_kwargs["max_tokens"] = max_tokens or settings.deepseek_max_tokens
+        response = resolved_client.generate_json(**gen_kwargs)
     except Exception as exc:  # noqa: BLE001
         return StructuredLlmCallResult(
             payload=None,

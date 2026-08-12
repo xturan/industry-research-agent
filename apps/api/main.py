@@ -27,7 +27,7 @@ from apps.api.routes.workbench import router as workbench_router
 from packages.core.config import get_settings
 from packages.core.logging import bind_log_context, clear_log_context, configure_logging
 from packages.core.utils import utc_now_iso
-from packages.db.session import SessionLocal
+from packages.db.session import SessionLocal, get_engine
 from packages.research_gateway.errors import GatewayError
 from packages.tasks.metrics import metrics_content_type, metrics_payload, record_api_request
 
@@ -39,6 +39,15 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     configure_logging(settings.log_level)
     app.state.settings = settings
+    # G2.8 兜底：gateway 启用时幂等建 gateway 三表（正式来源是 alembic；
+    # 此处只保证跳过/落后 alembic 的新环境能启动）。仅 Postgres 方言生效。
+    if settings.capability_gateway_enabled:
+        try:
+            from packages.capability_gateway.wiring import ensure_gateway_tables
+
+            ensure_gateway_tables(get_engine())
+        except Exception:  # noqa: BLE001 - fail-open，网关表缺失不阻塞 API 启动
+            LOGGER.warning("GATEWAY_TABLE_BOOTSTRAP_FAILED", exc_info=True)
     yield
 
 
