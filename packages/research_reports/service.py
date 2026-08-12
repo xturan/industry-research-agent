@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 
+import sqlalchemy as sa
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
@@ -26,22 +27,24 @@ class ResearchReportService:
         self._ensure_table()
 
     def _ensure_table(self) -> None:
-        self.session.execute(
-            text(
-                "CREATE TABLE IF NOT EXISTS research_reports ("
-                "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                "  query TEXT NOT NULL,"
-                "  report_json TEXT NOT NULL,"
-                "  dossier_path TEXT,"
-                "  source_count INTEGER DEFAULT 0,"
-                "  evidence_count INTEGER DEFAULT 0,"
-                "  overall_confidence TEXT DEFAULT 'medium',"
-                "  search_rounds INTEGER DEFAULT 0,"
-                "  tavily_credits INTEGER DEFAULT 0,"
-                "  created_at TEXT NOT NULL"
-                ")"
-            )
+        # 跨方言建表：SQLAlchemy 生成 DDL（SQLite 的 AUTOINCREMENT / PG 的
+        # SERIAL/IDENTITY 都能正确渲染）。此前硬编码 SQLite 语法在 PG 上报错。
+        meta = sa.MetaData()
+        table = sa.Table(
+            "research_reports",
+            meta,
+            sa.Column("id", sa.Integer(), primary_key=True),
+            sa.Column("query", sa.Text(), nullable=False),
+            sa.Column("report_json", sa.Text(), nullable=False),
+            sa.Column("dossier_path", sa.Text(), nullable=True),
+            sa.Column("source_count", sa.Integer(), server_default="0"),
+            sa.Column("evidence_count", sa.Integer(), server_default="0"),
+            sa.Column("overall_confidence", sa.Text(), server_default="'medium'"),
+            sa.Column("search_rounds", sa.Integer(), server_default="0"),
+            sa.Column("tavily_credits", sa.Integer(), server_default="0"),
+            sa.Column("created_at", sa.Text(), nullable=False),
         )
+        table.create(bind=self.session.get_bind(), checkfirst=True)
         self.session.commit()
         columns = {
             str(column["name"])

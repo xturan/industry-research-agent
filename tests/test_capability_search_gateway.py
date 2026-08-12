@@ -376,3 +376,53 @@ def test_gateway_search_full_protection_fallback_records_telemetry():
     assert recs[1].outcome == "success"
     assert recs[0].run_id == recs[1].run_id == "run-42"
     assert recs[1].fallback_used is True
+
+
+def test_gateway_fallback_on_network_error_without_status_code():
+    """网络层错误（如 SSL UNEXPECTED_EOF，detail 只有 reason 无 status_code）
+    必须归类为 NETWORK 触发 fallback，而不是 OUTPUT_INVALID 不兜底。"""
+    from packages.capability_gateway import (
+        CircuitBreaker,
+        FallbackPolicy,
+        InMemoryCircuitStateStore,
+        InMemoryProviderAttemptRecorder,
+        policy_from_instance,
+    )
+    from packages.capability_gateway.budget import InProcessConcurrencyBudget
+
+    settings = _settings(enabled=True, search_mode="gateway")
+    recorder = InMemoryProviderAttemptRecorder()
+    policies = {
+        inst.instance_id: policy_from_instance(inst) for inst in default_registry().all()
+    }
+
+    # AnySearch 返回 SSL 断连错误（detail 只有 reason，无 status_code）
+    def _any_ssl_error(endpoint, payload, headers, timeout):
+        from packages.sources.search_discovery import SourceAnySearchError
+
+        raise SourceAnySearchError(
+            "AnySearch network error: [SSL: UNEXPECTED_EOF_WHILE_READING]",
+            retryable=True,
+            detail={"reason": "[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred"},
+        )
+
+    provider = build_gateway_aware_search_provider(
+        settings,
+        anysearch_transport=_any_ssl_error,
+        tavily_transport=_tavily_success,
+        budget=InProcessConcurrencyBudget(policies),
+        circuit=CircuitBreaker(InMemoryCircuitStateStore()),
+        fallback_policy=FallbackPolicy(),
+        recorder=recorder,
+    )
+    resp = provider.search(_request())
+    assert resp.status == ToolStatus.SUCCESS  # Tavily 兜底成功
+    assert resp.raw_response_metadata["fallback_used"] is True
+    assert resp.raw_response_metadata["provider_used"] == "tavily.fallback"
+    recs = recorder.all()
+    assert len(recs) == 2
+    assert recs[0].provider_instance_id == "anysearch.primary"
+    assert recs[0].outcome == "failed"
+    assert recs[0].failure_class == "network"  # 归类为 NETWORK 才允许 fallback
+    assert recs[1].provider_instance_id == "tavily.fallback"
+    assert recs[1].outcome == "success"

@@ -422,18 +422,31 @@ def build_search_adapter_registry(
             failure_class = None
             if resp.status != ToolStatus.SUCCESS:
                 # AnySearch/Tavily adapter 把 provider 错误吞成 ERROR response
-                #（不是抛异常），因此这里从 response errors 的 detail.status_code
-                # 还原 failure_class——否则 FailureClassifier 只能看到 success=False
-                # → OUTPUT_INVALID → FallbackPolicy 不允许 fallback，search 回退失效。
-                from packages.capability_gateway.circuit import _from_status_code
+                #（不是抛异常），因此这里从 response errors 还原 failure_class——
+                # 否则 FailureClassifier 只能看到 success=False → OUTPUT_INVALID →
+                # FallbackPolicy 不允许 fallback，search 回退失效。
+                from packages.capability_gateway.circuit import (
+                    ProviderFailureClass,
+                    _from_status_code,
+                )
 
                 status_code = None
+                retryable = None
                 for err in resp.errors:
                     detail = getattr(err, "detail", None) or {}
-                    status_code = detail.get("status_code") if isinstance(detail, dict) else None
-                    if status_code is not None:
-                        break
-                failure_class = _from_status_code(status_code) if status_code is not None else None
+                    if isinstance(detail, dict):
+                        status_code = detail.get("status_code")
+                        if status_code is not None:
+                            break
+                        # 网络层错误（如 SSL UNEXPECTED_EOF）detail 只有 reason，
+                        # 无 status_code → 按 retryable 兜底为 NETWORK。
+                        if detail.get("reason") and retryable is None:
+                            retryable = bool(getattr(err, "retryable", False))
+                if status_code is not None:
+                    failure_class = _from_status_code(status_code)
+                elif retryable:
+                    # 无 status_code 但标记可重试 → 网络/上游不稳定，可 fallback
+                    failure_class = ProviderFailureClass.NETWORK
             return CapabilityResult(
                 provider_id=instance_id,
                 success=resp.status == ToolStatus.SUCCESS,

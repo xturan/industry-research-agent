@@ -186,7 +186,10 @@ def default_registry() -> CapabilityRegistry:
                     "tool_calling": True,
                     "max_context_tokens": 64000,
                 },
-                limits={"max_concurrency": 10},
+                # 实测校准（2026-08-12 provider_quota_calibration）：
+                # DeepSeek 并发 30 仍 100% 成功、0 限流 → 安全值 = 30×0.6 = 18。
+                # 原 10 过于保守（DeepSeek 可并行，延迟随并发略降）。
+                limits={"max_concurrency": 18},
                 routing={"priority": 100, "cost_tier": "paid"},
                 reliability="high",
             ),
@@ -206,7 +209,10 @@ def default_registry() -> CapabilityRegistry:
                     "tool_calling": False,
                     "max_context_tokens": 8000,
                 },
-                limits={"max_concurrency": 5},
+                # 实测校准（2026-08-12）：free 层无 429 限流，但上游随机失败
+                # （~40% ProviderRetryableError）+ 高延迟（p50 2.4s / p95 9.6s）。
+                # 它是不可靠兜底，不应高并发 → 安全值 2（= 最高全成功 1 × 0.6 附近）。
+                limits={"max_concurrency": 2},
                 routing={"priority": 20, "cost_tier": "free"},
                 reliability="best_effort",
             ),
@@ -218,7 +224,11 @@ def default_registry() -> CapabilityRegistry:
                 enabled=True,
                 roles=[CapabilityRole.PRIMARY.value],
                 features={"max_results": 20, "fresh_web": True},
-                limits={"max_concurrency": 20},
+                # 实测校准（2026-08-12）：无 429 限流，但上游 SSL 偶发断连
+                # （UNEXPECTED_EOF）导致 ~10-30% 失败，且 p95 高达 5-28s。
+                # 成功率随并发随机波动，安全值取 10（降 20 保守化，避免并发放大
+                # 上游不稳定；fallback 由 Tavily 承担）。
+                limits={"max_concurrency": 10},
                 routing={"priority": 100, "cost_tier": "paid"},
                 reliability="high",
             ),
