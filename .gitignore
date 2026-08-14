@@ -27,6 +27,18 @@ data/tmp/*
 !data/tmp/.gitkeep
 .codex/
 .claude/settings.local.json
+# ── 开发工作流（Claude/Codex 专属，不入库）2026-08-13 ──
+.agent/
+.agents/
+.claude/
+AGENTS.md
+CONTEXT.md
+PROJECT_PROGRESS.md
+command.txt
+test1.py
+plugins/
+.vscode/
+unsloth_compiled_cache/
 # git 工作树临时目录
 .claude/worktrees/
 # 本地模型权重（5.8GB Qwen，可重下）

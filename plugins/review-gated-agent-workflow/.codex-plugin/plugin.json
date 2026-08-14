@@ -1,6 +1,0 @@
-{
-  "name": "review-gated-agent-workflow",
-  "version": "0.1.0",
-  "description": "A universal review-gated Codex workflow for explicit PRD design, human review, PLAN creation, scoped implementation, validation, and workflow evolution.",
-  "skills": "./skills/"
-}
