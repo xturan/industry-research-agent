@@ -1,0 +1,56 @@
+{
+  "query_id": "K07",
+  "query": "某县低空经济项目投运情况（证据缺失场景）",
+  "plan": {
+    "normalized_query": "某县低空经济项目投运情况",
+    "dimension_plan": [
+      {
+        "dimension_id": "dim_policy",
+        "dimension_type": "local_rollout",
+        "research_question": "该县低空经济项目是否已正式投运？",
+        "why_it_matters": "区分在建与投运",
+        "coverage_required": "覆盖项目状态、投产时间与运营主体",
+        "expected_section_heading": "项目投运情况",
+        "source_priority": "B",
+        "source_families": ["official_news", "public_resource_transaction"],
+        "caliber_terms": ["低空经济"]
+      }
+    ],
+    "source_obligations": [
+      {"obligation_id": "obl_project", "source_family": "public_resource_transaction", "required_for": "项目执行", "min_required_evidence": 2}
+    ],
+    "query_requirements": {"needs_company_disclosure": false, "target_location": "某县", "is_location_sensitive": true}
+  },
+  "sources": [
+    {
+      "source_id": "src_k1", "source_family": "official_news", "tier": "C",
+      "title": "某县推进低空经济试点工作",
+      "url": "https://example.gov.cn/2025/xian",
+      "full_text": "某县正推进低空经济试点，相关项目尚在前期准备阶段，具体投运时间未公布。"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "ev_k1", "source_id": "src_k1",
+      "summary": "某县低空经济试点项目尚在前期准备阶段，投运时间未公布。",
+      "support_type": "background_support", "support_strength": 0.45, "specificity": "local_context",
+      "region": "某县", "time_ref": "2025",
+      "quoted_span": "相关项目尚在前期准备阶段，具体投运时间未公布", "limitations": ["缺少项目投运状态与主体信息"]
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "claim_project_not_in_service", "text": "该县低空经济项目已正式投运",
+      "supported": false, "evidence_ids": [],
+      "required_source_family": "public_resource_transaction", "claim_family": "execution_evidence", "limitations": ["无证据支撑，仅外部报道提及"]
+    }
+  ],
+  "draft": {
+    "sections": [
+      {
+        "section_id": "sec_1", "title": "项目投运情况",
+        "markdown_body": "<!-- claim_ids: claim_project_not_in_service, ghost_claim -->\n<!-- evidence_ids: ev_k1, ghost_ev -->\n某县低空经济试点项目尚在前期准备阶段。"
+      }
+    ]
+  }
+}

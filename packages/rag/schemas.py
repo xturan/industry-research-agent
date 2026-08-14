@@ -16,7 +16,11 @@ class RetrievalFilters:
     published_from: datetime | None = None
     published_to: datetime | None = None
     document_id: int | None = None
+    document_ids: list[int] | None = None   # Multi-document scoping
     theme_id: int | None = None
+    chunk_levels: list[str] | None = None   # e.g. ["child"], ["parent"]
+    backend_modes: list[str] | None = None  # e.g. ["hybrid"], ["lexical"]
+    rerank_mode: str | None = None          # e.g. "lane_balance_v1", "llm_reranker_v1"
     limit: int = 10
 
     def to_dict(self) -> dict[str, Any]:
@@ -27,6 +31,10 @@ class RetrievalFilters:
             "published_from": self.published_from.isoformat() if self.published_from else None,
             "published_to": self.published_to.isoformat() if self.published_to else None,
             "document_id": self.document_id,
+            "document_ids": self.document_ids,
+            "chunk_levels": self.chunk_levels,
+            "backend_modes": self.backend_modes,
+            "rerank_mode": self.rerank_mode,
             "theme_id": self.theme_id,
             "limit": self.limit,
         }
@@ -66,6 +74,7 @@ class RetrievalResponse:
     total_candidates: int
     items: list[RetrievalChunkItem]
     notes: list[str] = field(default_factory=list)
+    audit: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -75,6 +84,7 @@ class RetrievalResponse:
             "total_candidates": self.total_candidates,
             "returned_count": len(self.items),
             "notes": self.notes,
+            "audit": self.audit,
             "items": [item.to_dict() for item in self.items],
         }
 

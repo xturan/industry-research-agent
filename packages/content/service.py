@@ -21,6 +21,7 @@ from packages.content.schemas import (
     ContentGenerationResponse,
     GeneratedContentDraft,
 )
+from packages.core.run_log import CompactRunLogger
 from packages.db.models import Run, RunStatus, RunStep, RunType, StepStatus
 from packages.policy.service import PolicyChecker
 
@@ -47,6 +48,7 @@ class ContentFactoryService:
         self.session = session
         self.repository = repository or ContentAssetRepository(session)
         self.provider_resolution = provider_resolution
+        self._run_logger: CompactRunLogger | None = None
 
     def generate(self, request: ContentGenerateRequest) -> ContentGenerationResponse:
         research, source_run = self._load_research_source(request)
@@ -57,6 +59,16 @@ class ContentFactoryService:
             source_research_run_id=source_research_run_id,
             theme_id=source_run.theme_id if source_run is not None else None,
             resolved_mode=resolution.resolved_mode.value,
+        )
+        self._run_logger = CompactRunLogger(task_name="content_generate", run_id=generation_run.id)
+        self._run_logger.start(
+            input_summary=generation_run.input_json,
+            decision_summary=[
+                "load validated research memo",
+                "resolve content provider",
+                "generate requested content formats",
+                "persist assets after policy checks",
+            ],
         )
 
         try:
@@ -123,6 +135,8 @@ class ContentFactoryService:
                 output_json={"error": str(exc)},
             )
             raise ContentGenerationError(str(exc)) from exc
+        finally:
+            self._run_logger = None
 
     def get_asset(self, asset_id: int) -> ContentAssetView | None:
         row = self.repository.get_asset(asset_id)
@@ -221,6 +235,14 @@ class ContentFactoryService:
             step.finished_at = datetime.now(timezone.utc)
             self.session.add(step)
             self.session.commit()
+            if self._run_logger is not None:
+                self._run_logger.step(
+                    step_name=step_name,
+                    agent_name=agent_name,
+                    input_summary=input_json,
+                    status=StepStatus.FAILED.value,
+                    error=str(exc),
+                )
             raise
 
         step.status = StepStatus.SUCCEEDED
@@ -231,6 +253,14 @@ class ContentFactoryService:
             step.output_json = self._to_output_json(result)
         self.session.add(step)
         self.session.commit()
+        if self._run_logger is not None:
+            self._run_logger.step(
+                step_name=step_name,
+                agent_name=agent_name,
+                input_summary=input_json,
+                output_summary=step.output_json,
+                status=StepStatus.SUCCEEDED.value,
+            )
         return result
 
     def _persist_assets(
@@ -279,6 +309,8 @@ class ContentFactoryService:
         run.output_json = output_json
         self.session.add(run)
         self.session.commit()
+        if self._run_logger is not None:
+            self._run_logger.finish(status=status.value, output_summary=output_json)
 
     def _to_output_json(self, value: Any) -> dict[str, Any] | None:
         if value is None:

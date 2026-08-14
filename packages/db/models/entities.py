@@ -373,7 +373,11 @@ class ContentFeedbackEvent(TimestampMixin, Base):
 
 class Run(TimestampMixin, Base):
     __tablename__ = "runs"
-    __table_args__ = (Index("ix_runs_status_started_at", "status", "started_at"),)
+    __table_args__ = (
+        Index("ix_runs_status_started_at", "status", "started_at"),
+        # G1.2 idempotent Run submission: exactly-one Run per (scope, key).
+        UniqueConstraint("idempotency_scope", "idempotency_key", name="uq_runs_idempotency"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     run_type: Mapped[RunType] = mapped_column(enum_column(RunType, "run_type"), nullable=False)
@@ -389,9 +393,21 @@ class Run(TimestampMixin, Base):
     output_json: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # G1.2 idempotency (scope is a stable "default" until a tenant/auth domain lands).
+    idempotency_scope: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    idempotency_key: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    idempotency_request_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # G1.5 cooperative cancellation: set when a cancel is REQUESTED but the run is
+    # still RUNNING; the worker observes it and stops at the next safe boundary.
+    cancel_requested_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     theme: Mapped[Theme | None] = relationship(back_populates="runs")
     steps: Mapped[list[RunStep]] = relationship(back_populates="run", cascade="all, delete-orphan")
+    events: Mapped[list[RunEvent]] = relationship(
+        back_populates="run", cascade="all, delete-orphan"
+    )
     delivery_jobs: Mapped[list[DeliveryJob]] = relationship(back_populates="source_run")
     task_jobs: Mapped[list[TaskJob]] = relationship(back_populates="source_run")
 
@@ -501,6 +517,10 @@ class TaskJob(TimestampMixin, Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     max_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=3)
+    # G3: fencing token——每次 claim +1；stale worker finalize 时用旧 generation 写 0 行。
+    execution_generation: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
     available_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -631,6 +651,30 @@ class RunStep(TimestampMixin, Base):
     run: Mapped[Run] = relationship(back_populates="steps")
 
 
+class RunEvent(TimestampMixin, Base):
+    """G1.4 append-only timeline of a Research Run (NOT the source of truth for
+    Run.status — Run.status remains authoritative)."""
+
+    __tablename__ = "run_events"
+    __table_args__ = (
+        Index("ix_run_events_run_id_sequence", "run_id", "sequence"),
+        UniqueConstraint("run_id", "sequence", name="uq_run_events_run_seq"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_id: Mapped[int] = mapped_column(
+        ForeignKey("runs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    event_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    stage: Mapped[str] = mapped_column(String(32), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    message: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    payload_json: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+
+    run: Mapped[Run] = relationship(back_populates="events")
+
+
 class MemoryRecord(TimestampMixin, Base):
     __tablename__ = "memory_records"
     __table_args__ = (Index("ix_memory_records_memory_type_scope_key", "memory_type", "scope_key"),)
@@ -649,3 +693,144 @@ class MemoryRecord(TimestampMixin, Base):
     )
 
     # TODO: Switch to pgvector columns + ANN index when vector retrieval service is integrated.
+
+
+# ── Graph v1 Research Records ──
+
+
+class ResearchGraphCheckpoint(Base):
+    __tablename__ = "research_graph_checkpoints"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    checkpoint_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    thread_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    current_node: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    state_json: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    saved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class ResearchGraphSourceRecord(Base):
+    __tablename__ = "research_graph_sources"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    source_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    url: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    domain: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    title: Mapped[str | None] = mapped_column(Text, nullable=True)
+    source_family: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    source_tier: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    source_role: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    usage_role: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    search_phrase: Mapped[str | None] = mapped_column(Text, nullable=True)
+    discovered_by_phrase: Mapped[str | None] = mapped_column(Text, nullable=True)
+    published_date: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    search_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    raw_text_meta_json: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    source_quality_json: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    payload_json: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+
+
+class ResearchGraphEvidenceRecord(Base):
+    __tablename__ = "research_graph_evidence_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    evidence_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    source_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    support_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    support_strength: Mapped[float | None] = mapped_column(Float, nullable=True)
+    specificity: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    limitations_json: Mapped[list[object] | None] = mapped_column(JSON, nullable=True)
+    payload_json: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+
+
+class ResearchGraphClaimRecord(Base):
+    __tablename__ = "research_graph_claims"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    claim_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    supported: Mapped[bool] = mapped_column(Boolean, default=False)
+    evidence_ids_json: Mapped[list[object] | None] = mapped_column(JSON, nullable=True)
+    required_source_family: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    support_requirement: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    payload_json: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+
+
+class ResearchGraphClaimEvidenceLink(Base):
+    __tablename__ = "research_graph_claim_evidence_links"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    claim_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    evidence_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    link_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    payload_json: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+
+
+class ResearchGraphClaimVerificationRecord(Base):
+    __tablename__ = "research_graph_claim_verifications"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    claim_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    support_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    support_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    evidence_ids_json: Mapped[list[object] | None] = mapped_column(JSON, nullable=True)
+    source_ids_json: Mapped[list[object] | None] = mapped_column(JSON, nullable=True)
+    notes_json: Mapped[list[object] | None] = mapped_column(JSON, nullable=True)
+    payload_json: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+
+
+class ResearchGraphDraftVersionRecord(Base):
+    __tablename__ = "research_graph_draft_versions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    draft_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    draft_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    report_markdown: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sections_json: Mapped[list[object] | None] = mapped_column(JSON, nullable=True)
+    payload_json: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+
+
+class ResearchGraphReviewIssueRecord(Base):
+    __tablename__ = "research_graph_review_issues"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    issue_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    severity: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    issue_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    target_claim_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    required_fix: Mapped[str | None] = mapped_column(Text, nullable=True)
+    suggested_search_queries_json: Mapped[list[object] | None] = mapped_column(JSON, nullable=True)
+    payload_json: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+
+
+class ResearchGraphQualityGateResult(Base):
+    __tablename__ = "research_graph_quality_gate_results"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    gate_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    decision: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    gate_route_to: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    route_to: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    gate_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    required_actions_json: Mapped[list[object] | None] = mapped_column(JSON, nullable=True)
+    quality_scores_json: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    payload_json: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())

@@ -1,0 +1,97 @@
+{
+  "query_id": "M03",
+  "query": "2025年合肥市低空经济产业政策、上市公司披露与项目落地情况",
+  "plan": {
+    "normalized_query": "2025年合肥市低空经济产业政策与项目落地情况",
+    "dimension_plan": [
+      {
+        "dimension_id": "dim_policy",
+        "dimension_type": "local_rollout",
+        "research_question": "合肥市低空经济政策与地方落地进展如何？",
+        "why_it_matters": "判断政策到项目传导链条",
+        "coverage_required": "覆盖政策原文与地方实施方案",
+        "expected_section_heading": "政策主线与地方落地",
+        "source_priority": "B",
+        "source_families": ["official_policy", "official_news", "public_resource_transaction"],
+        "caliber_terms": ["低空经济", "eVTOL"]
+      },
+      {
+        "dimension_id": "dim_execution",
+        "dimension_type": "execution",
+        "research_question": "合肥低空经济项目是否已进入实际执行阶段？",
+        "why_it_matters": "区分政策宣示与项目落地",
+        "coverage_required": "覆盖项目招标、中标与开工信息",
+        "expected_section_heading": "项目与执行证据",
+        "source_priority": "B",
+        "source_families": ["public_resource_transaction", "official_policy"],
+        "caliber_terms": ["低空经济"]
+      }
+    ],
+    "source_obligations": [
+      {"obligation_id": "obl_policy", "source_family": "official_policy", "required_for": "政策基线", "min_required_evidence": 3},
+      {"obligation_id": "obl_execution", "source_family": "public_resource_transaction", "required_for": "项目执行", "min_required_evidence": 2}
+    ],
+    "query_requirements": {"needs_company_disclosure": false, "target_location": "合肥", "is_location_sensitive": true}
+  },
+  "sources": [
+    {
+      "source_id": "src_001", "source_family": "official_policy", "tier": "A",
+      "title": "合肥市支持低空经济发展若干政策",
+      "url": "https://www.hefei.gov.cn/xxgk/2025/lowaltitude",
+      "full_text": "为促进低空经济高质量发展，合肥市于2025年出台支持低空经济发展若干政策，重点支持eVTOL研发制造与场景应用。"
+    },
+    {
+      "source_id": "src_002", "source_family": "public_resource_transaction", "tier": "B",
+      "title": "合肥低空经济产业园一期工程施工招标公告",
+      "url": "https://ggzy.hefei.gov.cn/2025/zbgg/045",
+      "full_text": "合肥低空经济产业园一期工程已发布施工招标公告，项目位于高新区，计划2025年9月开工，投资约12亿元。"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "ev_001", "source_id": "src_001",
+      "summary": "合肥市2025年出台支持低空经济发展若干政策，重点支持eVTOL研发制造与场景应用。",
+      "support_type": "direct_support", "support_strength": 0.9, "specificity": "policy_statement",
+      "region": "合肥", "time_ref": "2025", "policy_tool": ["财政补贴"],
+      "quoted_span": "合肥市于2025年出台支持低空经济发展若干政策", "limitations": []
+    },
+    {
+      "evidence_id": "ev_002", "source_id": "src_001",
+      "summary": "政策重点支持eVTOL研发制造与场景应用。",
+      "support_type": "direct_support", "support_strength": 0.85, "specificity": "policy_statement",
+      "region": "合肥", "time_ref": "2025",
+      "quoted_span": "重点支持eVTOL研发制造与场景应用", "limitations": []
+    },
+    {
+      "evidence_id": "ev_003", "source_id": "src_002",
+      "summary": "合肥低空经济产业园一期工程已发布施工招标公告，计划2025年9月开工，投资约12亿元。",
+      "support_type": "primary_support", "support_strength": 0.88, "specificity": "project_announcement",
+      "region": "合肥", "time_ref": "2025", "stage": "招标", "amount": "12亿元", "project_name": "合肥低空经济产业园一期",
+      "quoted_span": "合肥低空经济产业园一期工程已发布施工招标公告", "limitations": []
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "claim_policy_hefei", "text": "合肥市已出台支持低空经济发展的专项政策",
+      "supported": true, "evidence_ids": ["ev_001", "ev_002"],
+      "required_source_family": "official_policy", "claim_family": "policy_basis", "limitations": []
+    },
+    {
+      "claim_id": "claim_execution_hefei", "text": "合肥低空经济产业园一期工程已进入招标阶段",
+      "supported": true, "evidence_ids": ["ev_003"],
+      "required_source_family": "public_resource_transaction", "claim_family": "execution_evidence", "limitations": []
+    }
+  ],
+  "draft": {
+    "sections": [
+      {
+        "section_id": "sec_1", "title": "政策主线与地方落地",
+        "markdown_body": "<!-- claim_ids: claim_policy_hefei -->\n<!-- evidence_ids: ev_001, ev_002 -->\n合肥市已出台支持低空经济发展的专项政策。"
+      },
+      {
+        "section_id": "sec_2", "title": "项目与执行证据",
+        "markdown_body": "<!-- claim_ids: claim_execution_hefei -->\n<!-- evidence_ids: ev_003 -->\n合肥低空经济产业园一期工程已进入招标阶段。"
+      }
+    ]
+  }
+}

@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from packages.db.models import DocumentStatus, SourceType
 from packages.rag.schemas import RetrievalFilters
+from packages.sources.schemas import UserProvidedSource
 
 
 class ResearchMode(StrEnum):
@@ -39,6 +40,11 @@ RESEARCH_MODEL_STEPS = (
 class ResearchAnalyzeRequest(BaseModel):
     query: str = Field(min_length=1, max_length=400)
     mode: ResearchMode = ResearchMode.MOCK
+    research_strategy: str | None = Field(
+        default=None,
+        description="'quick' (2 rounds), 'standard' (3 rounds), 'deep' (5 rounds). "
+        "When set, routes to Deep Research pipeline instead of legacy agent pipeline.",
+    )
     provider: ResearchProvider | None = None
     model: str | None = Field(default=None, min_length=1, max_length=200)
     step_models: dict[str, str] | None = None
@@ -52,6 +58,16 @@ class ResearchAnalyzeRequest(BaseModel):
     published_to: datetime | None = None
     document_id: int | None = None
     theme_id: int | None = None
+    enable_source_acquisition: bool = False
+    max_sources: int | None = Field(default=None, ge=1, le=50)
+    max_docs_per_source: int | None = Field(default=None, ge=1, le=100)
+    max_evidence_per_source: int | None = Field(default=None, ge=1, le=100)
+    enable_pdf_processing: bool = False
+    max_pdf_attachments_per_source: int | None = Field(default=None, ge=1, le=50)
+    max_pdf_pages_per_attachment: int | None = Field(default=None, ge=1, le=500)
+    source_ids: list[str] | None = None
+    include_user_sources: bool = True
+    user_provided_sources: list[UserProvidedSource] = Field(default_factory=list)
 
     @field_validator("step_models")
     @classmethod
@@ -78,6 +94,21 @@ class ResearchAnalyzeRequest(BaseModel):
                 )
             normalized[step_key] = model_value
         return normalized
+
+    @field_validator("source_ids")
+    @classmethod
+    def validate_source_ids(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        normalized: list[str] = []
+        seen: set[str] = set()
+        for item in value:
+            source_id = item.strip()
+            if not source_id or source_id in seen:
+                continue
+            normalized.append(source_id)
+            seen.add(source_id)
+        return normalized or None
 
     def to_retrieval_filters(self) -> RetrievalFilters:
         return RetrievalFilters(
@@ -176,6 +207,20 @@ class EvidenceSummary(BaseModel):
     top_evidence: list[EvidenceReference]
 
 
+class SourceAcquisitionSummary(BaseModel):
+    enabled: bool
+    routed_sources: list[str] = Field(default_factory=list)
+    routing_recommendations: list[dict[str, object]] = Field(default_factory=list)
+    documents_found: int = 0
+    evidence_items_found: int = 0
+    bundle_id: str | None = None
+    source_quality_summary: dict[str, object] | None = None
+    source_traces: list[dict[str, object]] = Field(default_factory=list)
+    truncated_sources: list[str] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)
+    pdf_summary: dict[str, object] | None = None
+
+
 class ResearchAnalysisResult(BaseModel):
     run_id: int
     query: str
@@ -192,6 +237,7 @@ class ResearchAnalysisResult(BaseModel):
     final_memo: FinalResearchMemo
     confidence_score: float = Field(ge=0.0, le=1.0)
     insufficient_evidence: bool
+    source_acquisition: SourceAcquisitionSummary | None = None
     workflow_notes: list[str] = Field(default_factory=list)
     provider_metadata: dict[str, object] | None = None
     error_message: str | None = None

@@ -1,0 +1,37 @@
+[
+  {
+    "case_id": "X01",
+    "label": "local_disclosure_combo_hefei",
+    "query": "2025年合肥低空经济上市公司年报披露与地方政策项目公示官方来源",
+    "max_rounds": 2,
+    "max_loop_count": 1
+  },
+  {
+    "case_id": "X02",
+    "label": "policy_statistics_combo",
+    "query": "2025年低空经济政策目标与统计数据官方证据",
+    "max_rounds": 2,
+    "max_loop_count": 1
+  },
+  {
+    "case_id": "X03",
+    "label": "disclosure_project_combo",
+    "query": "2025年低空经济上市公司示范项目落地与年报披露官方证据",
+    "max_rounds": 2,
+    "max_loop_count": 1
+  },
+  {
+    "case_id": "X04",
+    "label": "multi_city_compare",
+    "query": "2025年合肥和武汉低空经济地方政策项目公示官方来源对比",
+    "max_rounds": 2,
+    "max_loop_count": 1
+  },
+  {
+    "case_id": "X05",
+    "label": "disclosure_procurement_combo",
+    "query": "2025年低空经济上市公司中标公告与年报披露官方证据",
+    "max_rounds": 2,
+    "max_loop_count": 1
+  }
+]

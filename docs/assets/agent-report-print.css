@@ -1,0 +1,72 @@
+@page {
+  size: A4;
+  margin: 18mm 16mm;
+}
+
+body {
+  font-family: "Noto Sans SC", "Microsoft YaHei", "SimHei", Arial, sans-serif;
+  color: #111827;
+  line-height: 1.55;
+  font-size: 13.5px;
+}
+
+h1 {
+  font-size: 30px;
+  border-bottom: 2px solid #0f172a;
+  padding-bottom: 8px;
+}
+
+h2 {
+  font-size: 22px;
+  margin-top: 28px;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 4px;
+}
+
+h3 {
+  font-size: 17px;
+  margin-top: 20px;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0;
+  font-size: 12px;
+}
+
+th, td {
+  border: 1px solid #cbd5e1;
+  padding: 6px 8px;
+  vertical-align: top;
+}
+
+th {
+  background: #f1f5f9;
+}
+
+code {
+  font-family: Consolas, "Courier New", monospace;
+  background: #f8fafc;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+pre {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 10px;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+img {
+  max-width: 100%;
+}
+
+blockquote {
+  border-left: 4px solid #94a3b8;
+  padding-left: 12px;
+  color: #475569;
+}

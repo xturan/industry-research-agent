@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invest Agent — 研究情报工作台</title>
+<style>
+:root {
+  --bg: #0f1117; --panel: #1a1d27; --border: #2a2d3a;
+  --text: #e1e4eb; --muted: #8b8fa3; --accent: #6c8cff;
+  --green: #4ade80; --red: #f87171; --amber: #fbbf24;
+  --radius: 8px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; }
+header { background:var(--panel); border-bottom:1px solid var(--border); padding:12px 24px; display:flex; align-items:center; justify-content:space-between; }
+header h1 { font-size:18px; font-weight:600; color:var(--accent); }
+header .status { font-size:12px; color:var(--muted); }
+#app { display:flex; flex:1; overflow:hidden; }
+.sidebar { width:280px; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; }
+.sidebar-section { padding:16px; border-bottom:1px solid var(--border); }
+.sidebar-section h3 { font-size:12px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; letter-spacing:.5px; }
+.theme-item { padding:8px 12px; border-radius:var(--radius); cursor:pointer; font-size:13px; margin-bottom:4px; }
+.theme-item:hover { background:rgba(108,140,255,.08); }
+.theme-item.active { background:rgba(108,140,255,.15); border-left:3px solid var(--accent); }
+.theme-item .name { font-weight:500; }
+.theme-item .meta { font-size:11px; color:var(--muted); }
+.theme-form { display:flex; gap:6px; margin-top:10px; }
+.theme-form input { flex:1; padding:6px 10px; border:1px solid var(--border); border-radius:4px; background:var(--bg); color:var(--text); font-size:12px; }
+.theme-form button { padding:6px 10px; background:var(--accent); color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; }
+.theme-status { display:inline-block; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600; }
+.theme-status.active { background:rgba(74,222,128,.15); color:var(--green); }
+.theme-status.monitoring { background:rgba(251,191,36,.15); color:var(--amber); }
+.theme-status.archived { background:rgba(248,113,113,.15); color:var(--red); }
+.main { flex:1; display:flex; flex-direction:column; overflow-y:auto; padding:24px; }
+.panel { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
+.panel h2 { font-size:15px; margin-bottom:14px; color:var(--accent); }
+.form-row { display:flex; gap:10px; margin-bottom:12px; }
+.form-row input, .form-row select, .form-row textarea { padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text); font-size:13px; }
+.form-row input[type="text"] { flex:1; }
+.form-row select { min-width:140px; }
+.form-row textarea { flex:1; min-height:60px; resize:vertical; }
+.btn { padding:8px 16px; border-radius:6px; border:none; cursor:pointer; font-size:13px; font-weight:500; }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-primary:hover { opacity:.9; }
+.btn-secondary { background:var(--border); color:var(--text); }
+.result-card { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:12px; }
+.result-card h4 { font-size:13px; color:var(--accent); margin-bottom:6px; }
+.result-card p { font-size:12px; color:var(--muted); line-height:1.6; }
+.result-card .confidence { font-size:11px; padding:2px 8px; border-radius:4px; }
+.conf-high { background:rgba(74,222,128,.15); color:var(--green); }
+.conf-medium { background:rgba(251,191,36,.15); color:var(--amber); }
+.conf-low { background:rgba(248,113,113,.15); color:var(--red); }
+.tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; margin:2px 4px 2px 0; background:rgba(108,140,255,.1); color:var(--accent); }
+.empty { text-align:center; padding:40px; color:var(--muted); font-size:13px; }
+.loading { text-align:center; padding:20px; color:var(--muted); }
+.error { color:var(--red); font-size:12px; padding:8px; background:rgba(248,113,113,.08); border-radius:var(--radius); margin-bottom:10px; }
+.search-result { border-bottom:1px solid var(--border); padding:10px 0; }
+.search-result:last-child { border-bottom:none; }
+.search-result .doc-title { font-weight:500; font-size:13px; }
+.search-result .chunk-preview { font-size:12px; color:var(--muted); margin-top:4px; line-height:1.5; }
+#memo-content { white-space:pre-wrap; line-height:1.7; font-size:13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🔍 Invest Agent — 研究情报工作台</h1>
+  <span class="status" id="api-status">⚫ 连接中...</span>
+</header>
+<div id="app">
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <h3>📋 主题监控列表</h3>
+      <div id="theme-list"><div class="empty">加载中...</div></div>
+      <div class="theme-form">
+        <input type="text" id="new-theme-name" placeholder="主题名称" maxlength="255">
+        <input type="text" id="new-theme-slug" placeholder="slug" maxlength="255" style="width:80px">
+        <button onclick="createTheme()">+</button>
+      </div>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="panel" id="research-panel">
+      <h2>📝 研究查询</h2>
+      <div class="form-row">
+        <input type="text" id="query-input" placeholder="输入研究问题，例如：安徽的低空经济未来前景如何？">
+        <select id="query-mode"><option value="quick-dr">Quick DR</option><option value="standard-dr" selected>Standard DR</option><option value="deep-dr">Deep DR</option><option value="mock">Mock (legacy)</option><option value="llm">LLM (legacy)</option></select>
+        <button class="btn btn-primary" onclick="submitResearch()">提交研究</button>
+      </div>
+      <div class="form-row" style="font-size:11px;color:var(--muted)">
+        <label><input type="checkbox" id="enable-source" checked> 启用源采集</label>
+        <span style="margin-left:12px">Mode: mock 模式返回模拟数据，用于快速验证工作流</span>
+      </div>
+      <div id="research-error"></div>
+      <div id="research-result"></div>
+    </div>
+    <div class="panel" id="dr-panel">
+      <h2>🤖 Deep Research（多轮深度调研）</h2>
+      <div class="form-row">
+        <input type="text" id="dr-query" placeholder="输入研究问题，例如：广东人形机器人产业政策和项目落地情况">
+        <select id="dr-rounds"><option value="2">2轮(快)</option><option value="3" selected>3轮</option><option value="4">4轮(深)</option></select>
+        <button class="btn btn-primary" onclick="submitDeepResearch()">启动深度调研</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+        模仿 GPT Deep Research：口径扩展 → 多轮搜索 → 源分级(A/B/C/D) → 证据链 → 报告。需要 ~20-40 Tavily credits + 3-6 DeepSeek calls。
+      </div>
+      <div id="dr-error"></div>
+      <div id="dr-result"></div>
+    </div>
+    <div class="panel" id="search-panel">
+      <h2>🔎 证据搜索</h2>
+      <div class="form-row">
+        <input type="text" id="search-input" placeholder="搜索文档分块...">
+        <select id="search-theme-filter"><option value="">全部主题</option></select>
+        <button class="btn btn-primary" onclick="searchEvidence()">搜索</button>
+      </div>
+      <div id="search-result"></div>
+    </div>
+  </main>
+</div>
+<script>
+const API = '';
+let themes = [];
+let currentThemeId = null;
+
+async function api(path, opts={}) {
+  const url = API + path;
+  const res = await fetch(url, {headers:{'Content-Type':'application/json'},...opts});
+  if (!res.ok) { const e = await res.json().catch(()=>({detail:res.statusText})); throw new Error(e.detail||res.statusText); }
+  return res.json();
+}
+
+async function loadStatus() {
+  try { await api('/healthz'); document.getElementById('api-status').innerHTML='🟢 API 在线'; }
+  catch(e) { document.getElementById('api-status').innerHTML='🔴 API 离线'; }
+}
+
+async function loadThemes() {
+  try {
+    themes = await api('/themes?status=all');
+    renderThemeList();
+    renderThemeFilter();
+  } catch(e) {
+    document.getElementById('theme-list').innerHTML = '<div class="error">加载主题失败: '+e.message+'</div>';
+  }
+}
+
+function renderThemeList() {
+  const el = document.getElementById('theme-list');
+  if (!themes.length) { el.innerHTML='<div class="empty">暂无主题，创建一个吧</div>'; return; }
+  el.innerHTML = themes.map(t => `
+    <div class="theme-item${currentThemeId===t.id?' active':''}" onclick="selectTheme(${t.id})">
+      <div class="name">${esc(t.name)} <span class="theme-status ${t.status}">${t.status}</span></div>
+      <div class="meta">${esc(t.slug)}${t.description?' · '+esc(t.description.slice(0,40)):''}</div>
+    </div>
+  `).join('');
+}
+
+function renderThemeFilter() {
+  const sel = document.getElementById('search-theme-filter');
+  sel.innerHTML = '<option value="">全部主题</option>' + themes.map(t =>
+    `<option value="${t.id}"${currentThemeId===t.id?' selected':''}>${esc(t.name)}</option>`
+  ).join('');
+}
+
+function selectTheme(id) { currentThemeId = currentThemeId===id ? null : id; renderThemeList(); renderThemeFilter(); }
+
+async function createTheme() {
+  const name = document.getElementById('new-theme-name').value.trim();
+  const slug = document.getElementById('new-theme-slug').value.trim();
+  if (!name || !slug) return alert('名称和slug不能为空');
+  try {
+    await api('/themes', {method:'POST', body:JSON.stringify({name, slug})});
+    document.getElementById('new-theme-name').value = '';
+    document.getElementById('new-theme-slug').value = '';
+    await loadThemes();
+  } catch(e) { alert('创建失败: '+e.message); }
+}
+
+async function submitResearch() {
+  const query = document.getElementById('query-input').value.trim();
+  if (!query) return;
+  const mode = document.getElementById('query-mode').value;
+  const enableSource = document.getElementById('enable-source').checked;
+  const errEl = document.getElementById('research-error');
+  const resEl = document.getElementById('research-result');
+  errEl.innerHTML = '';
+  resEl.innerHTML = '<div class="loading">⏳ 正在执行研究...</div>';
+  try {
+    // Route to Deep Research for quick/standard/deep modes
+    const isDR = mode.endsWith('-dr');
+    if (isDR) {
+      const strategy = mode.replace('-dr', '');
+      const result = await api('/research/analyze', {
+        method:'POST', body:JSON.stringify({query, mode:'mock', research_strategy: strategy})
+      });
+      renderDRResult(result);
+      return;
+    }
+    const body = {
+      query, mode,
+      provider: mode==='mock'?'mock':'deepseek',
+      enable_source_acquisition: enableSource,
+      max_sources: 3,
+      max_docs_per_source: 3,
+    };
+    if (currentThemeId) body.theme_id = currentThemeId;
+    const result = await api('/research/analyze', {method:'POST', body:JSON.stringify(body)});
+    renderResearchResult(result);
+  } catch(e) { errEl.innerHTML = '<div class="error">研究失败: '+e.message+'</div>'; resEl.innerHTML = ''; }
+}
+
+function renderResearchResult(r) {
+  const el = document.getElementById('research-result');
+  const thesesHtml = (r.theses||[]).map(t => `
+    <div class="result-card">
+      <h4>${esc(t.title)} <span class="confidence conf-${(t.confidence||'').toLowerCase()}">${t.confidence||'?'}</span></h4>
+      <p>${esc(t.stance||'')}</p>
+      ${(t.evidence_refs||[]).map(e => `<span class="tag">📄 ${esc(e)}</span>`).join('')}
+    </div>
+  `).join('');
+  const objectionsHtml = (r.objections||[]).map(o => `
+    <div class="result-card"><h4>⚠️ 反方观点</h4><p>${esc(o.argument||'')}</p></div>
+  `).join('');
+  const risksHtml = (r.risks||[]).map(rk => `<span class="tag">⚠ ${esc(rk.description||rk)}</span>`).join('');
+  const memo = r.final_memo || {};
+  el.innerHTML = `
+    <div class="result-card" style="border-left:3px solid var(--accent)">
+      <h4>📋 研究摘要</h4>
+      <p>Run ID: ${r.run_id} · 查询: ${esc(r.query||'')}</p>
+      <div style="margin-top:10px"><strong>执行摘要:</strong></div>
+      <div id="memo-content">${esc(memo.executive_summary||'无摘要')}</div>
+      <div style="margin-top:10px"><strong>置信度评估:</strong> ${esc(memo.confidence_assessment||'')}</div>
+      <div style="margin-top:8px">${risksHtml}</div>
+      ${(memo.suggested_next_questions||[]).map(q => `<div class="tag">❓ ${esc(q)}</div>`).join('')}
+    </div>
+    <h3 style="font-size:14px;margin:12px 0 8px">📌 论点 (${(r.theses||[]).length})</h3>
+    ${thesesHtml}
+    <h3 style="font-size:14px;margin:12px 0 8px">🛡️ 反方观点 (${(r.objections||[]).length})</h3>
+    ${objectionsHtml}
+  `;
+}
+
+async function searchEvidence() {
+  const query = document.getElementById('search-input').value.trim();
+  if (!query) return;
+  const themeId = document.getElementById('search-theme-filter').value;
+  const el = document.getElementById('search-result');
+  el.innerHTML = '<div class="loading">⏳ 搜索中...</div>';
+  try {
+    const body = { query, limit: 10 };
+    if (themeId) body.theme_id = parseInt(themeId);
+    const result = await api('/search/evidence-bundle', {method:'POST', body:JSON.stringify(body)});
+    renderSearchResult(result);
+  } catch(e) { el.innerHTML = '<div class="error">搜索失败: '+e.message+'</div>'; }
+}
+
+function renderSearchResult(r) {
+  const el = document.getElementById('search-result');
+  const docs = r.grouped_documents || [];
+  if (!docs.length) { el.innerHTML = '<div class="empty">无搜索结果</div>'; return; }
+  el.innerHTML = docs.map(doc => `
+    <div class="search-result">
+      <div class="doc-title">📄 ${esc(doc.document_title||'未知文档')} <span class="tag">${esc(doc.source_type||'')}</span></div>
+      ${(doc.chunks||[]).slice(0,3).map(c => `
+        <div class="chunk-preview">
+          <span class="tag">${(c.score||0).toFixed(2)}</span>
+          ${esc((c.preview_text||c.text||'').slice(0,200))}
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+async function submitDeepResearch() {
+  const query = document.getElementById('dr-query').value.trim();
+  if (!query) return;
+  const rounds = parseInt(document.getElementById('dr-rounds').value);
+  const errEl = document.getElementById('dr-error');
+  const resEl = document.getElementById('dr-result');
+  errEl.innerHTML = '';
+  resEl.innerHTML = '<div class="loading">⏳ 深度调研进行中（多轮搜索+源分级+证据链，约1-3分钟）...</div>';
+  try {
+    const result = await api('/deep-research/analyze', {
+      method:'POST', body:JSON.stringify({query, max_rounds: rounds})
+    });
+    renderDRResult(result);
+  } catch(e) { errEl.innerHTML = '<div class="error">调研失败: '+e.message+'</div>'; resEl.innerHTML = ''; }
+}
+
+function renderDRResult(r) {
+  const el = document.getElementById('dr-result');
+  const tiers = {}; (r.source_assessments||[]).forEach(s => { tiers[s.tier] = (tiers[s.tier]||0)+1; });
+  const tierStr = Object.entries(tiers).map(([k,v]) => `${k}:${v}`).join(' ');
+  const evidenceHtml = (r.evidence_chain||[]).slice(0,8).map(e => `
+    <div class="result-card">
+      <h4>${esc(e.claim||'').slice(0,120)} <span class="confidence conf-${e.confidence==='high'?'high':e.confidence==='medium'?'medium':'low'}">${e.confidence||'?'}</span></h4>
+      <span class="tag">${esc(e.stage||'')}</span>
+      ${(e.source_urls||[]).slice(0,2).map(u => `<span class="tag" style="font-size:10px">🔗 ${esc(u.slice(0,60))}</span>`).join('')}
+    </div>
+  `).join('');
+  el.innerHTML = `
+    <div class="result-card" style="border-left:3px solid var(--accent)">
+      <h4>📋 调研报告 <span class="confidence conf-${(r.overall_confidence||'medium').toLowerCase()}">${r.overall_confidence||'?'}</span></h4>
+      <p style="font-size:11px;color:var(--muted)">${r.search_rounds_executed||0}轮搜索 · ${r.estimated_tavily_credits||0} credits · ${(r.source_assessments||[]).length}源 [${tierStr}] · ${(r.evidence_chain||[]).length}证据项</p>
+      <div id="memo-content">${esc(r.executive_summary||'')}</div>
+      ${(r.key_findings||[]).map(f => `<div class="tag">✅ ${esc(f)}</div>`).join('')}
+      ${(r.key_inferences||[]).map(i => `<div class="tag">💡 ${esc(i)}</div>`).join('')}
+    </div>
+    <div style="margin-top:10px"><strong>⚠️ 数据缺口 (${(r.data_gaps||[]).length})</strong></div>
+    ${(r.data_gaps||[]).map(g => `<div class="search-result"><span style="color:var(--red)">⚠</span> ${esc(g)}</div>`).join('')}
+    <div style="margin-top:10px"><strong>❓ 不确定性 (${(r.uncertainties||[]).length})</strong></div>
+    ${(r.uncertainties||[]).map(u => `<div class="search-result"><span style="color:var(--amber)">❓</span> ${esc(u)}</div>`).join('')}
+    ${evidenceHtml ? '<div style="margin-top:10px"><strong>📌 证据链</strong></div>'+evidenceHtml : ''}
+    <div style="margin-top:10px"><strong>🔍 源评估</strong></div>
+    ${(r.source_assessments||[]).slice(0,10).map(s => `
+      <div class="search-result">
+        <span class="tag">${s.tier}</span>
+        <span style="font-size:11px">${esc(s.title||'').slice(0,80)}</span>
+        <span style="font-size:10px;color:var(--muted)">auth:${(s.authority_score||0).toFixed(0)}%</span>
+      </div>
+    `).join('')}
+  `;
+}
+
+function esc(s) { if (!s) return ''; const d=document.createElement('div'); d.textContent=String(s); return d.innerHTML; }
+
+loadStatus();
+loadThemes();
+setInterval(loadStatus, 30000);
+</script>
+</body>
+</html>

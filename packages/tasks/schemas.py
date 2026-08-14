@@ -36,6 +36,7 @@ class TaskAcceptedResponse(BaseModel):
     idempotency_key: str | None
     accepted_at: datetime
     deduplicated: bool
+    run_id: int | None = None  # G0.1: research runs are created at enqueue time
 
 
 class TaskAttemptView(BaseModel):

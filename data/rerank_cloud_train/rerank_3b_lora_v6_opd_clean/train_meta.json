@@ -1,0 +1,20 @@
+{
+  "trained_at": "2026-08-08T04:40:43+00:00",
+  "method": "ordinal_preference_distillation",
+  "base_model": "Qwen/Qwen2.5-3B-Instruct",
+  "init_adapter": "output/rerank_3b_lora_v5_opd/checkpoint-120",
+  "data_file": "data/v5_opd_pairs_clean.jsonl",
+  "n_pairs": 3124,
+  "epochs": 1,
+  "batch": 1,
+  "grad_accum": 8,
+  "world_size": 2,
+  "effective_pair_batch": 16,
+  "max_length": 1536,
+  "lr": 1.5e-05,
+  "beta": 1.0,
+  "ce_weight": 0.2,
+  "margin_scale": 0.12,
+  "total_steps": 196,
+  "wall_seconds": 1694.4
+}

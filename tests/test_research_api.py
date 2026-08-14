@@ -62,6 +62,7 @@ def test_research_api_analyze_and_run_view(monkeypatch, tmp_path: Path) -> None:
         assert payload["evidence_judge"]["coverage"]
         assert payload["risks"]
         assert payload["final_memo"]["executive_summary"]
+        assert payload["source_acquisition"]["enabled"] is False
 
         run_response = client.get(f"/research/runs/{payload['run_id']}")
         assert run_response.status_code == 200
@@ -82,3 +83,55 @@ def test_research_api_analyze_and_run_view(monkeypatch, tmp_path: Path) -> None:
         empty_payload = empty_response.json()
         assert empty_payload["insufficient_evidence"] is True
         assert empty_payload["theses"] == []
+
+
+def test_research_api_source_assisted_and_no_results(monkeypatch, tmp_path: Path) -> None:
+    _seed_research_api_db(monkeypatch, tmp_path)
+    with TestClient(app) as client:
+        assisted = client.post(
+            "/research/analyze",
+            json={
+                "query": "Assess supply signal from provided source",
+                "mode": "mock",
+                "enable_source_acquisition": True,
+                "enable_pdf_processing": True,
+                "max_pdf_attachments_per_source": 2,
+                "max_pdf_pages_per_attachment": 10,
+                "user_provided_sources": [
+                    {
+                        "title": "Desk note",
+                        "inline_text": (
+                            "Battery supply constraints remain visible across major refiners."
+                        ),
+                    }
+                ],
+            },
+        )
+        assert assisted.status_code == 200
+        assisted_payload = assisted.json()
+        assert assisted_payload["status"] == "succeeded"
+        assert assisted_payload["source_acquisition"]["enabled"] is True
+        assert "user_input" in assisted_payload["source_acquisition"]["routed_sources"]
+        assert assisted_payload["source_acquisition"]["evidence_items_found"] >= 1
+        pdf_summary = assisted_payload["source_acquisition"]["pdf_summary"]
+        assert pdf_summary["enabled"] is True
+        assert "attachments_discovered" in pdf_summary
+        assert "attachments_processed" in pdf_summary
+        assert "pdf_evidence_items_found" in pdf_summary
+
+        no_result = client.post(
+            "/research/analyze",
+            json={
+                "query": "humanoid robot revenue chain",
+                "mode": "mock",
+                "enable_source_acquisition": True,
+                "source_ids": ["world_bank"],
+                "include_user_sources": False,
+            },
+        )
+        assert no_result.status_code == 200
+        no_result_payload = no_result.json()
+        assert no_result_payload["status"] == "succeeded"
+        assert no_result_payload["insufficient_evidence"] is True
+        assert no_result_payload["source_acquisition"]["routed_sources"] == ["world_bank"]
+        assert no_result_payload["source_acquisition"]["evidence_items_found"] == 0

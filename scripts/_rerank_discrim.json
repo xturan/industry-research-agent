@@ -1,0 +1,11 @@
+{
+  "model": "Qwen2.5-3B-Instruct-AWQ",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Query: 湖南浏阳烟花产业发展 浏阳 烟花 产业链 浏阳 烟花 产值\n\nDocument: 某房地产上市公司2023年年报显示，公司营收同比增长8%，主要来自长三角住宅物业销售与商业地产租赁，毛利率保持稳定。公司新增土地储备3幅，位于杭州与南京。\n\nRate the relevance of this document to the query on a scale of 0 to 1. Output only the number, like 0.85"
+    }
+  ],
+  "max_tokens": 10,
+  "temperature": 0.0
+}

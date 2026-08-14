@@ -90,6 +90,40 @@ def test_tasks_api_flow_and_observability(monkeypatch, tmp_path: Path) -> None:
         research_task_payload = research_task.json()
         assert research_task_payload["status"] == "succeeded"
         research_run_id = research_task_payload["result_json"]["run_id"]
+        assert research_task_payload["result_json"]["source_acquisition"]["enabled"] is False
+
+        source_assisted_submit = client.post(
+            "/tasks/research/analyze",
+            json={
+                "idempotency_key": "api:research:source:1",
+                "request": {
+                    "query": "Assess supply from user source",
+                    "mode": "mock",
+                    "enable_source_acquisition": True,
+                    "enable_pdf_processing": True,
+                    "max_pdf_attachments_per_source": 2,
+                    "max_pdf_pages_per_attachment": 10,
+                    "user_provided_sources": [
+                        {
+                            "title": "Desk note",
+                            "inline_text": "Supply remains constrained across key refiners.",
+                        }
+                    ],
+                },
+            },
+        )
+        assert source_assisted_submit.status_code == 200
+        source_task_id = source_assisted_submit.json()["task_id"]
+
+        assert worker.run_once() is True
+        source_task = client.get(f"/tasks/{source_task_id}")
+        assert source_task.status_code == 200
+        source_task_payload = source_task.json()
+        assert source_task_payload["status"] == "succeeded"
+        source_summary = source_task_payload["result_json"]["source_acquisition"]
+        assert source_summary["enabled"] is True
+        assert "user_input" in source_summary["routed_sources"]
+        assert source_summary["pdf_summary"]["enabled"] is True
 
         content_submit = client.post(
             "/tasks/content/generate",
