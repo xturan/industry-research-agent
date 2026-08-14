@@ -74,9 +74,26 @@ CAPABILITY_GATEWAY_SEARCH_MODE=gateway
 CAPABILITY_GATEWAY_LLM_MODE=gateway      # 或 off，仅启用搜索网关
 ```
 
-三个开关齐设才生效：总开关 `ENABLED=false` 会压过任何 mode。Postgres 方言自动启用
-共享 store（PostgresLease 预算 / PostgresCircuit / PostgresRecorder）；SQLite/dev
-自动回退进程内 store，本地开发不崩。
+三个开关齐设才生效：总开关 `ENABLED=false` 会压过任何 mode。
+
+### 存储后端（budget / circuit 三分支）
+
+并发预算（G2.3）与熔断状态（G2.4）的存储后端按配置三分支选择：
+
+| 配置 | budget / circuit store | 说明 |
+|---|---|---|
+| `CAPABILITY_GATEWAY_REDIS_ENABLED=true` + `REDIS_URL` | **Redis**（Sorted Set + Hash） | 推荐：短 TTL 状态、原子、跨进程共享，卸掉 PG 高频写 |
+| Postgres 方言（默认） | PostgresLease / PostgresCircuit | 现状：短事务 + 表存储 |
+| SQLite / dev | InProcess / InMemory | 进程内语义验证，不崩 |
+
+```
+CAPABILITY_GATEWAY_REDIS_ENABLED=true   # 需 REDIS_URL 已配（默认 redis://localhost:6379/0）
+```
+
+**Redis 关键设计**：并发预算用单个 Lua 脚本原子完成「Redis TIME 取时钟 → 清理过期 →
+计数 → 写租约」，天然无锁；熔断状态用 Hash + PEXPIRE（120s = 4×cooldown）。Redis 不可用时
+budget fail-closed（转 capacity_exhausted 守"永不超限"）、circuit fail-open（回 CLOSED 安全默认）。
+recorder（attempt 遥测）是审计日志，**始终保留 PostgreSQL**，不迁 Redis。
 
 ## 🧪 负载压测（Load Acceptance）
 
