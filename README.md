@@ -5,6 +5,8 @@
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![LangGraph](https://img.shields.io/badge/Workflow-LangGraph-6B46C1)](https://langchain-ai.github.io/langgraph/)
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Ollama](https://img.shields.io/badge/Reranker-Ollama%2FLoRA-orange?logo=ollama&logoColor=white)](https://ollama.com/)
+[![DeepSeek](https://img.shields.io/badge/LLM-DeepSeek-4D6BFE)](https://www.deepseek.com/)
 [![License](https://img.shields.io/badge/license-MIT-2ea44f)](LICENSE)
 
 > 本项目定位为行业情报、产业研究和内容生产辅助系统，不构成证券投资建议。
