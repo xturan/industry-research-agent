@@ -8,6 +8,12 @@ __pycache__/
 htmlcov/
 .env
 *.egg-info/
+
+# Exception: the provider-backed graph's _impl bytecode is intentionally
+# version-controlled (see packages/research_harness/real_nodes.py:_load_impl).
+# Without this, *.pyc above would drop it and the graph would fall back to a
+# transient temp-dir copy that gets cleared.
+!packages/research_harness/_real_nodes_impl.cpython-313.pyc
 dist/
 build/
 alembic_autogen.db
@@ -15,3 +21,50 @@ validation_migration.db
 validation_*.db
 data/raw/*
 !data/raw/.gitkeep
+data/run_logs/*
+!data/run_logs/.gitkeep
+data/tmp/*
+!data/tmp/.gitkeep
+.codex/
+.claude/settings.local.json
+# ── 开发工作流（Claude/Codex 专属，不入库）2026-08-13 ──
+.agent/
+.agents/
+.claude/
+AGENTS.md
+CONTEXT.md
+PROJECT_PROGRESS.md
+command.txt
+test1.py
+plugins/
+.vscode/
+unsloth_compiled_cache/
+# git 工作树临时目录
+.claude/worktrees/
+# 本地模型权重（5.8GB Qwen，可重下）
+models/
+plugin-test-workspace/
+
+# ── 运行时数据（真实研究产物，不入库）2026-08-11 ──
+data/run_dossiers/
+data/reports/
+data/run_contexts/
+data/evals/
+data/graph_checkpoints/
+data/exports/
+data/samples/
+# rerank 训练权重（大文件，可重下）——保留目录内脚本/文档，排除权重与 checkpoint
+data/rerank_cloud_train/output/
+data/rerank_training/output/
+*.safetensors
+
+# Model output (large weights, will re-download on target machine)
+packages/training/data/model_output/
+packages/training/data/model_output_v2/
+packages/training/data/model_output*/
+*.pt
+*.pth
+*.safetensors
+
+# Keep uv.lock for reproducible installs
+# uv.lock is committed intentionally

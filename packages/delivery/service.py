@@ -6,6 +6,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from packages.core.config import get_settings
+from packages.core.run_log import CompactRunLogger
 from packages.db.models import (
     ContentAsset,
     DeliveryJob,
@@ -65,51 +66,82 @@ class DeliveryService:
         self.session = session
         self.repository = repository or DeliveryRepository(session)
         self.settings = get_settings()
+        self._run_logger: CompactRunLogger | None = None
 
     def create_job(self, request: DeliveryJobCreateRequest) -> DeliveryJobCreateResponse:
-        assets = self.repository.load_assets(request.content_asset_ids)
-        if len(assets) != len(request.content_asset_ids):
-            found = {asset.id for asset in assets}
-            missing = sorted(set(request.content_asset_ids) - found)
-            raise DeliveryServiceError(f"Unknown content_asset_ids: {missing}")
+        run_logger = CompactRunLogger(task_name="delivery_create_job")
+        run_logger.start(
+            input_summary=request.model_dump(mode="json"),
+            decision_summary=[
+                "load requested content assets",
+                "derive initial review/status state",
+                "persist delivery job and item rows",
+            ],
+        )
+        try:
+            assets = self.repository.load_assets(request.content_asset_ids)
+            if len(assets) != len(request.content_asset_ids):
+                found = {asset.id for asset in assets}
+                missing = sorted(set(request.content_asset_ids) - found)
+                raise DeliveryServiceError(f"Unknown content_asset_ids: {missing}")
 
-        status, review_status = initial_review_state(require_review=request.require_review)
-        job = self.repository.create_job(
-            source_run_id=request.source_run_id,
-            status=status,
-            delivery_target=request.delivery_target,
-            review_status=review_status,
-            mode=request.mode,
-            requested_by=request.requested_by,
-            metadata_json=request.metadata_json,
-            content_assets=assets,
-        )
-        return DeliveryJobCreateResponse(
-            delivery_job_id=job.id,
-            item_count=len(job.items),
-            status=job.status,
-            review_status=job.review_status,
-        )
+            status, review_status = initial_review_state(require_review=request.require_review)
+            job = self.repository.create_job(
+                source_run_id=request.source_run_id,
+                status=status,
+                delivery_target=request.delivery_target,
+                review_status=review_status,
+                mode=request.mode,
+                requested_by=request.requested_by,
+                metadata_json=request.metadata_json,
+                content_assets=assets,
+            )
+            response = DeliveryJobCreateResponse(
+                delivery_job_id=job.id,
+                item_count=len(job.items),
+                status=job.status,
+                review_status=job.review_status,
+            )
+            run_logger.finish(status=response.status.value, output_summary=response)
+            return response
+        except Exception as exc:
+            run_logger.finish(status=RunStatus.FAILED.value, output_summary={"error": str(exc)})
+            raise
 
     def approve_job(self, job_id: int) -> DeliveryApprovalResponse:
-        job = self.repository.get_job(job_id)
-        if job is None:
-            raise DeliveryServiceError(f"Delivery job {job_id} not found.")
-        try:
-            validate_approve_transition(status=job.status, review_status=job.review_status)
-        except DeliveryStateError as exc:
-            raise DeliveryServiceError(str(exc)) from exc
-
-        job.review_status = DeliveryReviewStatus.APPROVED
-        job.status = DeliveryJobStatus.READY
-        self.session.add(job)
-        self.session.commit()
-        self.session.refresh(job)
-        return DeliveryApprovalResponse(
-            delivery_job_id=job.id,
-            status=job.status,
-            review_status=job.review_status,
+        run_logger = CompactRunLogger(task_name="delivery_approve_job", run_id=f"job-{job_id}")
+        run_logger.start(
+            input_summary={"delivery_job_id": job_id},
+            decision_summary=[
+                "load delivery job",
+                "validate approve transition",
+                "mark job ready for dispatch",
+            ],
         )
+        try:
+            job = self.repository.get_job(job_id)
+            if job is None:
+                raise DeliveryServiceError(f"Delivery job {job_id} not found.")
+            try:
+                validate_approve_transition(status=job.status, review_status=job.review_status)
+            except DeliveryStateError as exc:
+                raise DeliveryServiceError(str(exc)) from exc
+
+            job.review_status = DeliveryReviewStatus.APPROVED
+            job.status = DeliveryJobStatus.READY
+            self.session.add(job)
+            self.session.commit()
+            self.session.refresh(job)
+            response = DeliveryApprovalResponse(
+                delivery_job_id=job.id,
+                status=job.status,
+                review_status=job.review_status,
+            )
+            run_logger.finish(status=response.status.value, output_summary=response)
+            return response
+        except Exception as exc:
+            run_logger.finish(status=RunStatus.FAILED.value, output_summary={"error": str(exc)})
+            raise
 
     def dispatch_job(self, job_id: int) -> DeliveryDispatchResponse:
         job = self.repository.get_job(job_id)
@@ -143,6 +175,16 @@ class DeliveryService:
         self.session.refresh(job)
 
         run = self._create_delivery_run(job)
+        self._run_logger = CompactRunLogger(task_name="delivery_dispatch", run_id=run.id)
+        self._run_logger.start(
+            input_summary=run.input_json,
+            decision_summary=[
+                "validate dispatch transition",
+                "evaluate delivery policy",
+                "export assets before connector dispatch",
+                "derive final job status from item statuses",
+            ],
+        )
         try:
             export_result = self._export_job_assets(job=job, run=run)
             self._dispatch_items(job=job, run=run, export_result=export_result)
@@ -182,6 +224,8 @@ class DeliveryService:
                 output_json={"delivery_job_id": job.id, "error": str(exc)},
             )
             raise DeliveryServiceError(str(exc)) from exc
+        finally:
+            self._run_logger = None
 
     def get_job(self, job_id: int) -> DeliveryJobView | None:
         job = self.repository.get_job(job_id)
@@ -234,9 +278,25 @@ class DeliveryService:
             }
             self.session.add(step)
             self.session.commit()
+            if self._run_logger is not None:
+                self._run_logger.step(
+                    step_name="export_bundle",
+                    agent_name="delivery-exporter",
+                    input_summary=step.input_json,
+                    output_summary=step.output_json,
+                    status=StepStatus.SUCCEEDED.value,
+                )
             return result
         except Exception as exc:
             self._fail_step(step=step, error_message=str(exc))
+            if self._run_logger is not None:
+                self._run_logger.step(
+                    step_name="export_bundle",
+                    agent_name="delivery-exporter",
+                    input_summary=step.input_json,
+                    status=StepStatus.FAILED.value,
+                    error=str(exc),
+                )
             raise
 
     def _dispatch_items(
@@ -289,6 +349,15 @@ class DeliveryService:
             self.session.add(item)
             self.session.add(step)
             self.session.commit()
+            if self._run_logger is not None:
+                self._run_logger.step(
+                    step_name=step.step_name,
+                    agent_name=step.agent_name,
+                    input_summary=step.input_json,
+                    output_summary=step.output_json,
+                    status=step.status.value,
+                    error=step.error_message,
+                )
 
     def _start_step(
         self,
@@ -324,6 +393,8 @@ class DeliveryService:
         run.output_json = output_json
         self.session.add(run)
         self.session.commit()
+        if self._run_logger is not None:
+            self._run_logger.finish(status=status.value, output_summary=output_json)
 
     def _build_dispatch_response(self, job: DeliveryJob) -> DeliveryDispatchResponse:
         receipts = [

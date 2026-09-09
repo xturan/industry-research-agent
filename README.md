@@ -1,365 +1,243 @@
-# Invest Agent Monorepo
+# Industry Research Agent
 
-Production-oriented engineering scaffold for an AI application focused on industry-report mining,
-evidence-based research workflows, multi-agent orchestration, and multi-channel content generation.
+生产导向的中文产业调研 Agent：把一个产业问题转换为可执行的研究计划，完成来源发现、网页抓取、证据构建、质量审查和多章节报告生成。
 
-This repository is positioned for industry intelligence and content production, not direct securities investment advice.
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![LangGraph](https://img.shields.io/badge/Workflow-LangGraph-6B46C1)](https://langchain-ai.github.io/langgraph/)
+[![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Ollama](https://img.shields.io/badge/Reranker-Ollama%2FLoRA-orange?logo=ollama&logoColor=white)](https://ollama.com/)
+[![DeepSeek](https://img.shields.io/badge/LLM-DeepSeek-4D6BFE)](https://www.deepseek.com/)
+[![License](https://img.shields.io/badge/license-MIT-2ea44f)](LICENSE)
 
-## Monorepo Layout
+> 本项目定位为行业情报、产业研究和内容生产辅助系统，不构成证券投资建议。
 
-- `apps/api` - FastAPI service
-- `apps/worker` - task queue worker service
-- `packages/core` - shared configuration, logging, and utilities
-- `packages/db` - SQLAlchemy models, repositories, and Alembic migration setup
-- `packages/ingestion` - source fetch/store/parse/chunk/persist ingestion pipeline
-- `packages/agents` - deterministic multi-agent research workflow (v1) with provider abstraction
-- `packages/providers` - shared LLM transport abstraction and DeepSeek provider client
-- `packages/content` - deterministic content factory layer for multi-platform asset generation
-- `packages/delivery` - delivery job orchestration with review/approval and deterministic dispatch connectors
-- `packages/tasks` - PostgreSQL/SQLite-backed async task queue, worker claim/execute loop, retries, idempotency
-- `packages/rag` - RAG interface placeholders
-- `packages/memory` - durable memory extraction/search and growth-feedback loop services
-- `packages/evals` - deterministic eval rubrics, smoke runner, and eval persistence
-- `packages/policy` - deterministic policy/guardrail checks for research/content/delivery
-- `packages/registry` - versionable template/policy/style-pack registry
-- `packages/ops` - readiness and recent-failure reporting services
-- `infra` - local Docker Compose and infrastructure notes
-- `tests` - API, config, and database tests
+## 这个项目解决什么问题
 
-## Local Setup
+普通搜索通常只能返回一组网页，难以回答产业研究真正关心的几个问题：
 
-1. Create and activate a virtual environment.
-2. Install dependencies:
-   ```bash
-   make install
-   ```
-3. Copy environment file and adjust values as needed:
-   ```bash
-   cp .env.example .env
-   ```
-4. Optional for live DeepSeek research mode:
-   - set `DEEPSEEK_API_KEY`
-   - prefer `DEEPSEEK_RESEARCH_MODEL=deepseek-chat` for faster structured JSON workflows
-   - optional per-step model routing via:
-     - `DEEPSEEK_MODEL_SUPERVISOR_INTAKE`
-     - `DEEPSEEK_MODEL_THESIS_BUILDER`
-     - `DEEPSEEK_MODEL_OPPONENT`
-     - `DEEPSEEK_MODEL_EVIDENCE_JUDGE`
-     - `DEEPSEEK_MODEL_RISK_ANALYST`
-     - `DEEPSEEK_MODEL_SYNTHESIZE_MEMO`
-   - keep `LLM_PROVIDER=mock` for safe default unless you explicitly want live LLM mode
+- 当前结论对应哪些一手来源？
+- 政策是否已经转化为项目、采购、企业披露或统计变化？
+- 哪些维度已有证据，哪些维度仍然缺失？
+- 来源质量、证据强度和报告表述是否匹配？
 
-PowerShell tip:
-- `Invoke-RestMethod` renders nested arrays as `System.Object[]` in table/list view.
-- To inspect full nested payload, pipe to JSON:
-  ```powershell
-  $resp = Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/research/analyze" -ContentType "application/json" -Body '{"query":"人形机器人 2026 收入兑现环节","top_k":6,"mode":"llm","provider":"deepseek"}'
-  $resp | ConvertTo-Json -Depth 100
-  ```
+Industry Research Agent 将研究过程拆成可审计的链路：
 
-## Run Commands
+    研究问题
+      -> 意图识别与维度规划
+      -> 多路来源发现与抓取
+      -> 文档解析、切块与来源评级
+      -> Evidence Bundle 与 Claim 构建
+      -> 报告撰写、对手审查、逐条验证
+      -> 质量门禁与最终报告
 
-- Start local infra (PostgreSQL + Redis):
-  ```bash
-  make up
-  ```
-- Run API:
-  ```bash
-  make dev-api
-  ```
-- Run worker:
-  ```bash
-  make dev-worker
-  ```
-- Run one worker tick (claim one eligible task if exists):
-  ```bash
-  make task-worker-once
-  ```
-- Stop local infra:
-  ```bash
-  make down
-  ```
+每条重要判断都尽量关联到 Claim、Evidence、Source 和引用定位；证据不足时降低结论强度，并将缺口显式保留在报告中。
 
-## Database Migrations and Seed
+## 生成结果
 
-- Apply migrations:
-  ```bash
-  make migrate-up
-  ```
-- Roll back one migration:
-  ```bash
-  make migrate-down
-  ```
-- Seed a tiny traceability dataset (theme -> document -> chunk -> thesis -> evidence link):
-  ```bash
-  make seed-dev
-  ```
-- List current tables for the configured database:
-  ```bash
-  make db-tables
-  ```
+仓库内提供了可直接打开的示例报告：
 
-## Ingestion Endpoints
+| 主题 | 示例 | 内容规模 |
+|---|---|---:|
+| 低空经济 | [中标公告深度研究报告](examples/reports/低空经济中标公告深度研究报告.html) | 约 3 万字 / 142 条证据 |
+| 动力电池 | [动力电池产业链调研](examples/reports/动力电池产业链调研.html) | 约 3 万字 / 69 条证据 |
+| 智能网联汽车 | [智能网联汽车产业链调研](examples/reports/智能网联汽车产业链调研.html) | 约 1.9 万字 / 44 条证据 |
+| 合肥低空经济 | [市级产业调研](examples/reports/合肥低空经济产业调研.html) | 约 2.5 万字 / 93 条证据 |
 
-- `POST /ingest/file` - multipart file upload ingestion (`.txt`, `.md`, `.html`)
-- `POST /ingest/url` - URL-based ingestion for standard web pages
-- `GET /documents/{document_id}` - document metadata and status
-- `GET /documents/{document_id}/chunks` - chunk summaries and citations
+报告包含执行摘要、研究口径、分维度分析、风险与不确定性、证据引用和来源说明，而不是只输出搜索结果或结论列表。
 
-## Retrieval Endpoints (RAG v1)
+## 核心能力
 
-- `POST /search/chunks` - chunk-level retrieval with metadata filters and explainable scoring
-- `POST /search/evidence-bundle` - auditable evidence bundle builder for downstream thesis/content agents
+### 研究框架
 
-## Multi-Agent Research Endpoints
+- 固定的产业研究维度框架，覆盖政策、市场、产业链、供需、技术、项目、企业、资本、区域、风险和趋势等维度。
+- Query 分解为多个研究维度和证据义务，避免用一个搜索词覆盖所有问题。
+- 对地方问题保留省、市、县级粒度，并显式记录上级来源兜底和本级证据缺口。
 
-- `POST /research/analyze` - run multi-agent workflow over retrieved evidence (`mode=mock` by default, `mode=llm` + `provider=deepseek` supported)
-- `GET /research/runs/{run_id}` - inspect persisted run and step outputs for auditability
+### 来源与检索
 
-## Content Factory Endpoints
+- AnySearch 作为当前搜索发现主 provider，Tavily 可作为 fallback。
+- DeepSeek 参与复杂 Query 的意图识别、检索规划和报告生成。
+- Crawl4AI 负责网页正文、Markdown、附件和出链抽取。
+- 对政策、项目/招采、统计/财政、上市公司披露、环评/土地等来源族进行分类、路由和质量评级。
+- 对结构化披露、统计和查询平台保留专用 adapter，不把所有来源退化为通用网页搜索。
 
-- `POST /content/generate` - generate platform content assets from `research_run_id` or supplied memo payload
-- `GET /content/assets/{asset_id}` - retrieve persisted content asset details
-- `GET /content/by-run/{run_id}` - list assets generated from a research run
+### 证据与报告
 
-## Memory and Feedback Endpoints
+- Source Quality 与 Evidence Strength 分离但联动：来源权威性不能直接替代证据对具体 Claim 的支撑强度。
+- Evidence Bundle 保留 Source、时间、地域、Source Family、Citation、限制条件和支持类型。
+- Editor1 生成可读报告，Editor2 进行对手审查，Evidence Judge 验证 Claim 支持关系。
+- Chief Gate 根据覆盖度、引用完整性、来源多样性、风险和证据缺口决定通过、补证据、重写或人工审核。
 
-- `POST /feedback/content` - record content performance metrics and refresh strategy memory
-- `POST /memory/extract/run/{run_id}` - extract reusable memory records from an existing run
-- `POST /memory/search` - search memory by type/scope/keywords with deterministic ranking
-- `POST /memory/account-preference` - upsert account-level preference memory
-- `GET /memory/by-scope/{scope_key}` - inspect memories by scope prefix
+### 运行可靠性
 
-## Delivery Endpoints
+- Capability Gateway 为搜索和 LLM provider 提供路由、fallback、并发预算、电路熔断和遥测。
+- 每次 provider attempt 可记录 run 归因、延迟、token/result 用量和 fallback 状态。
+- LangGraph checkpoint、运行 dossier 和报告 artifact 支持中断恢复与过程审计。
 
-- `POST /delivery/jobs` - create delivery jobs from one or more content assets
-- `POST /delivery/jobs/{job_id}/approve` - approve a pending-review delivery job
-- `POST /delivery/jobs/{job_id}/dispatch` - dispatch approved jobs via deterministic connectors
-- `GET /delivery/jobs/{job_id}` - inspect delivery job details and item-level status
-- `GET /delivery/by-asset/{asset_id}` - list delivery jobs associated with a content asset
-- `GET /delivery/by-run/{run_id}` - list delivery jobs associated with a source run
+## 架构
 
-## Async Task Endpoints
+![系统架构图](docs/assets/architecture.png)
 
-- `POST /tasks/research/analyze` - enqueue research analysis task
-- `POST /tasks/content/generate` - enqueue content generation task
-- `POST /tasks/delivery/dispatch` - enqueue delivery dispatch task
-- `GET /tasks/{task_id}` - inspect task metadata, attempts, result/error
-- `POST /tasks/{task_id}/retry` - requeue failed/dead-letter/cancelled task
-- `POST /tasks/{task_id}/cancel` - cancel queued/running task
+    FastAPI / Async Tasks
+            |
+            v
+    LangGraph Research Workflow
+      Planner -> Source Hunter -> Parser -> Source Quality
+          -> Evidence Builder -> Claim Builder
+          -> Editor1 -> Editor2 -> Verifier -> Chief Gate
+            |
+            +--> add evidence / revise / human review
+            |
+            v
+    Final Report + Dossier + Checkpoint + Telemetry
 
-## Evals / Ops / Registry Endpoints
+主要模块：
 
-- `POST /evals/run-smoke` - run deterministic smoke eval and persist results
-- `GET /evals/runs/{eval_run_id}` - inspect persisted eval run + case items
-- `GET /ops/readiness-report` - system readiness snapshot (DB, dirs, worker hint, failures)
-- `GET /ops/failures/recent` - recent failed tasks/runs/delivery/evals
-- `GET /registry/templates` - list versioned content templates/style packs
-- `GET /registry/policies` - list versioned policy bundles
+| 模块 | 职责 |
+|---|---|
+| apps/api | FastAPI API 入口 |
+| apps/worker | 异步任务执行与重试 |
+| packages/research_harness | LangGraph 研究流程、证据链和报告生成 |
+| packages/sources | 来源 taxonomy、路由、搜索、抓取和国内来源适配 |
+| packages/providers | DeepSeek、搜索 provider 和统一调用抽象 |
+| packages/rag | Chunk 检索、粗排和精排接口 |
+| packages/capability_gateway | provider 路由、预算、熔断和遥测 |
+| packages/content | 将研究结果转成多平台内容资产 |
+| packages/memory | 运行记忆、主题记忆和反馈记忆 |
+| packages/evals | 研究、来源和策略评测 |
+| docs | 技术路线、来源协议、工作流和评测文档 |
 
-## Ingestion Demo
+## 快速开始
 
-- Ingest the bundled local markdown sample:
-  ```bash
-  make ingest-demo-file
-  ```
-- Ingest a URL sample:
-  ```bash
-  make ingest-demo-url
-  ```
+### 1. 安装依赖
 
-- Run chunk retrieval demo (auto-ingests sample first):
-  ```bash
-  make rag-demo-chunks
-  ```
+    make install
 
-- Run evidence bundle demo (auto-ingests sample first):
-  ```bash
-  make rag-demo-bundle
-  ```
+### 2. 配置 provider
 
-- Run multi-agent research demo (auto-ingests sample first):
-  ```bash
-  make research-demo
-  ```
-- Run manual DeepSeek smoke demo for research (requires `DEEPSEEK_API_KEY`):
-  ```bash
-  make research-live-deepseek
-  ```
+    Copy-Item .env.example .env
 
-- Run content factory demo (auto-ingests sample, runs research, then generates assets):
-  ```bash
-  make content-demo
-  ```
+按需填写：
 
-- Run memory + feedback loop demo (auto-ingests sample, runs research/content, ingests feedback, extracts/searches memory):
-  ```bash
-  make memory-demo
-  ```
+    # 报告与规划模型
+    DEEPSEEK_API_KEY=your_deepseek_api_key_here
+    DEEPSEEK_RESEARCH_MODEL=deepseek-chat
 
-- Run delivery demo (auto-ingests sample, runs research/content, creates delivery job, approves, dispatches):
-  ```bash
-  make delivery-demo
-  ```
-- Run async task demo for research enqueue + one worker execution:
-  ```bash
-  make tasks-demo-research
-  ```
-- Run smoke eval demo:
-  ```bash
-  make evals-smoke-demo
-  ```
+    # 搜索发现：AnySearch 主 provider，Tavily fallback
+    SEARCH_DISCOVERY_PROVIDER=anysearch
+    SEARCH_DISCOVERY_FALLBACK_PROVIDER=tavily
+    ANYSEARCH_API_KEY=your_anysearch_api_key_here
+    TAVILY_API_KEY=your_tavily_api_key_here
 
-Raw source files are persisted under `data/raw/` for later traceability.
+    # 本地精排，可选；未启用时使用确定性精排
+    RERANK_ENDPOINT=http://localhost:11434/v1/chat/completions
+    RERANK_MODEL=invest-rerank-v6
 
-## Validation Commands
+安全默认值是 LLM_PROVIDER=mock。只有明确配置 key 并选择 live/LLM 模式时，才会调用外部模型。
 
-- Tests:
-  ```bash
-  make test
-  ```
-- Lint:
-  ```bash
-  make lint
-  ```
-- Format:
-  ```bash
-  make format
-  ```
-- Docker Compose config check:
-  ```bash
-  make compose-config
-  ```
-- API health check:
-  ```bash
-  curl http://127.0.0.1:8000/healthz
-  ```
-- API readiness check:
-  ```bash
-  curl http://127.0.0.1:8000/readyz
-  ```
-- Metrics check:
-  ```bash
-  curl http://127.0.0.1:8000/metrics
-  ```
-- File ingestion check:
-  ```bash
-  curl -X POST "http://127.0.0.1:8000/ingest/file" -F "file=@data/samples/energy_storage_note.md"
-  ```
-- Chunk retrieval check:
-  ```bash
-  curl -X POST "http://127.0.0.1:8000/search/chunks" \
-    -H "Content-Type: application/json" \
-    -d "{\"query\":\"lithium refining pricing\",\"limit\":5}"
-  ```
-- Multi-agent research check:
-  ```bash
-  curl -X POST "http://127.0.0.1:8000/research/analyze" \
-    -H "Content-Type: application/json" \
-    -d "{\"query\":\"lithium pricing power outlook\",\"top_k\":6,\"mode\":\"mock\"}"
-  ```
-- DeepSeek-backed research check (manual, requires key):
-  ```bash
-  curl -X POST "http://127.0.0.1:8000/research/analyze" \
-    -H "Content-Type: application/json" \
-    -d "{\"query\":\"lithium pricing power outlook\",\"top_k\":6,\"mode\":\"llm\",\"provider\":\"deepseek\",\"enable_thinking\":false}"
-  ```
-- DeepSeek per-step model override at request time:
-  ```bash
-  curl -X POST "http://127.0.0.1:8000/research/analyze" \
-    -H "Content-Type: application/json" \
-    -d "{\"query\":\"humanoid robotics revenue path\",\"top_k\":6,\"mode\":\"llm\",\"provider\":\"deepseek\",\"model\":\"deepseek-chat\",\"step_models\":{\"thesis_builder\":\"deepseek-reasoner\",\"synthesize_memo\":\"deepseek-reasoner\"}}"
-  ```
-- Content generation check:
-  ```bash
-  curl -X POST "http://127.0.0.1:8000/content/generate" \
-    -H "Content-Type: application/json" \
-    -d "{\"research_run_id\":1,\"content_types\":[\"wechat_article\",\"xiaohongshu_post\",\"douyin_script\"],\"mode\":\"mock\"}"
-  ```
-- Extract memory from run:
-  ```bash
-  curl -X POST "http://127.0.0.1:8000/memory/extract/run/1"
-  ```
-- Record feedback and refresh content-strategy memory:
-  ```bash
-  curl -X POST "http://127.0.0.1:8000/feedback/content" \
-    -H "Content-Type: application/json" \
-    -d "{\"content_asset_id\":1,\"channel\":\"xiaohongshu\",\"views\":1200,\"likes\":120,\"comments\":20,\"shares\":15,\"saves\":30,\"clicks\":40,\"conversions\":4}"
-  ```
-- Search memory:
-  ```bash
-  curl -X POST "http://127.0.0.1:8000/memory/search" \
-    -H "Content-Type: application/json" \
-    -d "{\"query\":\"lithium risk\",\"limit\":5,\"recent_first\":true}"
-  ```
-- Upsert account preference memory:
-  ```bash
-  curl -X POST "http://127.0.0.1:8000/memory/account-preference" \
-    -H "Content-Type: application/json" \
-    -d "{\"scope_key\":\"account:default\",\"content\":\"Prefer concise risk-balanced copy.\",\"score\":0.7}"
-  ```
-- Create delivery job:
-  ```bash
-  curl -X POST "http://127.0.0.1:8000/delivery/jobs" \
-    -H "Content-Type: application/json" \
-    -d "{\"content_asset_ids\":[1,2],\"delivery_target\":\"export_bundle\",\"mode\":\"mock\",\"require_review\":true,\"source_run_id\":1}"
-  ```
-- Approve and dispatch delivery job:
-  ```bash
-  curl -X POST "http://127.0.0.1:8000/delivery/jobs/1/approve"
-  curl -X POST "http://127.0.0.1:8000/delivery/jobs/1/dispatch"
-  ```
-- Enqueue async research/content/delivery tasks:
-  ```bash
-  curl -X POST "http://127.0.0.1:8000/tasks/research/analyze" \
-    -H "Content-Type: application/json" \
-    -d "{\"idempotency_key\":\"rq-1\",\"request\":{\"query\":\"lithium pricing power outlook\",\"top_k\":6,\"mode\":\"mock\"}}"
-  curl -X POST "http://127.0.0.1:8000/tasks/content/generate" \
-    -H "Content-Type: application/json" \
-    -d "{\"idempotency_key\":\"cg-1\",\"request\":{\"research_run_id\":1,\"content_types\":[\"wechat_article\",\"xiaohongshu_post\",\"douyin_script\"],\"mode\":\"mock\"}}"
-  curl -X POST "http://127.0.0.1:8000/tasks/delivery/dispatch" \
-    -H "Content-Type: application/json" \
-    -d "{\"idempotency_key\":\"dd-1\",\"delivery_job_id\":1}"
-  ```
-- Poll async task status:
-  ```bash
-  curl http://127.0.0.1:8000/tasks/1
-  ```
-- Run smoke eval:
-  ```bash
-  curl -X POST "http://127.0.0.1:8000/evals/run-smoke" \
-    -H "Content-Type: application/json" \
-    -d "{\"query\":\"lithium pricing outlook\",\"top_k\":6,\"bootstrap_sample\":true}"
-  ```
-- Readiness report and recent failures:
-  ```bash
-  curl http://127.0.0.1:8000/ops/readiness-report
-  curl http://127.0.0.1:8000/ops/failures/recent
-  ```
-- Registry listing:
-  ```bash
-  curl http://127.0.0.1:8000/registry/templates
-  curl http://127.0.0.1:8000/registry/policies
-  ```
+### 3. 启动本地服务
 
-## TODO Markers for Next Steps
+    make up
+    make dev-api
 
-- Add pgvector-backed embedding columns and ANN indexes for `document_chunks` retrieval.
-- Add PDF parser improvements (digitally-readable first) and OCR adapter later if needed.
-- Add additional LLM providers and model routing policies beyond DeepSeek research integration.
-- Add richer agent policies, self-reflection loops, and scoring/evals integration for research quality.
-- Integrate real LLM provider in `packages/content/provider.py` for richer generation quality.
-- Add brand/style packs and title A/B testing for content generation quality uplift.
-- Add publishing connectors, cover image generation, and growth feedback loop.
-- Add memory-informed hooks into research planning and content generation prompts/policies.
-- Add hybrid memory retrieval (keyword + pgvector) and retention/forgetting policies.
-- Integrate real delivery connectors with credential management and platform auth flows.
-- Add delivery scheduling, retry policy, rate limiting, and attribution analytics.
-- Implement hybrid retrieval upgrades and optional embedding-based search in `packages/rag`.
-- Integrate MCP-compatible tool adapters behind stable interfaces.
-- Extend queue backend with Redis streams and autoscaling worker coordination.
-- Add richer eval datasets, LLM-as-judge options, and prompt/template experiment pipelines.
-- Add policy dashboards, approval workflows, and deployment-grade policy enforcement toggles.
-- Add OTEL tracing, SLO alerts, and production deployment manifests.
-#   i n v e s t - a g e n t  
- 
+如需启用本地 Ollama 精排：
+
+    ollama pull qwen2.5:3b-instruct
+    cd data/rerank_cloud_train/output/ollama_rerank_v6_qwen25_3b
+    ollama create invest-rerank-v6 -f Modelfile
+
+### 4. 发起一次研究
+
+    $body = @{
+      query = "安徽低空经济的政策、项目落地与产业链发展如何"
+      top_k = 6
+      mode = "llm"
+      provider = "deepseek"
+      enable_thinking = $false
+    } | ConvertTo-Json
+
+    Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/research/analyze" -ContentType "application/json" -Body $body
+
+查看完整嵌套返回时使用：
+
+    $response | ConvertTo-Json -Depth 100
+
+## 关键 API
+
+| Endpoint | 用途 |
+|---|---|
+| POST /research/analyze | 执行研究分析和报告生成 |
+| GET /research/runs/{run_id} | 查看运行状态和步骤输出 |
+| POST /ingest/url | 抓取并入库网页来源 |
+| POST /search/chunks | 按 Chunk 检索来源内容 |
+| POST /search/evidence-bundle | 构建可审计 Evidence Bundle |
+| POST /tasks/research/analyze | 异步提交研究任务 |
+| GET /tasks/{task_id} | 查看异步任务状态 |
+| GET /gateway/health | 查看 provider 网关健康度 |
+| GET /gateway/providers | 查看 provider 成功率、延迟、限流和 fallback |
+| GET /ops/sources/performance | 查看来源性能和路由表现 |
+
+## Provider 网关
+
+需要统一治理搜索和 LLM 请求时，在 .env 中启用：
+
+    CAPABILITY_GATEWAY_ENABLED=true
+    CAPABILITY_GATEWAY_SEARCH_MODE=gateway
+    CAPABILITY_GATEWAY_LLM_MODE=gateway
+
+网关负责：
+
+- provider 路由和 fallback；
+- 并发预算与跨进程 lease；
+- 连续失败熔断与恢复探测；
+- attempt 级遥测、token/result 用量和 run 归因；
+- PostgreSQL、Redis、SQLite/InProcess 三类运行环境的状态存储适配。
+
+## 验证
+
+常用验证命令：
+
+    make test
+    make lint
+    make compose-config
+    make research-demo
+    make evals-smoke-demo
+
+来源层专项验证：
+
+    pytest -q tests/test_sources_layer.py
+    pytest -q tests/test_sources_live_fetch.py tests/test_sources_profile_adapter.py tests/test_sources_router_domestic.py
+    pytest -q tests/test_sources_pdf_step43.py
+
+需要真实 DeepSeek 时：
+
+    make research-live-deepseek
+
+运行过程中的报告、dossier、checkpoint 和 provider 遥测会根据配置写入 data/，用于复核来源、证据、路由和质量门禁。
+
+## 文档入口
+
+- [项目现状总览](docs/current-project-overview.md)
+- [Technical Roadmap Evolution](docs/technical-roadmap-evolution.md)
+- [Source Query Decomposition](docs/source-query-decomposition-rules.md)
+- [Source Taxonomy Inventory](docs/source-taxonomy-inventory.md)
+- [Source Quality Scoring v2](docs/source-quality-scoring-v2.md)
+- [50 Query 覆盖评测](docs/evals/report_coverage_50_queries_v1.md)
+- [Agent Workflow](docs/workflows/review-gated-agent-workflow.md)
+- [Skill Contracts](docs/workflows/skill-contracts.md)
+- [项目 PRD](docs/prd/deep_research_readable_report_prd_v0_1.md)
+- [Architecture Decision Records](docs/adr/)
+
+实现过程中的阶段性记录、方案讨论和历史 remediation 不再作为 README 主体；它们保留在 .agent/PLANS/、.agent/STATUS.md 和 docs/，便于开发者追溯而不干扰项目展示。
+
+## 当前边界
+
+- 国内来源仍然依赖站点结构稳定性，深分页、反爬、登录态和复杂交互页面需要专用适配。
+- 扫描型 PDF 的 OCR、复杂表格和图表理解尚未作为默认路径启用。
+- 市县级来源采用通用域名模式、白名单和上级来源兜底，不能宣称覆盖所有地区。
+- Provider 质量、来源命中率和报告完整性必须通过真实 query 与 evidence gate 持续评估。
+- 外部 provider 的密钥只应放在本地 .env 或部署密钥系统中，不要提交到 Git。
+
+## License
+
+MIT

@@ -11,6 +11,8 @@ from packages.db.models import DeliveryJob, EvalRun, Run, TaskAttempt, TaskJob
 from packages.db.models.enums import EvalStatus, RunStatus, TaskJobStatus
 from packages.delivery.enums import DeliveryJobStatus
 from packages.ops.schemas import ReadinessReport, RecentFailureItem, RecentFailuresResponse
+from packages.sources.performance import SourcePerformanceService
+from packages.sources.schemas import SourcePerformanceSummary
 
 try:
     UTC = datetime.UTC
@@ -162,6 +164,17 @@ class OpsService:
 
         items.sort(key=lambda x: x.created_at, reverse=True)
         return RecentFailuresResponse(items=items[:limit])
+
+    def sources_performance(
+        self,
+        *,
+        lookback_days: int = 30,
+        max_runs: int = 500,
+    ) -> SourcePerformanceSummary:
+        return SourcePerformanceService(self.session).summarize(
+            lookback_days=lookback_days,
+            max_runs=max_runs,
+        )
 
     def _count_tasks_failed(self) -> int:
         return int(

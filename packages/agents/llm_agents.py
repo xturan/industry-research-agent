@@ -448,7 +448,7 @@ def _bundle_payload(bundle: EvidenceBundle) -> dict[str, Any]:
                 "source_type": item.source_type,
                 "section_name": item.section_name,
                 "chunk_index": item.chunk_index,
-                "chunk_text": item.chunk_text[:800],
+                "chunk_text": item.chunk_text[:1600],
                 "citation_locator": item.citation_locator,
                 "score": item.score,
             }

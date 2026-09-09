@@ -1,0 +1,708 @@
+{
+  "metrics": {
+    "n": 98,
+    "baseline": {
+      "model": "Qwen2.5-3B-Instruct-AWQ",
+      "spearman_vs_label": 0.3971,
+      "mae_vs_label": 0.2439,
+      "binary_acc": 0.7449,
+      "mean_score": 0.44
+    },
+    "lora": {
+      "model": "rerank-lora",
+      "spearman_vs_label": 0.2951,
+      "mae_vs_label": 0.3092,
+      "binary_acc": 0.5612,
+      "mean_score": 0.358
+    },
+    "label_mean": 0.633
+  },
+  "samples": [
+    {
+      "query_id": "C09",
+      "chunk_id": "C09_src_0_chunk_0",
+      "label": 0.45,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "C09",
+      "chunk_id": "C09_src_1_chunk_0",
+      "label": 0.85,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "C09",
+      "chunk_id": "C09_src_2_chunk_0",
+      "label": 0.62,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "C09",
+      "chunk_id": "C09_src_3_chunk_0",
+      "label": 0.85,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "C09",
+      "chunk_id": "C09_src_4_chunk_0",
+      "label": 0.85,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "C09",
+      "chunk_id": "C09_src_5_chunk_0",
+      "label": 0.82,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "C09",
+      "chunk_id": "C09_src_6_chunk_0",
+      "label": 0.95,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "C09",
+      "chunk_id": "C09_src_7_chunk_0",
+      "label": 0.82,
+      "baseline": 0.21,
+      "lora": 0.45
+    },
+    {
+      "query_id": "C09",
+      "chunk_id": "C09_src_8_chunk_0",
+      "label": 0.55,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "C09",
+      "chunk_id": "C09_src_9_chunk_0",
+      "label": 0.85,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "C10",
+      "chunk_id": "C10_src_0_chunk_0",
+      "label": 0.62,
+      "baseline": 0.51,
+      "lora": 0.2
+    },
+    {
+      "query_id": "C10",
+      "chunk_id": "C10_src_1_chunk_0",
+      "label": 0.72,
+      "baseline": 0.0,
+      "lora": 0.2
+    },
+    {
+      "query_id": "C10",
+      "chunk_id": "C10_src_2_chunk_0",
+      "label": 0.72,
+      "baseline": 0.21,
+      "lora": 0.2
+    },
+    {
+      "query_id": "C10",
+      "chunk_id": "C10_src_3_chunk_0",
+      "label": 0.72,
+      "baseline": 0.5,
+      "lora": 0.45
+    },
+    {
+      "query_id": "C10",
+      "chunk_id": "C10_src_4_chunk_0",
+      "label": 0.78,
+      "baseline": 0.5,
+      "lora": 0.2
+    },
+    {
+      "query_id": "C10",
+      "chunk_id": "C10_src_5_chunk_0",
+      "label": 0.62,
+      "baseline": 0.2,
+      "lora": 0.2
+    },
+    {
+      "query_id": "C10",
+      "chunk_id": "C10_src_6_chunk_0",
+      "label": 0.62,
+      "baseline": 0.6,
+      "lora": 0.2
+    },
+    {
+      "query_id": "C10",
+      "chunk_id": "C10_src_7_chunk_0",
+      "label": 0.82,
+      "baseline": 0.81,
+      "lora": 0.25
+    },
+    {
+      "query_id": "C10",
+      "chunk_id": "C10_src_8_chunk_0",
+      "label": 0.21,
+      "baseline": 0.21,
+      "lora": 0.2
+    },
+    {
+      "query_id": "C10",
+      "chunk_id": "C10_src_9_chunk_0",
+      "label": 0.78,
+      "baseline": 0.81,
+      "lora": 0.2
+    },
+    {
+      "query_id": "C11",
+      "chunk_id": "C11_src_0_chunk_0",
+      "label": 0.78,
+      "baseline": 0.7,
+      "lora": 0.32
+    },
+    {
+      "query_id": "C11",
+      "chunk_id": "C11_src_1_chunk_0",
+      "label": 0.35,
+      "baseline": 0.0,
+      "lora": 0.2
+    },
+    {
+      "query_id": "C11",
+      "chunk_id": "C11_src_2_chunk_0",
+      "label": 0.35,
+      "baseline": 0.51,
+      "lora": 0.45
+    },
+    {
+      "query_id": "C11",
+      "chunk_id": "C11_src_3_chunk_0",
+      "label": 0.45,
+      "baseline": 0.21,
+      "lora": 0.2
+    },
+    {
+      "query_id": "C11",
+      "chunk_id": "C11_src_4_chunk_0",
+      "label": 0.21,
+      "baseline": 0.0,
+      "lora": 0.23
+    },
+    {
+      "query_id": "C11",
+      "chunk_id": "C11_src_5_chunk_0",
+      "label": 0.62,
+      "baseline": 0.51,
+      "lora": 0.2
+    },
+    {
+      "query_id": "C11",
+      "chunk_id": "C11_src_6_chunk_0",
+      "label": 0.78,
+      "baseline": 0.51,
+      "lora": 0.45
+    },
+    {
+      "query_id": "C11",
+      "chunk_id": "C11_src_7_chunk_0",
+      "label": 0.82,
+      "baseline": 0.5,
+      "lora": 0.2
+    },
+    {
+      "query_id": "C11",
+      "chunk_id": "C11_src_8_chunk_0",
+      "label": 0.55,
+      "baseline": 0.51,
+      "lora": 0.5
+    },
+    {
+      "query_id": "C11",
+      "chunk_id": "C11_src_9_chunk_0",
+      "label": 0.72,
+      "baseline": 0.0,
+      "lora": 0.23
+    },
+    {
+      "query_id": "K08",
+      "chunk_id": "K08_src_0_chunk_0",
+      "label": 0.21,
+      "baseline": 0.5,
+      "lora": 0.23
+    },
+    {
+      "query_id": "K08",
+      "chunk_id": "K08_src_1_chunk_0",
+      "label": 0.35,
+      "baseline": 0.21,
+      "lora": 0.2
+    },
+    {
+      "query_id": "K08",
+      "chunk_id": "K08_src_2_chunk_0",
+      "label": 0.45,
+      "baseline": 0.0,
+      "lora": 0.2
+    },
+    {
+      "query_id": "K08",
+      "chunk_id": "K08_src_3_chunk_0",
+      "label": 0.55,
+      "baseline": 0.51,
+      "lora": 0.23
+    },
+    {
+      "query_id": "K08",
+      "chunk_id": "K08_src_4_chunk_0",
+      "label": 0.45,
+      "baseline": 0.5,
+      "lora": 0.23
+    },
+    {
+      "query_id": "K08",
+      "chunk_id": "K08_src_5_chunk_0",
+      "label": 0.45,
+      "baseline": 0.51,
+      "lora": 0.45
+    },
+    {
+      "query_id": "K08",
+      "chunk_id": "K08_src_6_chunk_0",
+      "label": 0.21,
+      "baseline": 0.81,
+      "lora": 0.45
+    },
+    {
+      "query_id": "K08",
+      "chunk_id": "K08_src_7_chunk_0",
+      "label": 0.25,
+      "baseline": 0.5,
+      "lora": 0.2
+    },
+    {
+      "query_id": "K08",
+      "chunk_id": "K08_src_8_chunk_0",
+      "label": 0.35,
+      "baseline": 0.21,
+      "lora": 0.2
+    },
+    {
+      "query_id": "K09",
+      "chunk_id": "K09_src_0_chunk_0",
+      "label": 0.78,
+      "baseline": 0.4,
+      "lora": 0.45
+    },
+    {
+      "query_id": "K09",
+      "chunk_id": "K09_src_1_chunk_0",
+      "label": 0.45,
+      "baseline": 0.21,
+      "lora": 0.2
+    },
+    {
+      "query_id": "K09",
+      "chunk_id": "K09_src_2_chunk_0",
+      "label": 0.61,
+      "baseline": 0.6,
+      "lora": 0.2
+    },
+    {
+      "query_id": "K09",
+      "chunk_id": "K09_src_3_chunk_0",
+      "label": 0.45,
+      "baseline": 0.3,
+      "lora": 0.32
+    },
+    {
+      "query_id": "K09",
+      "chunk_id": "K09_src_4_chunk_0",
+      "label": 0.82,
+      "baseline": 0.67,
+      "lora": 0.32
+    },
+    {
+      "query_id": "K09",
+      "chunk_id": "K09_src_5_chunk_0",
+      "label": 0.45,
+      "baseline": 0.0,
+      "lora": 0.2
+    },
+    {
+      "query_id": "K09",
+      "chunk_id": "K09_src_6_chunk_0",
+      "label": 0.35,
+      "baseline": 0.21,
+      "lora": 0.5
+    },
+    {
+      "query_id": "K09",
+      "chunk_id": "K09_src_7_chunk_0",
+      "label": 0.21,
+      "baseline": 0.21,
+      "lora": 0.2
+    },
+    {
+      "query_id": "K09",
+      "chunk_id": "K09_src_8_chunk_0",
+      "label": 0.15,
+      "baseline": 0.0,
+      "lora": 0.2
+    },
+    {
+      "query_id": "K09",
+      "chunk_id": "K09_src_9_chunk_0",
+      "label": 0.85,
+      "baseline": 0.0,
+      "lora": 0.2
+    },
+    {
+      "query_id": "M08",
+      "chunk_id": "M08_src_0_chunk_0",
+      "label": 0.0,
+      "baseline": 0.0,
+      "lora": 0.21
+    },
+    {
+      "query_id": "M08",
+      "chunk_id": "M08_src_1_chunk_0",
+      "label": 0.85,
+      "baseline": 0.7,
+      "lora": 0.25
+    },
+    {
+      "query_id": "M08",
+      "chunk_id": "M08_src_2_chunk_0",
+      "label": 0.92,
+      "baseline": 0.67,
+      "lora": 0.32
+    },
+    {
+      "query_id": "M08",
+      "chunk_id": "M08_src_3_chunk_0",
+      "label": 0.95,
+      "baseline": 0.6,
+      "lora": 0.2
+    },
+    {
+      "query_id": "M08",
+      "chunk_id": "M08_src_4_chunk_0",
+      "label": 0.82,
+      "baseline": 0.21,
+      "lora": 0.23
+    },
+    {
+      "query_id": "M08",
+      "chunk_id": "M08_src_5_chunk_0",
+      "label": 0.85,
+      "baseline": 0.67,
+      "lora": 0.5
+    },
+    {
+      "query_id": "M08",
+      "chunk_id": "M08_src_6_chunk_0",
+      "label": 0.62,
+      "baseline": 0.21,
+      "lora": 0.2
+    },
+    {
+      "query_id": "M08",
+      "chunk_id": "M08_src_7_chunk_0",
+      "label": 0.82,
+      "baseline": 0.81,
+      "lora": 0.2
+    },
+    {
+      "query_id": "M08",
+      "chunk_id": "M08_src_8_chunk_0",
+      "label": 0.95,
+      "baseline": 0.81,
+      "lora": 0.25
+    },
+    {
+      "query_id": "M08",
+      "chunk_id": "M08_src_9_chunk_0",
+      "label": 0.95,
+      "baseline": 0.4,
+      "lora": 0.2
+    },
+    {
+      "query_id": "M09",
+      "chunk_id": "M09_src_0_chunk_0",
+      "label": 0.35,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "M09",
+      "chunk_id": "M09_src_1_chunk_0",
+      "label": 0.72,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "M09",
+      "chunk_id": "M09_src_2_chunk_0",
+      "label": 0.82,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "M09",
+      "chunk_id": "M09_src_3_chunk_0",
+      "label": 0.85,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "M09",
+      "chunk_id": "M09_src_4_chunk_0",
+      "label": 0.82,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "M09",
+      "chunk_id": "M09_src_5_chunk_0",
+      "label": 0.82,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "M09",
+      "chunk_id": "M09_src_6_chunk_0",
+      "label": 0.82,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "M09",
+      "chunk_id": "M09_src_7_chunk_0",
+      "label": 0.85,
+      "baseline": 0.81,
+      "lora": 0.25
+    },
+    {
+      "query_id": "M09",
+      "chunk_id": "M09_src_8_chunk_0",
+      "label": 0.72,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "M09",
+      "chunk_id": "M09_src_9_chunk_0",
+      "label": 0.72,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "P09",
+      "chunk_id": "P09_src_0_chunk_0",
+      "label": 0.72,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "P09",
+      "chunk_id": "P09_src_1_chunk_0",
+      "label": 0.62,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "P09",
+      "chunk_id": "P09_src_2_chunk_0",
+      "label": 0.45,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "P09",
+      "chunk_id": "P09_src_3_chunk_0",
+      "label": 0.82,
+      "baseline": 0.81,
+      "lora": 0.85
+    },
+    {
+      "query_id": "P09",
+      "chunk_id": "P09_src_4_chunk_0",
+      "label": 0.72,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "P09",
+      "chunk_id": "P09_src_5_chunk_0",
+      "label": 0.72,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "P09",
+      "chunk_id": "P09_src_6_chunk_0",
+      "label": 0.78,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "P09",
+      "chunk_id": "P09_src_7_chunk_0",
+      "label": 0.45,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "P09",
+      "chunk_id": "P09_src_8_chunk_0",
+      "label": 0.85,
+      "baseline": 0.21,
+      "lora": 0.45
+    },
+    {
+      "query_id": "P10",
+      "chunk_id": "P10_src_0_chunk_0",
+      "label": 0.72,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "P10",
+      "chunk_id": "P10_src_1_chunk_0",
+      "label": 0.82,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "P10",
+      "chunk_id": "P10_src_2_chunk_0",
+      "label": 0.78,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "P10",
+      "chunk_id": "P10_src_3_chunk_0",
+      "label": 0.35,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "P10",
+      "chunk_id": "P10_src_4_chunk_0",
+      "label": 0.72,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "P10",
+      "chunk_id": "P10_src_5_chunk_0",
+      "label": 0.62,
+      "baseline": 0.5,
+      "lora": 0.2
+    },
+    {
+      "query_id": "P10",
+      "chunk_id": "P10_src_6_chunk_0",
+      "label": 0.95,
+      "baseline": 0.6,
+      "lora": 0.85
+    },
+    {
+      "query_id": "P10",
+      "chunk_id": "P10_src_7_chunk_0",
+      "label": 0.82,
+      "baseline": 0.5,
+      "lora": 0.5
+    },
+    {
+      "query_id": "P10",
+      "chunk_id": "P10_src_8_chunk_0",
+      "label": 0.85,
+      "baseline": 0.6,
+      "lora": 0.25
+    },
+    {
+      "query_id": "P10",
+      "chunk_id": "P10_src_9_chunk_0",
+      "label": 0.45,
+      "baseline": 0.0,
+      "lora": 0.85
+    },
+    {
+      "query_id": "P11",
+      "chunk_id": "P11_src_0_chunk_0",
+      "label": 0.72,
+      "baseline": 0.81,
+      "lora": 0.2
+    },
+    {
+      "query_id": "P11",
+      "chunk_id": "P11_src_1_chunk_0",
+      "label": 0.72,
+      "baseline": 0.81,
+      "lora": 0.2
+    },
+    {
+      "query_id": "P11",
+      "chunk_id": "P11_src_2_chunk_0",
+      "label": 0.62,
+      "baseline": 0.4,
+      "lora": 0.2
+    },
+    {
+      "query_id": "P11",
+      "chunk_id": "P11_src_3_chunk_0",
+      "label": 0.45,
+      "baseline": 0.21,
+      "lora": 0.25
+    },
+    {
+      "query_id": "P11",
+      "chunk_id": "P11_src_4_chunk_0",
+      "label": 0.45,
+      "baseline": 0.6,
+      "lora": 0.23
+    },
+    {
+      "query_id": "P11",
+      "chunk_id": "P11_src_5_chunk_0",
+      "label": 0.85,
+      "baseline": 0.7,
+      "lora": 0.45
+    },
+    {
+      "query_id": "P11",
+      "chunk_id": "P11_src_6_chunk_0",
+      "label": 0.45,
+      "baseline": 0.0,
+      "lora": 0.2
+    },
+    {
+      "query_id": "P11",
+      "chunk_id": "P11_src_7_chunk_0",
+      "label": 0.25,
+      "baseline": 0.21,
+      "lora": 0.2
+    },
+    {
+      "query_id": "P11",
+      "chunk_id": "P11_src_8_chunk_0",
+      "label": 0.45,
+      "baseline": 0.21,
+      "lora": 0.2
+    },
+    {
+      "query_id": "P11",
+      "chunk_id": "P11_src_9_chunk_0",
+      "label": 0.45,
+      "baseline": 0.7,
+      "lora": 0.32
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "model": "Qwen2.5-3B-Instruct-AWQ",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Query: 湖南浏阳烟花产业发展 浏阳 烟花 产业链 浏阳 烟花 产值\n\nDocument: 2025年1—11月，浏阳花炮产业总产值达498.4亿元，同比增长13.5%，其内销与出口份额在全国保持领先。浏阳现有烟花爆竹生产企业431家，从业人员超过30万人。\n\nRate the relevance of this document to the query on a scale of 0 to 1. Output only the number, like 0.85"
+    }
+  ],
+  "max_tokens": 10,
+  "temperature": 0.0
+}

@@ -82,9 +82,19 @@ class DeepSeekProviderClient:
         user_prompt: str,
         model: str | None = None,
         enable_thinking: bool = False,
+        temperature: float | None = None,
+        top_p: float | None = None,
+        presence_penalty: float | None = None,
+        frequency_penalty: float | None = None,
     ) -> JsonProviderResponse:
         chosen_model = model or self.default_model
         started = time.perf_counter()
+        gen_kwargs = {
+            "temperature": temperature,
+            "top_p": top_p,
+            "presence_penalty": presence_penalty,
+            "frequency_penalty": frequency_penalty,
+        }
 
         try:
             completion = self._chat_completion(
@@ -93,6 +103,7 @@ class DeepSeekProviderClient:
                 model=chosen_model,
                 enable_thinking=enable_thinking,
                 strict_json=True,
+                **gen_kwargs,
             )
             content_text, reasoning_content, raw_extra = self._extract_message(completion)
             try:
@@ -108,6 +119,7 @@ class DeepSeekProviderClient:
                     model=chosen_model,
                     enable_thinking=enable_thinking,
                     strict_json=True,
+                    **gen_kwargs,
                 )
                 content_text, reasoning_content, raw_extra = self._extract_message(
                     repaired_completion
@@ -212,6 +224,10 @@ class DeepSeekProviderClient:
         model: str,
         enable_thinking: bool,
         strict_json: bool,
+        temperature: float | None = None,
+        top_p: float | None = None,
+        presence_penalty: float | None = None,
+        frequency_penalty: float | None = None,
     ) -> Any:
         last_error: Exception | None = None
         attempts = self.max_retries + 1
@@ -223,8 +239,15 @@ class DeepSeekProviderClient:
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt},
                     ],
-                    "temperature": 0.1,
+                    # Default remains deterministic (0.1); pass-through when set.
+                    "temperature": temperature if temperature is not None else 0.1,
                 }
+                if top_p is not None:
+                    kwargs["top_p"] = top_p
+                if presence_penalty is not None:
+                    kwargs["presence_penalty"] = presence_penalty
+                if frequency_penalty is not None:
+                    kwargs["frequency_penalty"] = frequency_penalty
                 if self.max_tokens is not None:
                     kwargs["max_tokens"] = self.max_tokens
                 if strict_json:

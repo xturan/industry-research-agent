@@ -5,6 +5,9 @@ from typing import Any
 from packages.evals.datasets import RESEARCH_MIN_CONFIDENCE_FOR_SUFFICIENT
 from packages.evals.schemas import EvalCaseResult
 from packages.policy.service import PolicyChecker
+from packages.sources.enums import QueryType
+from packages.sources.router import SourceRouter
+from packages.sources.schemas import QueryContext, ToolResponse
 
 
 def grade_rag_chunks(chunks_payload: dict[str, Any]) -> list[EvalCaseResult]:
@@ -248,3 +251,248 @@ def grade_task_delivery_flow(task_payload: dict[str, Any]) -> list[EvalCaseResul
             detail_json={"receipt_count": len(receipts)},
         ),
     ]
+
+
+def grade_source_acquisition_result(
+    *,
+    scenario_name: str,
+    query_context: QueryContext,
+    response: ToolResponse,
+) -> tuple[list[EvalCaseResult], dict[str, dict[str, Any]]]:
+    router = SourceRouter()
+    query_type, _ = router.classify_query_type(query_context)
+    traces_by_source = _pick_source_traces(response)
+    source_ids = [item.source_id for item in response.route_recommendations]
+    for source_id in traces_by_source:
+        if source_id not in source_ids:
+            source_ids.append(source_id)
+
+    if not source_ids:
+        return (
+            [
+                EvalCaseResult(
+                    case_name=f"{scenario_name}:no_sources",
+                    passed=False,
+                    score=0.0,
+                    detail_json={"query": query_context.query},
+                )
+            ],
+            {},
+        )
+
+    case_results: list[EvalCaseResult] = []
+    per_source_metrics: dict[str, dict[str, Any]] = {}
+    for source_id in source_ids:
+        trace = traces_by_source.get(source_id, {})
+        status = str(trace.get("status") or "error")
+        warnings = trace.get("warnings") if isinstance(trace.get("warnings"), list) else []
+        retry_count = _safe_int(trace.get("retry_count"))
+        evidence_count = _safe_int(trace.get("evidence_count"))
+        item_count = max(_safe_int(trace.get("item_count")), 1)
+        evidence_density = round(evidence_count / float(item_count), 6)
+
+        source_evidence = [
+            item
+            for item in response.evidence_items
+            if item.source_id == source_id
+        ]
+        citation_completeness = _citation_completeness(source_evidence)
+        availability = 1.0 if status in {"success", "partial"} else 0.0
+        evidence_yield = min(1.0, evidence_count / 2.0)
+        trace_completeness = _trace_completeness(trace)
+        query_fit = _query_fit_score(
+            source_id=source_id,
+            query_type=query_type,
+            query_context=query_context,
+        )
+        operational = _operational_stability_score(
+            status=status,
+            retry_count=retry_count,
+            warnings=warnings,
+        )
+        overall = round(
+            (
+                availability
+                + evidence_yield
+                + citation_completeness
+                + trace_completeness
+                + query_fit
+                + operational
+            )
+            / 6.0,
+            4,
+        )
+        per_source_metrics[source_id] = {
+            "availability": availability,
+            "evidence_yield": evidence_yield,
+            "citation_completeness": citation_completeness,
+            "trace_completeness": trace_completeness,
+            "query_fit": query_fit,
+            "operational_stability": operational,
+            "overall_score": overall,
+            "status": status,
+            "retry_count": retry_count,
+            "warnings": warnings,
+            "evidence_density": evidence_density,
+        }
+        case_results.extend(
+            [
+                EvalCaseResult(
+                    case_name=f"{scenario_name}:{source_id}:availability",
+                    passed=availability >= 1.0,
+                    score=availability,
+                    detail_json={"status": status},
+                ),
+                EvalCaseResult(
+                    case_name=f"{scenario_name}:{source_id}:evidence_yield",
+                    passed=evidence_yield >= 0.5,
+                    score=round(evidence_yield, 4),
+                    detail_json={
+                        "evidence_count": evidence_count,
+                        "evidence_density": evidence_density,
+                    },
+                ),
+                EvalCaseResult(
+                    case_name=f"{scenario_name}:{source_id}:citation_completeness",
+                    passed=citation_completeness >= 0.5 if source_evidence else True,
+                    score=round(citation_completeness, 4),
+                    detail_json={"evidence_items": len(source_evidence)},
+                ),
+                EvalCaseResult(
+                    case_name=f"{scenario_name}:{source_id}:trace_completeness",
+                    passed=trace_completeness >= 0.8,
+                    score=round(trace_completeness, 4),
+                    detail_json={"trace_keys": sorted(list(trace.keys()))},
+                ),
+                EvalCaseResult(
+                    case_name=f"{scenario_name}:{source_id}:query_fit",
+                    passed=query_fit >= 0.5,
+                    score=round(query_fit, 4),
+                    detail_json={"query_type": query_type.value},
+                ),
+                EvalCaseResult(
+                    case_name=f"{scenario_name}:{source_id}:operational_stability",
+                    passed=operational >= 0.5,
+                    score=round(operational, 4),
+                    detail_json={
+                        "retry_count": retry_count,
+                        "warning_count": len(warnings),
+                    },
+                ),
+                EvalCaseResult(
+                    case_name=f"{scenario_name}:{source_id}:overall",
+                    passed=overall >= 0.55,
+                    score=overall,
+                    detail_json=per_source_metrics[source_id],
+                ),
+            ]
+        )
+    return case_results, per_source_metrics
+
+
+def _pick_source_traces(response: ToolResponse) -> dict[str, dict[str, Any]]:
+    stage_order = {
+        "search_source_documents": 1,
+        "fetch_document_detail": 2,
+        "extract_evidence_items": 3,
+    }
+    selected: dict[str, tuple[int, dict[str, Any]]] = {}
+    for trace in response.traces:
+        if not trace.source_id:
+            continue
+        rank = stage_order.get(trace.tool_name, 0)
+        row = trace.model_dump(mode="json")
+        current = selected.get(trace.source_id)
+        if current is None or rank >= current[0]:
+            selected[trace.source_id] = (rank, row)
+    return {source_id: row for source_id, (_rank, row) in selected.items()}
+
+
+def _citation_completeness(source_evidence: list[Any]) -> float:
+    if not source_evidence:
+        return 0.0
+    required_keys = (
+        "source_name",
+        "source_id",
+        "title",
+        "url",
+        "retrieved_at",
+        "locator",
+    )
+    total = 0.0
+    for item in source_evidence:
+        metadata = item.citation.metadata if item.citation.metadata is not None else {}
+        present = 0
+        for key in required_keys:
+            value = metadata.get(key)
+            if value is None:
+                continue
+            if isinstance(value, str) and not value.strip():
+                continue
+            present += 1
+        total += present / float(len(required_keys))
+    return round(total / len(source_evidence), 6)
+
+
+def _trace_completeness(trace: dict[str, Any]) -> float:
+    required = (
+        "tool_name",
+        "status",
+        "duration_ms",
+        "http_calls",
+        "page_count",
+        "item_count",
+        "evidence_count",
+        "retry_count",
+        "adapter_version",
+    )
+    present = 0
+    for key in required:
+        if key not in trace:
+            continue
+        value = trace.get(key)
+        if value is None:
+            continue
+        present += 1
+    return round(present / float(len(required)), 6)
+
+
+def _query_fit_score(
+    *,
+    source_id: str,
+    query_type: QueryType,
+    query_context: QueryContext,
+) -> float:
+    if source_id == "user_input" and query_context.user_provided_sources:
+        return 1.0
+    compatibility = {
+        QueryType.MACRO: {"world_bank"},
+        QueryType.ENERGY: {"eia"},
+        QueryType.FILING: {"sec_edgar"},
+        QueryType.HEALTH: {"who_gho"},
+        QueryType.GENERAL: {"user_input"},
+    }
+    if source_id in compatibility.get(query_type, set()):
+        return 1.0
+    return 0.5 if query_type == QueryType.GENERAL else 0.0
+
+
+def _operational_stability_score(
+    *,
+    status: str,
+    retry_count: int,
+    warnings: list[Any],
+) -> float:
+    score = 1.0
+    if status not in {"success", "partial"}:
+        score -= 0.5
+    score -= min(max(retry_count, 0) * 0.1, 0.3)
+    score -= min(len(warnings) * 0.05, 0.2)
+    return round(max(score, 0.0), 6)
+
+
+def _safe_int(value: Any) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0

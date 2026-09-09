@@ -19,12 +19,20 @@ from packages.evals.graders import (
     grade_evidence_bundle,
     grade_rag_chunks,
     grade_research_output,
+    grade_source_acquisition_result,
     grade_task_delivery_flow,
 )
-from packages.evals.schemas import EvalCaseResult, EvalSummary, SmokeEvalRequest
+from packages.evals.schemas import (
+    EvalCaseResult,
+    EvalSummary,
+    SmokeEvalRequest,
+    SourceSmokeEvalRequest,
+)
 from packages.ingestion.service import IngestionService
 from packages.rag.bundle import EvidenceBundleBuilder
 from packages.rag.retrieval import ChunkRetrievalService
+from packages.sources.schemas import QueryContext, UserProvidedSource
+from packages.sources.service import SourceIntelligenceService
 
 
 class SmokeEvalRunner:
@@ -131,3 +139,123 @@ class SmokeEvalRunner:
             passed_count=passed_count,
         )
         return summary, cases, artifacts
+
+
+class SourceSmokeEvalRunner:
+    def __init__(self, session: Session) -> None:
+        self.session = session
+
+    def run(
+        self, request: SourceSmokeEvalRequest
+    ) -> tuple[EvalSummary, list[EvalCaseResult], dict[str, Any], int]:
+        cases: list[EvalCaseResult] = []
+        artifacts: dict[str, Any] = {}
+        scenarios = self._build_scenarios(request)
+        source_service = SourceIntelligenceService()
+
+        for scenario_name, query_context, payload in scenarios:
+            response = source_service.build_bundle_for_query(
+                query_context,
+                limit=query_context.max_documents_per_source,
+                max_evidence_per_source=query_context.max_evidence_per_source,
+                payload=payload,
+            )
+            scenario_cases, per_source_metrics = grade_source_acquisition_result(
+                scenario_name=scenario_name,
+                query_context=query_context,
+                response=response,
+            )
+            cases.extend(scenario_cases)
+            artifacts[scenario_name] = {
+                "query_context": query_context.model_dump(mode="json"),
+                "status": response.status.value,
+                "route_recommendations": [
+                    item.model_dump(mode="json")
+                    for item in response.route_recommendations
+                ],
+                "source_quality_summary": (
+                    response.source_quality_summary.model_dump(mode="json")
+                    if response.source_quality_summary is not None
+                    else None
+                ),
+                "per_source_metrics": per_source_metrics,
+                "error_count": len(response.errors),
+            }
+
+        passed_count = sum(1 for item in cases if item.passed)
+        score = round((sum(item.score for item in cases) / len(cases)) if cases else 0.0, 4)
+        issues = [item.case_name for item in cases if not item.passed]
+        summary = EvalSummary(
+            passed=passed_count == len(cases) if cases else False,
+            score=score,
+            issue_count=len(issues),
+            issues=issues,
+            case_count=len(cases),
+            passed_count=passed_count,
+        )
+        return summary, cases, artifacts, len(scenarios)
+
+    def _build_scenarios(
+        self, request: SourceSmokeEvalRequest
+    ) -> list[tuple[str, QueryContext, dict[str, Any]]]:
+        scenarios: list[tuple[str, QueryContext, dict[str, Any]]] = []
+        common = {
+            "max_sources": request.max_sources,
+            "max_documents_per_source": request.max_docs_per_source,
+            "max_evidence_per_source": request.max_evidence_per_source,
+        }
+        if request.include_macro:
+            scenarios.append(
+                (
+                    "macro_world_bank",
+                    QueryContext(
+                        query="gdp and cpi trend by country",
+                        countries=["USA"],
+                        **common,
+                    ),
+                    {"indicator_code": "NY.GDP.MKTP.CD", "country_codes": ["USA"]},
+                )
+            )
+        if request.include_energy:
+            scenarios.append(
+                (
+                    "energy_eia",
+                    QueryContext(
+                        query="oil inventory and electricity generation trend",
+                        **common,
+                    ),
+                    {"series_id": "PET.WCESTUS1.W", "api_key": "demo"},
+                )
+            )
+        if request.include_filing:
+            scenarios.append(
+                (
+                    "filing_sec_edgar",
+                    QueryContext(
+                        query="10-k filing analysis for AAPL",
+                        tickers=["AAPL"],
+                        **common,
+                    ),
+                    {"ticker": "AAPL", "form_type": "10-K"},
+                )
+            )
+        if request.include_user_input:
+            scenarios.append(
+                (
+                    "user_input",
+                    QueryContext(
+                        query="internal desk notes on supply risk",
+                        user_provided_sources=[
+                            UserProvidedSource(
+                                title="Desk note",
+                                inline_text=(
+                                    "Supply remains constrained and pricing support persists."
+                                ),
+                            )
+                        ],
+                        **common,
+                    ),
+                    {},
+                )
+            )
+        return scenarios

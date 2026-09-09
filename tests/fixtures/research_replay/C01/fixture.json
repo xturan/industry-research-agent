@@ -1,0 +1,56 @@
+{
+  "query_id": "C01",
+  "query": "低空经济相关上市公司披露与经营情况",
+  "plan": {
+    "normalized_query": "低空经济相关上市公司披露与经营情况",
+    "dimension_plan": [
+      {
+        "dimension_id": "dim_disclosure",
+        "dimension_type": "disclosure",
+        "research_question": "哪些上市公司披露了低空经济相关业务？",
+        "why_it_matters": "识别产业链上市公司",
+        "coverage_required": "覆盖上市公司公告与年报",
+        "expected_section_heading": "公司披露",
+        "source_priority": "B",
+        "source_families": ["company_disclosure", "industry_research"],
+        "caliber_terms": ["低空经济"]
+      }
+    ],
+    "source_obligations": [
+      {"obligation_id": "obl_disclosure", "source_family": "company_disclosure", "required_for": "公司披露", "min_required_evidence": 2}
+    ],
+    "query_requirements": {"needs_company_disclosure": true, "target_location": null, "is_location_sensitive": false}
+  },
+  "sources": [
+    {
+      "source_id": "src_d1", "source_family": "company_disclosure", "tier": "B",
+      "title": "某某航空科技股份有限公司2024年年度报告",
+      "url": "http://www.cninfo.com.cn/new/disclosure/detail?stockCode=000001",
+      "full_text": "报告期内，公司低空经济相关业务实现营业收入2.3亿元，同比增长35%，主要来自eVTOL核心部件销售。"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "ev_d1", "source_id": "src_d1",
+      "summary": "某某航空2024年低空经济相关业务营收2.3亿元，同比增长35%。",
+      "support_type": "direct_support", "support_strength": 0.92, "specificity": "financial_metric",
+      "company": "某某航空", "amount": "2.3亿元", "business_segment": "eVTOL核心部件", "time_ref": "2024",
+      "quoted_span": "公司低空经济相关业务实现营业收入2.3亿元，同比增长35%", "limitations": []
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "claim_disclosure_corp", "text": "某某航空2024年低空经济相关业务营收2.3亿元",
+      "supported": true, "evidence_ids": ["ev_d1"],
+      "required_source_family": "company_disclosure", "claim_family": "company_disclosure", "limitations": []
+    }
+  ],
+  "draft": {
+    "sections": [
+      {
+        "section_id": "sec_1", "title": "公司披露",
+        "markdown_body": "<!-- claim_ids: claim_disclosure_corp -->\n<!-- evidence_ids: ev_d1 -->\n某某航空2024年低空经济相关业务营收2.3亿元，同比增长35%。"
+      }
+    ]
+  }
+}

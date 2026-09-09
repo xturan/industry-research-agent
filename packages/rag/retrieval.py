@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Select, func, or_, select
+from sqlalchemy import Select, func, or_, select, text
 from sqlalchemy.orm import Session
 
 from packages.db.models import Citation, Document, DocumentChunk, Thesis, ThesisEvidenceLink
@@ -39,7 +39,18 @@ class ChunkRetrievalService:
 
         dialect_name = self._dialect_name()
         notes: list[str] = []
-        if dialect_name == "postgresql" and normalized_query:
+        backend_modes = list(filters.backend_modes or [])
+
+        # ── Phase A2: Hybrid vector + FTS → RRF ──
+        if "hybrid" in backend_modes and dialect_name == "postgresql" and normalized_query:
+            candidates = self._hybrid_search(normalized_query, tokens, filters, limit)
+            retrieval_mode = "hybrid_rrf_v1"
+            notes.append("Hybrid retrieval: vector ANN + tsvector FTS → RRF merge.")
+            if not candidates:
+                candidates = self._search_postgres(normalized_query, tokens, filters, limit)
+                retrieval_mode = "hybrid_rrf_fallback_postgres_fts_v1"
+                notes.append("Hybrid returned no hits; fell back to PostgreSQL FTS.")
+        elif dialect_name == "postgresql" and normalized_query:
             candidates = self._search_postgres(normalized_query, tokens, filters, limit)
             retrieval_mode = "postgres_fts_v1"
             notes.append("Used PostgreSQL full-text retrieval for initial candidate generation.")
@@ -91,8 +102,8 @@ class ChunkRetrievalService:
     def _search_postgres(
         self, query: str, tokens: list[str], filters: RetrievalFilters, limit: int
     ) -> list[_Candidate]:
-        vector = func.to_tsvector("english", func.coalesce(DocumentChunk.text, ""))
-        ts_query = func.plainto_tsquery("english", query)
+        vector = func.to_tsvector("simple", func.coalesce(DocumentChunk.text, ""))
+        ts_query = func.plainto_tsquery("simple", query)
         rank = func.ts_rank_cd(vector, ts_query).label("lexical_score")
         stmt = (
             select(DocumentChunk, Document, rank)
@@ -110,6 +121,116 @@ class ChunkRetrievalService:
             _Candidate(chunk=chunk, document=document, lexical_score=float(lexical_score or 0.0))
             for chunk, document, lexical_score in rows
         ]
+
+    # ── Phase A2: Hybrid vector ANN + tsvector FTS → RRF merge ──
+
+    def _hybrid_search(
+        self, query: str, tokens: list[str], filters: RetrievalFilters, limit: int
+    ) -> list[_Candidate]:
+        """Vector ANN + tsvector FTS → RRF merge → hybrid candidates."""
+        k = max(limit * 3, 15)
+        vector_candidates = self._vector_ann_search(query, tokens, filters, k)
+        fts_candidates = self._tsvector_fts_search(query, tokens, filters, k)
+        return self._rrf_merge(vector_candidates, fts_candidates, rrf_k=60)[:limit]
+
+    def _vector_ann_search(
+        self, query: str, tokens: list[str], filters: RetrievalFilters, k: int
+    ) -> list[_Candidate]:
+        """pgvector HNSW ANN search using cosine distance (<=>)."""
+        from packages.rag.embeddings import build_deterministic_embedding
+
+        query_embedding = build_deterministic_embedding(query)
+        embedding_str = "[" + ",".join(str(v) for v in query_embedding) + "]"
+
+        stmt = (
+            select(
+                DocumentChunk,
+                Document,
+                (1.0 - (DocumentChunk.embedding_vector.cosine_distance(embedding_str))).label("vector_score"),
+            )
+            .join(Document, Document.id == DocumentChunk.document_id)
+            .where(DocumentChunk.embedding_vector.isnot(None))
+        )
+        stmt = self._apply_common_filters(stmt, filters)
+        stmt = stmt.order_by(text("vector_score DESC")).limit(k)
+        rows = self.session.execute(stmt).all()
+        candidates: list[_Candidate] = []
+        for chunk, document, vector_score in rows:
+            c = _Candidate(
+                chunk=chunk,
+                document=document,
+                lexical_score=float(vector_score or 0.0),
+                lane_scores={"vector_score": round(float(vector_score or 0.0), 6)},
+            )
+            candidates.append(c)
+        return candidates
+
+    def _tsvector_fts_search(
+        self, query: str, tokens: list[str], filters: RetrievalFilters, k: int
+    ) -> list[_Candidate]:
+        """tsvector full-text search using idx_chunks_fts GIN index."""
+        ts_query = func.plainto_tsquery("simple", query)
+        vector = func.to_tsvector("simple", func.coalesce(DocumentChunk.text, ""))
+        rank = func.ts_rank_cd(vector, ts_query).label("fts_score")
+
+        stmt = (
+            select(DocumentChunk, Document, rank)
+            .join(Document, Document.id == DocumentChunk.document_id)
+            .where(vector.op("@@")(ts_query))
+        )
+        stmt = self._apply_common_filters(stmt, filters)
+        stmt = stmt.order_by(text("fts_score DESC")).limit(k)
+        rows = self.session.execute(stmt).all()
+        candidates: list[_Candidate] = []
+        for chunk, document, fts_score in rows:
+            c = _Candidate(
+                chunk=chunk,
+                document=document,
+                lexical_score=float(fts_score or 0.0),
+                lane_scores={"fts_score": round(float(fts_score or 0.0), 6)},
+            )
+            candidates.append(c)
+        return candidates
+
+    @staticmethod
+    def _rrf_merge(
+        vector_results: list[_Candidate],
+        fts_results: list[_Candidate],
+        rrf_k: int = 60,
+    ) -> list[_Candidate]:
+        """Reciprocal Rank Fusion merge of two ranked lists."""
+        rrf_scores: dict[int, float] = {}
+        candidate_map: dict[int, _Candidate] = {}
+
+        for rank, c in enumerate(vector_results, start=1):
+            rrf_scores[c.chunk.id] = rrf_scores.get(c.chunk.id, 0.0) + 1.0 / (rrf_k + rank)
+            candidate_map[c.chunk.id] = c
+
+        for rank, c in enumerate(fts_results, start=1):
+            rrf_scores[c.chunk.id] = rrf_scores.get(c.chunk.id, 0.0) + 1.0 / (rrf_k + rank)
+            if c.chunk.id not in candidate_map:
+                candidate_map[c.chunk.id] = c
+
+        merged = sorted(rrf_scores.items(), key=lambda x: -x[1])
+        result: list[_Candidate] = []
+        for chunk_id, rrf_score in merged:
+            c = candidate_map[chunk_id]
+            c.lane_scores = dict(c.lane_scores or {})
+            c.lane_scores["rrf_score"] = round(rrf_score, 6)
+            # Tag retrieval source
+            vec_rank = next(
+                (i + 1 for i, vc in enumerate(vector_results) if vc.chunk.id == chunk_id), None
+            )
+            fts_rank = next(
+                (i + 1 for i, fc in enumerate(fts_results) if fc.chunk.id == chunk_id), None
+            )
+            c.lane_scores["retrieval_source"] = (
+                "both" if vec_rank and fts_rank
+                else "vector" if vec_rank
+                else "fts"
+            )
+            result.append(c)
+        return result
 
     def _search_fallback(
         self, query: str, tokens: list[str], filters: RetrievalFilters, limit: int

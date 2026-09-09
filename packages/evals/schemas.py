@@ -49,3 +49,21 @@ class SmokeEvalResponse(BaseModel):
     eval_run_id: int
     status: EvalStatus
     summary: EvalSummary
+
+
+class SourceSmokeEvalRequest(BaseModel):
+    lookback_days: int = Field(default=30, ge=1, le=3650)
+    max_sources: int = Field(default=4, ge=1, le=20)
+    max_docs_per_source: int = Field(default=3, ge=1, le=50)
+    max_evidence_per_source: int = Field(default=3, ge=1, le=50)
+    include_macro: bool = True
+    include_energy: bool = True
+    include_filing: bool = True
+    include_user_input: bool = True
+
+
+class SourceSmokeEvalResponse(BaseModel):
+    eval_run_id: int
+    status: EvalStatus
+    summary: EvalSummary
+    scenario_count: int = Field(ge=0)

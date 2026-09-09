@@ -1,0 +1,2550 @@
+E:\anaconda\Lib\site-packages\requests\__init__.py:113: RequestsDependencyWarning: urllib3 (2.5.0) or chardet (7.4.3)/charset_normalizer (3.3.2) doesn't match a supported version!
+  warnings.warn(
+[INFO] Running Deep Research on 20 queries...
+[INFO] Output: E:\invest_agent\packages\training\data\seed_source_assessments.jsonl
+
+[1/20] M01: 2021 �������й�����Դ�������ߴӹ��ò������¡��Ծɻ��¡���������ʩ�����������Ե�ı仯���Ƿ���Ȼ֧���������������...
+  OK: 15 sources, confidence=medium, 388.4s, total_samples=15
+
+[2/20] M02: ���������㡱��ȫ��һ�廯���������Ƿ��Ѿ�ת��Ϊ��ʵ�������Ľ����������ù������ߡ��ط���Ŀ�嵥���õ�/�ܺ�Լ����������/...
+[INIT].... �� Crawl4AI 0.8.6 
+[FETCH]... �� 
+https://fgw.guizhou.gov.cn/fggz/ywdt/202301/t20230110_77896556.html            
+| [FETCH]... �� 
+https://fgw.guizhou.gov.cn/fggz/ywdt/202301/t20230110_77896556.html            
+| [FETCH]... �� 
+https://fgw.guizhou.gov.cn/fggz/ywdt/202301/t20230110_77896556.html            
+| [INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://fgw.guizhou.gov.cn/fggz/ywdt/202301/t20230110_77896556.html            
+| ✓ | ⏱: 1.58s 
+[SCRAPE].. ◆ 
+https://fgw.guizhou.gov.cn/fggz/ywdt/202301/t20230110_77896556.html            
+| ✓ | ⏱: 0.07s 
+[COMPLETE] ● 
+https://fgw.guizhou.gov.cn/fggz/ywdt/202301/t20230110_77896556.html            
+| ✓ | ⏱: 1.67s 
+  OK: 24 sources, confidence=medium, 451.9s, total_samples=39
+
+[3/20] M03: 低空经济在中央层面的政策支持是否已经进入规模化落地阶段？请分别验证空域改革、适航认证、基础设施建设、地方试点和企业订单。...
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://amos.caac.gov.cn/officialpage/                            
+| ✓ | ⏱: 3.86s 
+[SCRAPE].. ◆ https://amos.caac.gov.cn/officialpage/                            
+| ✓ | ⏱: 0.02s 
+[COMPLETE] ● https://amos.caac.gov.cn/officialpage/                            
+| ✓ | ⏱: 3.89s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://amos.caac.gov.cn/                                         
+| ✓ | ⏱: 1.81s 
+[SCRAPE].. ◆ https://amos.caac.gov.cn/                                         
+| ✓ | ⏱: 0.03s 
+[COMPLETE] ● https://amos.caac.gov.cn/                                         
+| ✓ | ⏱: 1.86s 
+  OK: 22 sources, confidence=low, 464.9s, total_samples=61
+
+[4/20] M04: 中国数据要素和公共数据授权运营政策目前处于“制度建设”还是“财政/项目落地”阶段？请找出预算、招投标、平台建设、运营主体...
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ http://www.gansu.gov.cn/gsszf/c100055/202512/174264249.shtml      
+| ✓ | ⏱: 2.52s 
+[SCRAPE].. ◆ http://www.gansu.gov.cn/gsszf/c100055/202512/174264249.shtml      
+| ✓ | ⏱: 0.19s 
+[COMPLETE] ● http://www.gansu.gov.cn/gsszf/c100055/202512/174264249.shtml      
+| ✓ | ⏱: 2.73s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://sjzyj.ah.gov.cn/xwdt/gsgg/40785945.html                   
+| ✓ | ⏱: 2.33s 
+[SCRAPE].. ◆ https://sjzyj.ah.gov.cn/xwdt/gsgg/40785945.html                   
+| ✓ | ⏱: 0.10s 
+[COMPLETE] ● https://sjzyj.ah.gov.cn/xwdt/gsgg/40785945.html                   
+| ✓ | ⏱: 2.45s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://sjzyj.ah.gov.cn/xwdt/gsgg/40786887.html                   
+| ✓ | ⏱: 2.44s 
+[SCRAPE].. ◆ https://sjzyj.ah.gov.cn/xwdt/gsgg/40786887.html                   
+| ✓ | ⏱: 0.07s 
+[COMPLETE] ● https://sjzyj.ah.gov.cn/xwdt/gsgg/40786887.html                   
+| ✓ | ⏱: 2.53s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.bjchy.gov.cn/affair/caizhengsz/zdzxjj/4028805a982b408301982b82c1f300
+34.html               | ✓ | ⏱: 1.58s 
+[SCRAPE].. ◆ 
+http://www.bjchy.gov.cn/affair/caizhengsz/zdzxjj/4028805a982b408301982b82c1f300
+34.html               | ✓ | ⏱: 0.05s 
+[COMPLETE] ● 
+http://www.bjchy.gov.cn/affair/caizhengsz/zdzxjj/4028805a982b408301982b82c1f300
+34.html               | ✓ | ⏱: 1.65s 
+  OK: 25 sources, confidence=low, 469.6s, total_samples=86
+
+[5/20] M06: 房地产去库存、城中村改造、“三大工程”和地方收储政策是否能实质改善钢铁、水泥、家电、工程机械需求？请区分政策目标、资金来...
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...17n02y23r/zbzy_8160/202207/t
+20220715_199202.html  | ✓ | ⏱: 0.85s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...17n02y23r/zbzy_8160/202207/t
+20220715_199202.html  | ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...17n02y23r/zbzy_8160/202207/t
+20220715_199202.html  | ✗ | ⏱: 0.87s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...17n02y23r/zbzy_8160/202207/t
+20220715_199202.html  | ✓ | ⏱: 1.03s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...17n02y23r/zbzy_8160/202207/t
+20220715_199202.html  | ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...17n02y23r/zbzy_8160/202207/t
+20220715_199202.html  | ✗ | ⏱: 1.05s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ http://www.pbc.gov.cn/en/3688229/3688335/3730285/index.html       
+| ✓ | ⏱: 0.76s 
+[SCRAPE].. ◆ http://www.pbc.gov.cn/en/3688229/3688335/3730285/index.html       
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● http://www.pbc.gov.cn/en/3688229/3688335/3730285/index.html       
+| ✗ | ⏱: 0.77s 
+  OK: 23 sources, confidence=low, 431.2s, total_samples=109
+
+[6/20] M08: 光伏产业链当前的主要矛盾是国内产能过剩、出口贸易壁垒，还是价格周期？请用产能、价格、出口、海外政策和企业公告交叉验证。...
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://gxt.fujian.gov.cn/zwgk/xw/hydt/xydt/202501/t20250115_6701065.htm       
+| ✓ | ⏱: 2.53s 
+[SCRAPE].. ◆ 
+https://gxt.fujian.gov.cn/zwgk/xw/hydt/xydt/202501/t20250115_6701065.htm       
+| ✓ | ⏱: 0.11s 
+[COMPLETE] ● 
+https://gxt.fujian.gov.cn/zwgk/xw/hydt/xydt/202501/t20250115_6701065.htm       
+| ✓ | ⏱: 2.66s 
+  OK: 22 sources, confidence=high, 408.7s, total_samples=131
+
+[7/20] M09: 半导体设备和材料国产替代是否已经从政策支持转化为订单和收入？请重点检查招投标、中标公告、客户验证、上市公司收入结构。...
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ http://jiguan.huishan.gov.cn/zx/doc/2022/11/04/1094659.shtml      
+| ✓ | ⏱: 0.75s 
+[SCRAPE].. ◆ http://jiguan.huishan.gov.cn/zx/doc/2022/11/04/1094659.shtml      
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● http://jiguan.huishan.gov.cn/zx/doc/2022/11/04/1094659.shtml      
+| ✗ | ⏱: 0.75s 
+  OK: 15 sources, confidence=low, 403.1s, total_samples=146
+
+[8/20] M10: 商业航天和卫星互联网的中央政策是否已经形成明确产业订单？请区分发射计划、卫星制造、地面设备、终端应用和地方产业园建设。...
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ http://www.kepu.gov.cn/news/2025-08/22/content_388831.html        
+| ✓ | ⏱: 2.63s 
+[SCRAPE].. ◆ http://www.kepu.gov.cn/news/2025-08/22/content_388831.html        
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● http://www.kepu.gov.cn/news/2025-08/22/content_388831.html        
+| ✓ | ⏱: 2.64s 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://guiyang.gov.cn/...t20251215_89043662.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://guiyang.gov.cn/ztzl/rdzt/ztzlzsyzzl/ztzlzsyzzltzdt/202512/t20251215_890
+43662.html
+Call log:
+  - navigating to 
+"https://guiyang.gov.cn/ztzl/rdzt/ztzlzsyzzl/ztzlzsyzzltzdt/202512/t20251215_89
+043662.html", waiting until "domcontentloaded"
+ 
+[ERROR]... × https://guiyang.gov.cn/...t20251215_89043662.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://guiyang.gov.cn/ztzl/rdzt/ztzlzsyzzl/ztzlzsyzzltzdt/202512/t20251215_890
+43662.html
+Call log:
+  - navigating to 
+"https://guiyang.gov.cn/ztzl/rdzt/ztzlzsyzzl/ztzlzsyzzltzdt/202512/t20251215_89
+043662.html", waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://guiyang.gov.cn/...t20251215_89043662.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://guiyang.gov.cn/ztzl/rdzt/ztzlzsyzzl/ztzlzsyzzltzdt/202512/t20251215_890
+43662.html
+Call log:
+  - navigating to 
+"https://guiyang.gov.cn/ztzl/rdzt/ztzlzsyzzl/ztzlzsyzzltzdt/202512/t20251215_89
+043662.html", waiting until "domcontentloaded"
+ 
+[ERROR]... × https://guiyang.gov.cn/...t20251215_89043662.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://guiyang.gov.cn/ztzl/rdzt/ztzlzsyzzl/ztzlzsyzzltzdt/202512/t20251215_890
+43662.html
+Call log:
+  - navigating to 
+"https://guiyang.gov.cn/ztzl/rdzt/ztzlzsyzzl/ztzlzsyzzltzdt/202512/t20251215_89
+043662.html", waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+  OK: 27 sources, confidence=low, 510.2s, total_samples=173
+
+[9/20] M11: 粮食安全、种业振兴和农机更新政策对种子、农机、化肥、粮食加工产业链的影响分别是什么？请避免只引用农业大省标签。...
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://www.chinacoop.gov.cn/news.html?aid=1770148                
+| ✓ | ⏱: 8.82s 
+[SCRAPE].. ◆ https://www.chinacoop.gov.cn/news.html?aid=1770148                
+| ✓ | ⏱: 0.05s 
+[COMPLETE] ● https://www.chinacoop.gov.cn/news.html?aid=1770148                
+| ✓ | ⏱: 8.89s 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://www.gxzf.gov.cn/...8315/dt/t16839907.shtml  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: Timeout 30000ms exceeded.
+Call log:
+  - navigating to 
+"http://www.gxzf.gov.cn/zt/xwfb/wssthjbh0728_188315/dt/t16839907.shtml", 
+waiting until "domcontentloaded"
+ 
+[ERROR]... × http://www.gxzf.gov.cn/...8315/dt/t16839907.shtml  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: Timeout 30000ms exceeded.
+Call log:
+  - navigating to 
+"http://www.gxzf.gov.cn/zt/xwfb/wssthjbh0728_188315/dt/t16839907.shtml", 
+waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://www.gxzf.gov.cn/...8315/dt/t16839907.shtml  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.gxzf.gov.cn/zt/xwfb/wssthjbh0728_188315/dt/t16839907.shtml
+Call log:
+  - navigating to 
+"http://www.gxzf.gov.cn/zt/xwfb/wssthjbh0728_188315/dt/t16839907.shtml", 
+waiting until "domcontentloaded"
+ 
+[ERROR]... × http://www.gxzf.gov.cn/...8315/dt/t16839907.shtml  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.gxzf.gov.cn/zt/xwfb/wssthjbh0728_188315/dt/t16839907.shtml
+Call log:
+  - navigating to 
+"http://www.gxzf.gov.cn/zt/xwfb/wssthjbh0728_188315/dt/t16839907.shtml", 
+waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://www.hunan.gov.cn/hnszf/hdjl/zxft/c103136/202602/t20260202_33907997.html
+| ✓ | ⏱: 2.88s 
+[SCRAPE].. ◆ 
+https://www.hunan.gov.cn/hnszf/hdjl/zxft/c103136/202602/t20260202_33907997.html
+| ✓ | ⏱: 0.03s 
+[COMPLETE] ● 
+https://www.hunan.gov.cn/hnszf/hdjl/zxft/c103136/202602/t20260202_33907997.html
+| ✓ | ⏱: 2.93s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://www.chinacoop.gov.cn/news.html?aid=1144185                
+| ✓ | ⏱: 9.62s 
+[SCRAPE].. ◆ https://www.chinacoop.gov.cn/news.html?aid=1144185                
+| ✓ | ⏱: 0.02s 
+[COMPLETE] ● https://www.chinacoop.gov.cn/news.html?aid=1144185                
+| ✓ | ⏱: 9.65s 
+  OK: 28 sources, confidence=low, 549.8s, total_samples=201
+
+[10/20] M12: 煤炭安全保供、双碳约束和现代煤化工扩张之间是否存在政策冲突？请找出中央政策、能耗指标、项目审批和地方投资计划证据。...
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://www.ndrc.gov.cn/fzggw/jgsj/yxj/sjdt/202212/t20221230_1344969.html      
+| ✓ | ⏱: 3.74s 
+[SCRAPE].. ◆ 
+https://www.ndrc.gov.cn/fzggw/jgsj/yxj/sjdt/202212/t20221230_1344969.html      
+| ✓ | ⏱: 0.03s 
+[COMPLETE] ● 
+https://www.ndrc.gov.cn/fzggw/jgsj/yxj/sjdt/202212/t20221230_1344969.html      
+| ✓ | ⏱: 3.79s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://www.ndrc.gov.cn/fzggw/jgsj/yxj/sjdt/202205/t20220531_1326420.html      
+| ✓ | ⏱: 3.82s 
+[SCRAPE].. ◆ 
+https://www.ndrc.gov.cn/fzggw/jgsj/yxj/sjdt/202205/t20220531_1326420.html      
+| ✓ | ⏱: 0.03s 
+[COMPLETE] ● 
+https://www.ndrc.gov.cn/fzggw/jgsj/yxj/sjdt/202205/t20220531_1326420.html      
+| ✓ | ⏱: 3.87s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://www.ndrc.gov.cn/fggz/gbzj/wsgz/202208/t20220831_1334913.html           
+| ✓ | ⏱: 4.34s 
+[SCRAPE].. ◆ 
+https://www.ndrc.gov.cn/fggz/gbzj/wsgz/202208/t20220831_1334913.html           
+| ✓ | ⏱: 0.03s 
+[COMPLETE] ● 
+https://www.ndrc.gov.cn/fggz/gbzj/wsgz/202208/t20220831_1334913.html           
+| ✓ | ⏱: 4.38s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://www.ndrc.gov.cn/xwdt/spfg/zfzjt/202207/t20220725_1343183.html          
+| ✓ | ⏱: 4.53s 
+[SCRAPE].. ◆ 
+https://www.ndrc.gov.cn/xwdt/spfg/zfzjt/202207/t20220725_1343183.html          
+| ✓ | ⏱: 0.03s 
+[COMPLETE] ● 
+https://www.ndrc.gov.cn/xwdt/spfg/zfzjt/202207/t20220725_1343183.html          
+| ✓ | ⏱: 4.58s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://www.ndrc.gov.cn/fzggw/jgsj/yxj/sjdt/202110/t20211018_1300014_ext.html  
+| ✓ | ⏱: 2.47s 
+[SCRAPE].. ◆ 
+https://www.ndrc.gov.cn/fzggw/jgsj/yxj/sjdt/202110/t20211018_1300014_ext.html  
+| ✓ | ⏱: 0.02s 
+[COMPLETE] ● 
+https://www.ndrc.gov.cn/fzggw/jgsj/yxj/sjdt/202110/t20211018_1300014_ext.html  
+| ✓ | ⏱: 2.50s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://www.ndrc.gov.cn/fggz/dqzx/zyxdqzxfz/202207/t20220704_1330037.html      
+| ✓ | ⏱: 3.08s 
+[SCRAPE].. ◆ 
+https://www.ndrc.gov.cn/fggz/dqzx/zyxdqzxfz/202207/t20220704_1330037.html      
+| ✓ | ⏱: 0.03s 
+[COMPLETE] ● 
+https://www.ndrc.gov.cn/fggz/dqzx/zyxdqzxfz/202207/t20220704_1330037.html      
+| ✓ | ⏱: 3.13s 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://www.xzkl.gov.cn/.../t20221122_3816788.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.xzkl.gov.cn/zwyw/szfyw/202211/t20221122_3816788.html
+Call log:
+  - navigating to 
+"http://www.xzkl.gov.cn/zwyw/szfyw/202211/t20221122_3816788.html", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × http://www.xzkl.gov.cn/.../t20221122_3816788.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.xzkl.gov.cn/zwyw/szfyw/202211/t20221122_3816788.html
+Call log:
+  - navigating to 
+"http://www.xzkl.gov.cn/zwyw/szfyw/202211/t20221122_3816788.html", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://www.xzkl.gov.cn/.../t20221122_3816788.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.xzkl.gov.cn/zwyw/szfyw/202211/t20221122_3816788.html
+Call log:
+  - navigating to 
+"http://www.xzkl.gov.cn/zwyw/szfyw/202211/t20221122_3816788.html", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × http://www.xzkl.gov.cn/.../t20221122_3816788.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.xzkl.gov.cn/zwyw/szfyw/202211/t20221122_3816788.html
+Call log:
+  - navigating to 
+"http://www.xzkl.gov.cn/zwyw/szfyw/202211/t20221122_3816788.html", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+  OK: 23 sources, confidence=low, 485.3s, total_samples=224
+
+[11/20] P01: 广东省人工智能与制造业融合政策是否已经形成真实财政投入和企业采购？请重点验证政策文件、专项资金、政府采购、产业园和头部企...
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/gd_13844/202510/t20251023_936335.html
+| ✓ | ⏱: 3.90s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/gd_13844/202510/t20251023_936335.html
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/gd_13844/202510/t20251023_936335.html
+| ✗ | ⏱: 3.92s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/gd_13844/202510/t20251023_936335.html
+| ✓ | ⏱: 2.03s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/gd_13844/202510/t20251023_936335.html
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/gd_13844/202510/t20251023_936335.html
+| ✗ | ⏱: 2.05s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://www.szgm.gov.cn/gmxfj/gkmlpt/content/12/12486/post_12486121.html       
+| ✓ | ⏱: 14.19s 
+[SCRAPE].. ◆ 
+https://www.szgm.gov.cn/gmxfj/gkmlpt/content/12/12486/post_12486121.html       
+| ✓ | ⏱: 0.06s 
+[COMPLETE] ● 
+https://www.szgm.gov.cn/gmxfj/gkmlpt/content/12/12486/post_12486121.html       
+| ✓ | ⏱: 14.27s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://stic.sz.gov.cn/xxgk/kjgh/content/post_2907995.html        
+| ✓ | ⏱: 8.86s 
+[SCRAPE].. ◆ https://stic.sz.gov.cn/xxgk/kjgh/content/post_2907995.html        
+| ✓ | ⏱: 0.10s 
+[COMPLETE] ● https://stic.sz.gov.cn/xxgk/kjgh/content/post_2907995.html        
+| ✓ | ⏱: 8.97s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://stic.sz.gov.cn/xxgk/kjgh/content/post_2907983.html        
+| ✓ | ⏱: 3.81s 
+[SCRAPE].. ◆ https://stic.sz.gov.cn/xxgk/kjgh/content/post_2907983.html        
+| ✓ | ⏱: 0.06s 
+[COMPLETE] ● https://stic.sz.gov.cn/xxgk/kjgh/content/post_2907983.html        
+| ✓ | ⏱: 3.89s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/gd_13844/202504/t20250407_889625.html
+| ✓ | ⏱: 2.68s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/gd_13844/202504/t20250407_889625.html
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/gd_13844/202504/t20250407_889625.html
+| ✗ | ⏱: 2.70s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/gd_13844/202504/t20250407_889625.html
+| ✓ | ⏱: 4.01s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/gd_13844/202504/t20250407_889625.html
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/gd_13844/202504/t20250407_889625.html
+| ✗ | ⏱: 4.03s 
+  OK: 21 sources, confidence=low, 473.8s, total_samples=245
+
+[12/20] P02: 江苏省低空经济布局是否集中在政策规划，还是已有基础设施、飞行服务、整机制造和应用场景落地？请做省级证据链。...
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://fgw.sz.gov.cn/ztzl/qtztzl/szscjmyjjfzzhfwpt/xwdt/cyfz/content/post_1250
+3847.html             | ✓ | ⏱: 11.97s 
+[SCRAPE].. ◆ 
+https://fgw.sz.gov.cn/ztzl/qtztzl/szscjmyjjfzzhfwpt/xwdt/cyfz/content/post_1250
+3847.html             | ✓ | ⏱: 0.06s 
+[COMPLETE] ● 
+https://fgw.sz.gov.cn/ztzl/qtztzl/szscjmyjjfzzhfwpt/xwdt/cyfz/content/post_1250
+3847.html             | ✓ | ⏱: 12.05s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://www.sz.gov.cn/szzt2010/wgkzl/jcgk/jcygk/zdzcjc/content/post_12305127.ht
+ml                    | ✓ | ⏱: 4.84s 
+[SCRAPE].. ◆ 
+https://www.sz.gov.cn/szzt2010/wgkzl/jcgk/jcygk/zdzcjc/content/post_12305127.ht
+ml                    | ✓ | ⏱: 0.06s 
+[COMPLETE] ● 
+https://www.sz.gov.cn/szzt2010/wgkzl/jcgk/jcygk/zdzcjc/content/post_12305127.ht
+ml                    | ✓ | ⏱: 4.92s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://fgw.sz.gov.cn/zwgk/qt/tzgg/content/post_12305044.html     
+| ✓ | ⏱: 9.72s 
+[SCRAPE].. ◆ https://fgw.sz.gov.cn/zwgk/qt/tzgg/content/post_12305044.html     
+| ✓ | ⏱: 0.14s 
+[COMPLETE] ● https://fgw.sz.gov.cn/zwgk/qt/tzgg/content/post_12305044.html     
+| ✓ | ⏱: 9.89s 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://www.jiangmen.gov...ntent/post_3366583.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: Timeout 30000ms exceeded.
+Call log:
+  - navigating to 
+"http://www.jiangmen.gov.cn/bmpd/jmsfzhggj/gfxwj/content/post_3366583.html", 
+waiting until "domcontentloaded"
+ 
+[ERROR]... × http://www.jiangmen.gov...ntent/post_3366583.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: Timeout 30000ms exceeded.
+Call log:
+  - navigating to 
+"http://www.jiangmen.gov.cn/bmpd/jmsfzhggj/gfxwj/content/post_3366583.html", 
+waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.jiangmen.gov.cn/bmpd/jmsfzhggj/gfxwj/content/post_3366583.html      
+| ✓ | ⏱: 19.20s 
+[SCRAPE].. ◆ 
+http://www.jiangmen.gov.cn/bmpd/jmsfzhggj/gfxwj/content/post_3366583.html      
+| ✓ | ⏱: 0.03s 
+[COMPLETE] ● 
+http://www.jiangmen.gov.cn/bmpd/jmsfzhggj/gfxwj/content/post_3366583.html      
+| ✓ | ⏱: 19.24s 
+  OK: 24 sources, confidence=low, 608.4s, total_samples=269
+
+[13/20] P03: 浙江省数据要素和公共数据授权运营是否已进入商业化阶段？请验证省级政策、平台运营主体、招标项目和收入来源。...
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://dblz.zjrd.gov.c...7D9443E80AC6DE03577B8E2  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://dblz.zjrd.gov.cn/gfxwj/basccn.aspx?i=799995A3C7D9443E80AC6DE03577B8E2
+Call log:
+  - navigating to 
+"https://dblz.zjrd.gov.cn/gfxwj/basccn.aspx?i=799995A3C7D9443E80AC6DE03577B8E2"
+, waiting until "domcontentloaded"
+ 
+[ERROR]... × https://dblz.zjrd.gov.c...7D9443E80AC6DE03577B8E2  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://dblz.zjrd.gov.cn/gfxwj/basccn.aspx?i=799995A3C7D9443E80AC6DE03577B8E2
+Call log:
+  - navigating to 
+"https://dblz.zjrd.gov.cn/gfxwj/basccn.aspx?i=799995A3C7D9443E80AC6DE03577B8E2"
+, waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://dblz.zjrd.gov.c...7D9443E80AC6DE03577B8E2  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://dblz.zjrd.gov.cn/gfxwj/basccn.aspx?i=799995A3C7D9443E80AC6DE03577B8E2
+Call log:
+  - navigating to 
+"https://dblz.zjrd.gov.cn/gfxwj/basccn.aspx?i=799995A3C7D9443E80AC6DE03577B8E2"
+, waiting until "domcontentloaded"
+ 
+[ERROR]... × https://dblz.zjrd.gov.c...7D9443E80AC6DE03577B8E2  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://dblz.zjrd.gov.cn/gfxwj/basccn.aspx?i=799995A3C7D9443E80AC6DE03577B8E2
+Call log:
+  - navigating to 
+"https://dblz.zjrd.gov.cn/gfxwj/basccn.aspx?i=799995A3C7D9443E80AC6DE03577B8E2"
+, waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://bdb.shandong.gov...rt_329234_10337036.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://bdb.shandong.gov.cn/art/2025/10/30/art_329234_10337036.html
+Call log:
+  - navigating to 
+"http://bdb.shandong.gov.cn/art/2025/10/30/art_329234_10337036.html", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × http://bdb.shandong.gov...rt_329234_10337036.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://bdb.shandong.gov.cn/art/2025/10/30/art_329234_10337036.html
+Call log:
+  - navigating to 
+"http://bdb.shandong.gov.cn/art/2025/10/30/art_329234_10337036.html", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://bdb.shandong.gov...rt_329234_10337036.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://bdb.shandong.gov.cn/art/2025/10/30/art_329234_10337036.html
+Call log:
+  - navigating to 
+"http://bdb.shandong.gov.cn/art/2025/10/30/art_329234_10337036.html", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × http://bdb.shandong.gov...rt_329234_10337036.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://bdb.shandong.gov.cn/art/2025/10/30/art_329234_10337036.html
+Call log:
+  - navigating to 
+"http://bdb.shandong.gov.cn/art/2025/10/30/art_329234_10337036.html", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://data.hangzhou.gov.cn/dop/tpl/news/newsDetail.html?id=251&typeName=新闻
+动态                       | ✓ | ⏱: 11.42s 
+[SCRAPE].. ◆ 
+https://data.hangzhou.gov.cn/dop/tpl/news/newsDetail.html?id=251&typeName=新闻
+动态                       | ✓ | ⏱: 0.05s 
+[COMPLETE] ● 
+https://data.hangzhou.gov.cn/dop/tpl/news/newsDetail.html?id=251&typeName=新闻
+动态                       | ✓ | ⏱: 11.49s 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://minyi.zjzwfw.gov...a/phonetopic_10867.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: Timeout 30000ms exceeded.
+Call log:
+  - navigating to 
+"http://minyi.zjzwfw.gov.cn/dczjnewls/dczj/idea/phonetopic_10867.html", waiting
+until "domcontentloaded"
+ 
+[ERROR]... × http://minyi.zjzwfw.gov...a/phonetopic_10867.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: Timeout 30000ms exceeded.
+Call log:
+  - navigating to 
+"http://minyi.zjzwfw.gov.cn/dczjnewls/dczj/idea/phonetopic_10867.html", waiting
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://minyi.zjzwfw.gov...a/phonetopic_10867.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: Timeout 60000ms exceeded.
+Call log:
+  - navigating to 
+"http://minyi.zjzwfw.gov.cn/dczjnewls/dczj/idea/phonetopic_10867.html", waiting
+until "domcontentloaded"
+ 
+[ERROR]... × http://minyi.zjzwfw.gov...a/phonetopic_10867.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: Timeout 60000ms exceeded.
+Call log:
+  - navigating to 
+"http://minyi.zjzwfw.gov.cn/dczjnewls/dczj/idea/phonetopic_10867.html", waiting
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://ningbo.customs.gov.cn/ningbo_customs/ztjj92/4339812/5498767/index.html  
+| ✓ | ⏱: 9.52s 
+[SCRAPE].. ◆ 
+http://ningbo.customs.gov.cn/ningbo_customs/ztjj92/4339812/5498767/index.html  
+| ✓ | ⏱: 0.01s 
+[COMPLETE] ● 
+http://ningbo.customs.gov.cn/ningbo_customs/ztjj92/4339812/5498767/index.html  
+| ✗ | ⏱: 9.53s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://ningbo.customs.gov.cn/ningbo_customs/ztjj92/4339812/5498767/index.html  
+| ✓ | ⏱: 9.73s 
+[SCRAPE].. ◆ 
+http://ningbo.customs.gov.cn/ningbo_customs/ztjj92/4339812/5498767/index.html  
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://ningbo.customs.gov.cn/ningbo_customs/ztjj92/4339812/5498767/index.html  
+| ✗ | ⏱: 9.74s 
+  OK: 26 sources, confidence=low, 647.5s, total_samples=295
+
+[14/20] P04: 安徽省新能源汽车产业链是否仍依赖合肥龙头带动，还是已经形成全省多地协同？请从整车、电池、零部件、财政补贴和项目分布验证。...
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://fzggw.ah.gov.cn/ywdt/sxcz/149928091.html                  
+| ✓ | ⏱: 1.56s 
+[SCRAPE].. ◆ https://fzggw.ah.gov.cn/ywdt/sxcz/149928091.html                  
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● https://fzggw.ah.gov.cn/ywdt/sxcz/149928091.html                  
+| ✗ | ⏱: 1.57s 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.yzjjjc.gov..../m/wenzhang_754835.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.yzjjjc.gov.cn/html/m/wenzhang_754835.html
+Call log:
+  - navigating to "https://www.yzjjjc.gov.cn/html/m/wenzhang_754835.html", 
+waiting until "domcontentloaded"
+ 
+[ERROR]... × https://www.yzjjjc.gov..../m/wenzhang_754835.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.yzjjjc.gov.cn/html/m/wenzhang_754835.html
+Call log:
+  - navigating to "https://www.yzjjjc.gov.cn/html/m/wenzhang_754835.html", 
+waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.yzjjjc.gov..../m/wenzhang_754835.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.yzjjjc.gov.cn/html/m/wenzhang_754835.html
+Call log:
+  - navigating to "https://www.yzjjjc.gov.cn/html/m/wenzhang_754835.html", 
+waiting until "domcontentloaded"
+ 
+[ERROR]... × https://www.yzjjjc.gov..../m/wenzhang_754835.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.yzjjjc.gov.cn/html/m/wenzhang_754835.html
+Call log:
+  - navigating to "https://www.yzjjjc.gov.cn/html/m/wenzhang_754835.html", 
+waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://www.most.gov.cn/dfkj/ah/zxdt/201506/t20150630_120297.html 
+| ✓ | ⏱: 6.40s 
+[SCRAPE].. ◆ https://www.most.gov.cn/dfkj/ah/zxdt/201506/t20150630_120297.html 
+| ✓ | ⏱: 0.04s 
+[COMPLETE] ● https://www.most.gov.cn/dfkj/ah/zxdt/201506/t20150630_120297.html 
+| ✓ | ⏱: 6.46s 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.dangtu.gov.cn/xwzx/dtxw/81155211.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.dangtu.gov.cn/xwzx/dtxw/81155211.html
+Call log:
+  - navigating to "https://www.dangtu.gov.cn/xwzx/dtxw/81155211.html", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × https://www.dangtu.gov.cn/xwzx/dtxw/81155211.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.dangtu.gov.cn/xwzx/dtxw/81155211.html
+Call log:
+  - navigating to "https://www.dangtu.gov.cn/xwzx/dtxw/81155211.html", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.dangtu.gov.cn/xwzx/dtxw/81155211.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.dangtu.gov.cn/xwzx/dtxw/81155211.html
+Call log:
+  - navigating to "https://www.dangtu.gov.cn/xwzx/dtxw/81155211.html", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × https://www.dangtu.gov.cn/xwzx/dtxw/81155211.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.dangtu.gov.cn/xwzx/dtxw/81155211.html
+Call log:
+  - navigating to "https://www.dangtu.gov.cn/xwzx/dtxw/81155211.html", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://www.ahwx.gov.cn/.../t20220714_6169728.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.ahwx.gov.cn/wlcb/kah/202207/t20220714_6169728.html
+Call log:
+  - navigating to 
+"http://www.ahwx.gov.cn/wlcb/kah/202207/t20220714_6169728.html", waiting until 
+"domcontentloaded"
+ 
+[ERROR]... × http://www.ahwx.gov.cn/.../t20220714_6169728.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.ahwx.gov.cn/wlcb/kah/202207/t20220714_6169728.html
+Call log:
+  - navigating to 
+"http://www.ahwx.gov.cn/wlcb/kah/202207/t20220714_6169728.html", waiting until 
+"domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://www.ahwx.gov.cn/.../t20220714_6169728.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.ahwx.gov.cn/wlcb/kah/202207/t20220714_6169728.html
+Call log:
+  - navigating to 
+"http://www.ahwx.gov.cn/wlcb/kah/202207/t20220714_6169728.html", waiting until 
+"domcontentloaded"
+ 
+[ERROR]... × http://www.ahwx.gov.cn/.../t20220714_6169728.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.ahwx.gov.cn/wlcb/kah/202207/t20220714_6169728.html
+Call log:
+  - navigating to 
+"http://www.ahwx.gov.cn/wlcb/kah/202207/t20220714_6169728.html", waiting until 
+"domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+  OK: 24 sources, confidence=medium, 557.5s, total_samples=319
+
+[15/20] P05: 四川省锂资源、电池材料和水电优势是否真正支撑动力电池产业扩张？请验证资源、能耗、环评、项目投产和企业产能。...
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://scdfz.sc.gov.cn/gzdt/zyhy/content_135301    | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://scdfz.sc.gov.cn/gzdt/zyhy/content_135301
+Call log:
+  - navigating to "http://scdfz.sc.gov.cn/gzdt/zyhy/content_135301", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × http://scdfz.sc.gov.cn/gzdt/zyhy/content_135301    | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://scdfz.sc.gov.cn/gzdt/zyhy/content_135301
+Call log:
+  - navigating to "http://scdfz.sc.gov.cn/gzdt/zyhy/content_135301", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://scdfz.sc.gov.cn/gzdt/zyhy/content_135301    | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://scdfz.sc.gov.cn/gzdt/zyhy/content_135301
+Call log:
+  - navigating to "http://scdfz.sc.gov.cn/gzdt/zyhy/content_135301", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × http://scdfz.sc.gov.cn/gzdt/zyhy/content_135301    | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://scdfz.sc.gov.cn/gzdt/zyhy/content_135301
+Call log:
+  - navigating to "http://scdfz.sc.gov.cn/gzdt/zyhy/content_135301", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://scdfz.sc.gov.cn/scyx/scfw/content_172168    | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://scdfz.sc.gov.cn/scyx/scfw/content_172168
+Call log:
+  - navigating to "http://scdfz.sc.gov.cn/scyx/scfw/content_172168", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × http://scdfz.sc.gov.cn/scyx/scfw/content_172168    | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://scdfz.sc.gov.cn/scyx/scfw/content_172168
+Call log:
+  - navigating to "http://scdfz.sc.gov.cn/scyx/scfw/content_172168", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://scdfz.sc.gov.cn/scyx/scfw/content_172168    | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://scdfz.sc.gov.cn/scyx/scfw/content_172168
+Call log:
+  - navigating to "http://scdfz.sc.gov.cn/scyx/scfw/content_172168", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × http://scdfz.sc.gov.cn/scyx/scfw/content_172168    | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://scdfz.sc.gov.cn/scyx/scfw/content_172168
+Call log:
+  - navigating to "http://scdfz.sc.gov.cn/scyx/scfw/content_172168", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://www.gzz.gov.cn/bmdt/article/597883          | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at http://www.gzz.gov.cn/bmdt/article/597883
+Call log:
+  - navigating to "http://www.gzz.gov.cn/bmdt/article/597883", waiting until 
+"domcontentloaded"
+ 
+[ERROR]... × http://www.gzz.gov.cn/bmdt/article/597883          | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at http://www.gzz.gov.cn/bmdt/article/597883
+Call log:
+  - navigating to "http://www.gzz.gov.cn/bmdt/article/597883", waiting until 
+"domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://www.gzz.gov.cn/bmdt/article/597883          | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at http://www.gzz.gov.cn/bmdt/article/597883
+Call log:
+  - navigating to "http://www.gzz.gov.cn/bmdt/article/597883", waiting until 
+"domcontentloaded"
+ 
+[ERROR]... × http://www.gzz.gov.cn/bmdt/article/597883          | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at http://www.gzz.gov.cn/bmdt/article/597883
+Call log:
+  - navigating to "http://www.gzz.gov.cn/bmdt/article/597883", waiting until 
+"domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://www.kyb.cgs.gov....4/t20200401_594490.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.kyb.cgs.gov.cn/qt/zhaokuang/202004/t20200401_594490.html
+Call log:
+  - navigating to 
+"http://www.kyb.cgs.gov.cn/qt/zhaokuang/202004/t20200401_594490.html", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × http://www.kyb.cgs.gov....4/t20200401_594490.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.kyb.cgs.gov.cn/qt/zhaokuang/202004/t20200401_594490.html
+Call log:
+  - navigating to 
+"http://www.kyb.cgs.gov.cn/qt/zhaokuang/202004/t20200401_594490.html", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://www.kyb.cgs.gov....4/t20200401_594490.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.kyb.cgs.gov.cn/qt/zhaokuang/202004/t20200401_594490.html
+Call log:
+  - navigating to 
+"http://www.kyb.cgs.gov.cn/qt/zhaokuang/202004/t20200401_594490.html", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × http://www.kyb.cgs.gov....4/t20200401_594490.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.kyb.cgs.gov.cn/qt/zhaokuang/202004/t20200401_594490.html
+Call log:
+  - navigating to 
+"http://www.kyb.cgs.gov.cn/qt/zhaokuang/202004/t20200401_594490.html", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.abazhou.gov...azhou/c104349/l_c.shtml  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.abazhou.gov.cn/abazhou/c104349/l_c.shtml
+Call log:
+  - navigating to "https://www.abazhou.gov.cn/abazhou/c104349/l_c.shtml", 
+waiting until "domcontentloaded"
+ 
+[ERROR]... × https://www.abazhou.gov...azhou/c104349/l_c.shtml  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.abazhou.gov.cn/abazhou/c104349/l_c.shtml
+Call log:
+  - navigating to "https://www.abazhou.gov.cn/abazhou/c104349/l_c.shtml", 
+waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.abazhou.gov...azhou/c104349/l_c.shtml  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.abazhou.gov.cn/abazhou/c104349/l_c.shtml
+Call log:
+  - navigating to "https://www.abazhou.gov.cn/abazhou/c104349/l_c.shtml", 
+waiting until "domcontentloaded"
+ 
+[ERROR]... × https://www.abazhou.gov...azhou/c104349/l_c.shtml  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.abazhou.gov.cn/abazhou/c104349/l_c.shtml
+Call log:
+  - navigating to "https://www.abazhou.gov.cn/abazhou/c104349/l_c.shtml", 
+waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://www.gzz.gov.cn/zzxtahdf/article/78261       | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.gzz.gov.cn/zzxtahdf/article/78261
+Call log:
+  - navigating to "http://www.gzz.gov.cn/zzxtahdf/article/78261", waiting until
+"domcontentloaded"
+ 
+[ERROR]... × http://www.gzz.gov.cn/zzxtahdf/article/78261       | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.gzz.gov.cn/zzxtahdf/article/78261
+Call log:
+  - navigating to "http://www.gzz.gov.cn/zzxtahdf/article/78261", waiting until
+"domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://www.gzz.gov.cn/zzxtahdf/article/78261       | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.gzz.gov.cn/zzxtahdf/article/78261
+Call log:
+  - navigating to "http://www.gzz.gov.cn/zzxtahdf/article/78261", waiting until
+"domcontentloaded"
+ 
+[ERROR]... × http://www.gzz.gov.cn/zzxtahdf/article/78261       | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://www.gzz.gov.cn/zzxtahdf/article/78261
+Call log:
+  - navigating to "http://www.gzz.gov.cn/zzxtahdf/article/78261", waiting until
+"domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://scdfz.sc.gov.cn/gzdt/zyhy/content_159695    | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://scdfz.sc.gov.cn/gzdt/zyhy/content_159695
+Call log:
+  - navigating to "http://scdfz.sc.gov.cn/gzdt/zyhy/content_159695", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × http://scdfz.sc.gov.cn/gzdt/zyhy/content_159695    | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://scdfz.sc.gov.cn/gzdt/zyhy/content_159695
+Call log:
+  - navigating to "http://scdfz.sc.gov.cn/gzdt/zyhy/content_159695", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ http://scdfz.sc.gov.cn/gzdt/zyhy/content_159695    | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://scdfz.sc.gov.cn/gzdt/zyhy/content_159695
+Call log:
+  - navigating to "http://scdfz.sc.gov.cn/gzdt/zyhy/content_159695", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × http://scdfz.sc.gov.cn/gzdt/zyhy/content_159695    | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_EMPTY_RESPONSE at 
+http://scdfz.sc.gov.cn/gzdt/zyhy/content_159695
+Call log:
+  - navigating to "http://scdfz.sc.gov.cn/gzdt/zyhy/content_159695", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.dazhu.gov.cn/news-show-32622.html      | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.dazhu.gov.cn/news-show-32622.html
+Call log:
+  - navigating to "https://www.dazhu.gov.cn/news-show-32622.html", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × https://www.dazhu.gov.cn/news-show-32622.html      | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.dazhu.gov.cn/news-show-32622.html
+Call log:
+  - navigating to "https://www.dazhu.gov.cn/news-show-32622.html", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.dazhu.gov.cn/news-show-32622.html      | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.dazhu.gov.cn/news-show-32622.html
+Call log:
+  - navigating to "https://www.dazhu.gov.cn/news-show-32622.html", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × https://www.dazhu.gov.cn/news-show-32622.html      | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.dazhu.gov.cn/news-show-32622.html
+Call log:
+  - navigating to "https://www.dazhu.gov.cn/news-show-32622.html", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/sc_13848/202209/t20220916_326911.html
+| ✓ | ⏱: 2.71s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/sc_13848/202209/t20220916_326911.html
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/sc_13848/202209/t20220916_326911.html
+| ✗ | ⏱: 2.73s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/sc_13848/202209/t20220916_326911.html
+| ✓ | ⏱: 2.62s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/sc_13848/202209/t20220916_326911.html
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/sc_13848/202209/t20220916_326911.html
+| ✗ | ⏱: 2.64s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/sc_13848/202510/t20251027_936748.html
+| ✓ | ⏱: 2.40s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/sc_13848/202510/t20251027_936748.html
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/sc_13848/202510/t20251027_936748.html
+| ✗ | ⏱: 2.42s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/sc_13848/202510/t20251027_936748.html
+| ✓ | ⏱: 3.44s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/sc_13848/202510/t20251027_936748.html
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/sc_13848/202510/t20251027_936748.html
+| ✗ | ⏱: 3.45s 
+  OK: 21 sources, confidence=medium, 710.8s, total_samples=340
+
+[16/20] P08: 内蒙古绿电、绿氢和现代煤化工项目是否具备成本与消纳优势？请核查风光资源、用电价格、项目审批、下游需求。...
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.wulanchabu.gov.cn/bmxxgk/1899555.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.wulanchabu.gov.cn/bmxxgk/1899555.html
+Call log:
+  - navigating to "https://www.wulanchabu.gov.cn/bmxxgk/1899555.html", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × https://www.wulanchabu.gov.cn/bmxxgk/1899555.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.wulanchabu.gov.cn/bmxxgk/1899555.html
+Call log:
+  - navigating to "https://www.wulanchabu.gov.cn/bmxxgk/1899555.html", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.wulanchabu.gov.cn/bmxxgk/1899555.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.wulanchabu.gov.cn/bmxxgk/1899555.html
+Call log:
+  - navigating to "https://www.wulanchabu.gov.cn/bmxxgk/1899555.html", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × https://www.wulanchabu.gov.cn/bmxxgk/1899555.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.wulanchabu.gov.cn/bmxxgk/1899555.html
+Call log:
+  - navigating to "https://www.wulanchabu.gov.cn/bmxxgk/1899555.html", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ http://kjt.nmg.gov.cn/slb/kjdt/kjtgz/202312/t20231220_2429457.html
+| ✓ | ⏱: 3.32s 
+[SCRAPE].. ◆ http://kjt.nmg.gov.cn/slb/kjdt/kjtgz/202312/t20231220_2429457.html
+| ✓ | ⏱: 0.01s 
+[COMPLETE] ● http://kjt.nmg.gov.cn/slb/kjdt/kjtgz/202312/t20231220_2429457.html
+| ✓ | ⏱: 3.33s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://www.xilinhaote.gov.cn/xilinhaote/ztzl/zs.../zzq/2f484661006a457dac396ca
+8afdc26f2/index.html  | ✓ | ⏱: 3.75s 
+[SCRAPE].. ◆ 
+https://www.xilinhaote.gov.cn/xilinhaote/ztzl/zs.../zzq/2f484661006a457dac396ca
+8afdc26f2/index.html  | ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+https://www.xilinhaote.gov.cn/xilinhaote/ztzl/zs.../zzq/2f484661006a457dac396ca
+8afdc26f2/index.html  | ✗ | ⏱: 3.76s 
+  OK: 20 sources, confidence=medium, 480.1s, total_samples=360
+
+[17/20] P10: 海南自由贸易港政策对实际产业投资的拉动是否集中在旅游消费，还是已经扩展到医药、航运、数字贸易？请用项目和企业证据验证。...
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://db.hainan.gov.c.../t20250415_3849835.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://db.hainan.gov.cn/xwdt/yszx/202504/t20250415_3849835.html
+Call log:
+  - navigating to 
+"https://db.hainan.gov.cn/xwdt/yszx/202504/t20250415_3849835.html", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × https://db.hainan.gov.c.../t20250415_3849835.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://db.hainan.gov.cn/xwdt/yszx/202504/t20250415_3849835.html
+Call log:
+  - navigating to 
+"https://db.hainan.gov.cn/xwdt/yszx/202504/t20250415_3849835.html", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://db.hainan.gov.c.../t20250415_3849835.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://db.hainan.gov.cn/xwdt/yszx/202504/t20250415_3849835.html
+Call log:
+  - navigating to 
+"https://db.hainan.gov.cn/xwdt/yszx/202504/t20250415_3849835.html", waiting 
+until "domcontentloaded"
+ 
+[ERROR]... × https://db.hainan.gov.c.../t20250415_3849835.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://db.hainan.gov.cn/xwdt/yszx/202504/t20250415_3849835.html
+Call log:
+  - navigating to 
+"https://db.hainan.gov.cn/xwdt/yszx/202504/t20250415_3849835.html", waiting 
+until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202207/t20220716_235135.html
+| ✓ | ⏱: 2.72s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202207/t20220716_235135.html
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202207/t20220716_235135.html
+| ✗ | ⏱: 2.73s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202207/t20220716_235135.html
+| ✓ | ⏱: 3.36s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202207/t20220716_235135.html
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202207/t20220716_235135.html
+| ✗ | ⏱: 3.37s 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.hainan.gov....d94eb4.shtml?ddtab=true  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.hainan.gov.cn/hainan/hhcqhzn/201810/2437fedba6f2421e9324f1934ed94eb
+4.shtml?ddtab=true
+Call log:
+  - navigating to 
+"https://www.hainan.gov.cn/hainan/hhcqhzn/201810/2437fedba6f2421e9324f1934ed94e
+b4.shtml?ddtab=true", waiting until "domcontentloaded"
+ 
+[ERROR]... × https://www.hainan.gov....d94eb4.shtml?ddtab=true  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.hainan.gov.cn/hainan/hhcqhzn/201810/2437fedba6f2421e9324f1934ed94eb
+4.shtml?ddtab=true
+Call log:
+  - navigating to 
+"https://www.hainan.gov.cn/hainan/hhcqhzn/201810/2437fedba6f2421e9324f1934ed94e
+b4.shtml?ddtab=true", waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.hainan.gov....d94eb4.shtml?ddtab=true  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.hainan.gov.cn/hainan/hhcqhzn/201810/2437fedba6f2421e9324f1934ed94eb
+4.shtml?ddtab=true
+Call log:
+  - navigating to 
+"https://www.hainan.gov.cn/hainan/hhcqhzn/201810/2437fedba6f2421e9324f1934ed94e
+b4.shtml?ddtab=true", waiting until "domcontentloaded"
+ 
+[ERROR]... × https://www.hainan.gov....d94eb4.shtml?ddtab=true  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.hainan.gov.cn/hainan/hhcqhzn/201810/2437fedba6f2421e9324f1934ed94eb
+4.shtml?ddtab=true
+Call log:
+  - navigating to 
+"https://www.hainan.gov.cn/hainan/hhcqhzn/201810/2437fedba6f2421e9324f1934ed94e
+b4.shtml?ddtab=true", waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.hainan.gov....e955903f00719da60.shtml  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.hainan.gov.cn/hainan/c100723/202511/bfc84130e327403e955903f00719da6
+0.shtml
+Call log:
+  - navigating to 
+"https://www.hainan.gov.cn/hainan/c100723/202511/bfc84130e327403e955903f00719da
+60.shtml", waiting until "domcontentloaded"
+ 
+[ERROR]... × https://www.hainan.gov....e955903f00719da60.shtml  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.hainan.gov.cn/hainan/c100723/202511/bfc84130e327403e955903f00719da6
+0.shtml
+Call log:
+  - navigating to 
+"https://www.hainan.gov.cn/hainan/c100723/202511/bfc84130e327403e955903f00719da
+60.shtml", waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.hainan.gov....e955903f00719da60.shtml  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.hainan.gov.cn/hainan/c100723/202511/bfc84130e327403e955903f00719da6
+0.shtml
+Call log:
+  - navigating to 
+"https://www.hainan.gov.cn/hainan/c100723/202511/bfc84130e327403e955903f00719da
+60.shtml", waiting until "domcontentloaded"
+ 
+[ERROR]... × https://www.hainan.gov....e955903f00719da60.shtml  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.hainan.gov.cn/hainan/c100723/202511/bfc84130e327403e955903f00719da6
+0.shtml
+Call log:
+  - navigating to 
+"https://www.hainan.gov.cn/hainan/c100723/202511/bfc84130e327403e955903f00719da
+60.shtml", waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202207/t20220715_226124.html
+| ✓ | ⏱: 2.05s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202207/t20220715_226124.html
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202207/t20220715_226124.html
+| ✗ | ⏱: 2.06s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202207/t20220715_226124.html
+| ✓ | ⏱: 3.45s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202207/t20220715_226124.html
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202207/t20220715_226124.html
+| ✗ | ⏱: 3.47s 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.hainan.gov....02d955.shtml?ddtab=true  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.hainan.gov.cn/hainan/yhyshjzstz/202509/9164ce6d46e645bf8b3fd4eb1b02
+d955.shtml?ddtab=true
+Call log:
+  - navigating to 
+"https://www.hainan.gov.cn/hainan/yhyshjzstz/202509/9164ce6d46e645bf8b3fd4eb1b0
+2d955.shtml?ddtab=true", waiting until "domcontentloaded"
+ 
+[ERROR]... × https://www.hainan.gov....02d955.shtml?ddtab=true  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.hainan.gov.cn/hainan/yhyshjzstz/202509/9164ce6d46e645bf8b3fd4eb1b02
+d955.shtml?ddtab=true
+Call log:
+  - navigating to 
+"https://www.hainan.gov.cn/hainan/yhyshjzstz/202509/9164ce6d46e645bf8b3fd4eb1b0
+2d955.shtml?ddtab=true", waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.hainan.gov....02d955.shtml?ddtab=true  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.hainan.gov.cn/hainan/yhyshjzstz/202509/9164ce6d46e645bf8b3fd4eb1b02
+d955.shtml?ddtab=true
+Call log:
+  - navigating to 
+"https://www.hainan.gov.cn/hainan/yhyshjzstz/202509/9164ce6d46e645bf8b3fd4eb1b0
+2d955.shtml?ddtab=true", waiting until "domcontentloaded"
+ 
+[ERROR]... × https://www.hainan.gov....02d955.shtml?ddtab=true  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.hainan.gov.cn/hainan/yhyshjzstz/202509/9164ce6d46e645bf8b3fd4eb1b02
+d955.shtml?ddtab=true
+Call log:
+  - navigating to 
+"https://www.hainan.gov.cn/hainan/yhyshjzstz/202509/9164ce6d46e645bf8b3fd4eb1b0
+2d955.shtml?ddtab=true", waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202601/t20260129_948265.html
+| ✓ | ⏱: 2.09s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202601/t20260129_948265.html
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202601/t20260129_948265.html
+| ✗ | ⏱: 2.11s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202601/t20260129_948265.html
+| ✓ | ⏱: 2.21s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202601/t20260129_948265.html
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/dfxwfb/gssfbh/hn_13846/202601/t20260129_948265.html
+| ✗ | ⏱: 2.22s 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://ajj.hainan.gov..../t20190425_2539835.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://ajj.hainan.gov.cn/dfly/ywxx/ztjj/201904/t20190425_2539835.html
+Call log:
+  - navigating to 
+"https://ajj.hainan.gov.cn/dfly/ywxx/ztjj/201904/t20190425_2539835.html", 
+waiting until "domcontentloaded"
+ 
+[ERROR]... × https://ajj.hainan.gov..../t20190425_2539835.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://ajj.hainan.gov.cn/dfly/ywxx/ztjj/201904/t20190425_2539835.html
+Call log:
+  - navigating to 
+"https://ajj.hainan.gov.cn/dfly/ywxx/ztjj/201904/t20190425_2539835.html", 
+waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://ajj.hainan.gov..../t20190425_2539835.html  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://ajj.hainan.gov.cn/dfly/ywxx/ztjj/201904/t20190425_2539835.html
+Call log:
+  - navigating to 
+"https://ajj.hainan.gov.cn/dfly/ywxx/ztjj/201904/t20190425_2539835.html", 
+waiting until "domcontentloaded"
+ 
+[ERROR]... × https://ajj.hainan.gov..../t20190425_2539835.html  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://ajj.hainan.gov.cn/dfly/ywxx/ztjj/201904/t20190425_2539835.html
+Call log:
+  - navigating to 
+"https://ajj.hainan.gov.cn/dfly/ywxx/ztjj/201904/t20190425_2539835.html", 
+waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.hainan.gov....c5ca16.shtml?ddtab=true  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.hainan.gov.cn/hainan/zdjsxm/202203/ee419e404308413fbf78a95b50c5ca16
+.shtml?ddtab=true
+Call log:
+  - navigating to 
+"https://www.hainan.gov.cn/hainan/zdjsxm/202203/ee419e404308413fbf78a95b50c5ca1
+6.shtml?ddtab=true", waiting until "domcontentloaded"
+ 
+[ERROR]... × https://www.hainan.gov....c5ca16.shtml?ddtab=true  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.hainan.gov.cn/hainan/zdjsxm/202203/ee419e404308413fbf78a95b50c5ca16
+.shtml?ddtab=true
+Call log:
+  - navigating to 
+"https://www.hainan.gov.cn/hainan/zdjsxm/202203/ee419e404308413fbf78a95b50c5ca1
+6.shtml?ddtab=true", waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+[INIT].... → Crawl4AI 0.8.6 
+[ANTIBOT]. ℹ https://www.hainan.gov....c5ca16.shtml?ddtab=true  | Error: Proxy 
+direct failed: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.hainan.gov.cn/hainan/zdjsxm/202203/ee419e404308413fbf78a95b50c5ca16
+.shtml?ddtab=true
+Call log:
+  - navigating to 
+"https://www.hainan.gov.cn/hainan/zdjsxm/202203/ee419e404308413fbf78a95b50c5ca1
+6.shtml?ddtab=true", waiting until "domcontentloaded"
+ 
+[ERROR]... × https://www.hainan.gov....c5ca16.shtml?ddtab=true  | Error: 
+Unexpected error in _crawl_web at line 778 in _crawl_web 
+(C:\Users\LEGION\AppData\Roaming\Python\Python313\site-packages\crawl4ai\async_
+crawler_strategy.py):
+Error: Failed on navigating ACS-GOTO:
+Page.goto: net::ERR_CONNECTION_CLOSED at 
+https://www.hainan.gov.cn/hainan/zdjsxm/202203/ee419e404308413fbf78a95b50c5ca16
+.shtml?ddtab=true
+Call log:
+  - navigating to 
+"https://www.hainan.gov.cn/hainan/zdjsxm/202203/ee419e404308413fbf78a95b50c5ca1
+6.shtml?ddtab=true", waiting until "domcontentloaded"
+
+
+Code context:
+ 773                                   tag="GOTO",
+ 774                                   params={"url": url},
+ 775                               )
+ 776                               response = None
+ 777                           else:
+ 778 →                             raise RuntimeError(f"Failed on navigating 
+ACS-GOTO:\n{str(e)}")
+ 779   
+ 780                       # 
+──────────────────────────────────────────────────────────────
+ 781                       # Walk the redirect chain.  Playwright returns only 
+the last
+ 782                       # hop, so we trace the `request.redirected_from` 
+links until the
+ 783                       # first response that differs from the final one and
+surface its 
+  OK: 28 sources, confidence=medium, 678.7s, total_samples=388
+
+[18/20] C01: 合肥市新能源汽车产业集群是否已经从龙头企业招商进入供应链自循环阶段？请验证整车、电池、零部件、土地项目、财政支持和企业公...
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://www.digitalchina.gov.cn/2024/xwzx/szkx/202407/t20240718_4861327.htm    
+| ✓ | ⏱: 11.13s 
+[SCRAPE].. ◆ 
+https://www.digitalchina.gov.cn/2024/xwzx/szkx/202407/t20240718_4861327.htm    
+| ✓ | ⏱: 0.05s 
+[COMPLETE] ● 
+https://www.digitalchina.gov.cn/2024/xwzx/szkx/202407/t20240718_4861327.htm    
+| ✓ | ⏱: 11.20s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://www.hunan.gov.cn/hnyw/szdt/202309/t20230921_29493901.html 
+| ✓ | ⏱: 10.72s 
+[SCRAPE].. ◆ https://www.hunan.gov.cn/hnyw/szdt/202309/t20230921_29493901.html 
+| ✓ | ⏱: 0.05s 
+[COMPLETE] ● https://www.hunan.gov.cn/hnyw/szdt/202309/t20230921_29493901.html 
+| ✓ | ⏱: 10.78s 
+  OK: 17 sources, confidence=medium, 442.1s, total_samples=405
+
+[19/20] C07: 常州市动力电池和光伏产业链是否存在产能集中风险？请验证新增产能、开工投产、企业公告、地方扶持和市场价格。...
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://swt.hunan.gov.cn/swt/hnswt/mt/202209/t20220915_996768353816464640.html 
+| ✓ | ⏱: 14.51s 
+[SCRAPE].. ◆ 
+https://swt.hunan.gov.cn/swt/hnswt/mt/202209/t20220915_996768353816464640.html 
+| ✓ | ⏱: 0.07s 
+[COMPLETE] ● 
+https://swt.hunan.gov.cn/swt/hnswt/mt/202209/t20220915_996768353816464640.html 
+| ✓ | ⏱: 14.61s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+https://www.longhui.gov.cn/lhxswj/yjxx/202309/0741b41c9b2149829f41242df49ee3e2.
+shtml                 | ✓ | ⏱: 3.04s 
+[SCRAPE].. ◆ 
+https://www.longhui.gov.cn/lhxswj/yjxx/202309/0741b41c9b2149829f41242df49ee3e2.
+shtml                 | ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+https://www.longhui.gov.cn/lhxswj/yjxx/202309/0741b41c9b2149829f41242df49ee3e2.
+shtml                 | ✗ | ⏱: 3.05s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...n01y21r/xgbdbj_5881/202207/t
+20220715_211716.html  | ✓ | ⏱: 4.03s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...n01y21r/xgbdbj_5881/202207/t
+20220715_211716.html  | ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...n01y21r/xgbdbj_5881/202207/t
+20220715_211716.html  | ✗ | ⏱: 4.05s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...n01y21r/xgbdbj_5881/202207/t
+20220715_211716.html  | ✓ | ⏱: 3.31s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...n01y21r/xgbdbj_5881/202207/t
+20220715_211716.html  | ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...n01y21r/xgbdbj_5881/202207/t
+20220715_211716.html  | ✗ | ⏱: 3.33s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...n06y14r/xgbdbj_8411/202207/t
+20220715_201465.html  | ✓ | ⏱: 2.55s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...n06y14r/xgbdbj_8411/202207/t
+20220715_201465.html  | ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...n06y14r/xgbdbj_8411/202207/t
+20220715_201465.html  | ✗ | ⏱: 2.56s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...n06y14r/xgbdbj_8411/202207/t
+20220715_201465.html  | ✓ | ⏱: 3.29s 
+[SCRAPE].. ◆ 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...n06y14r/xgbdbj_8411/202207/t
+20220715_201465.html  | ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://www.scio.gov.cn/xwfb/gwyxwbgsxwfbh/wqfbh_...n06y14r/xgbdbj_8411/202207/t
+20220715_201465.html  | ✗ | ⏱: 3.31s 
+  OK: 23 sources, confidence=low, 464.3s, total_samples=428
+
+[20/20] K07: 肥西县新能源汽车产业链是否只是承接合肥外溢，还是形成独立项目集群？请验证项目、园区、企业、土地和用工数据。...
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://xf.ahfeixi.gov.cn/content/detail/63316b132792ee550d7b23c6.html          
+| ✓ | ⏱: 3.00s 
+[SCRAPE].. ◆ 
+http://xf.ahfeixi.gov.cn/content/detail/63316b132792ee550d7b23c6.html          
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://xf.ahfeixi.gov.cn/content/detail/63316b132792ee550d7b23c6.html          
+| ✓ | ⏱: 3.01s 
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ 
+http://xf.ahfeixi.gov.cn/content/detail/649836432792ee600159c35e.html          
+| ✓ | ⏱: 4.74s 
+[SCRAPE].. ◆ 
+http://xf.ahfeixi.gov.cn/content/detail/649836432792ee600159c35e.html          
+| ✓ | ⏱: 0.00s 
+[COMPLETE] ● 
+http://xf.ahfeixi.gov.cn/content/detail/649836432792ee600159c35e.html          
+| ✗ | ⏱: 4.75s 
+  OK: 18 sources, confidence=low, 413.0s, total_samples=446
+
+[DONE] Collected 446 training samples → E:\invest_agent\packages\training\data\seed_source_assessments.jsonl

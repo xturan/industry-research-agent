@@ -20,6 +20,8 @@ dependencies = [
   "python-multipart>=0.0.9",
   "prometheus-client>=0.20.0",
   "openai>=1.35.0",
+  "pypdf>=5.4.0",
+  "rank-bm25>=0.2.2",
 ]
 
 [project.optional-dependencies]
@@ -27,6 +29,16 @@ dev = [
   "pytest>=8.2.0",
   "httpx>=0.27.0",
   "ruff>=0.5.0",
+]
+train = [
+  "torch>=2.10",
+  "peft>=0.12.0",
+  "trl>=0.15.0",
+  "datasets>=2.18.0",
+  "bitsandbytes>=0.43.0",
+  "accelerate>=0.28.0",
+  "transformers>=4.45.0",
+  "crawl4ai>=0.8.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -44,7 +56,34 @@ select = ["E", "F", "I", "B", "UP"]
 "packages/db/bootstrap.py" = ["UP017"]
 "packages/db/models/enums.py" = ["UP042"]
 "packages/agents/schemas.py" = ["UP042"]
+"packages/registry/research_prompts.py" = ["E501"]
+"packages/rag/rerankers.py" = ["E402", "E501"]
+"packages/capability_gateway/budget.py" = ["UP017"]
+"packages/capability_gateway/circuit.py" = ["UP017"]
+"packages/capability_gateway/health.py" = ["UP017"]
+"packages/capability_gateway/redis_stores.py" = ["UP017"]
+"packages/capability_gateway/telemetry.py" = ["UP017"]
+"packages/execution/execution_lease.py" = ["UP017"]
+"packages/execution/coordinator.py" = ["UP017"]
+"scripts/gateway_g1_6_acceptance.py" = ["E402", "E501", "UP017"]
+"scripts/g2_2_routing_acceptance.py" = ["E402", "E501", "UP017"]
+"scripts/g2_3_concurrency_acceptance.py" = ["E402", "E501", "UP017"]
+"scripts/gateway_mvp_acceptance.py" = ["E402", "E501", "UP017"]
+"scripts/g3_execution_acceptance.py" = ["E402", "E501", "UP017"]
+"scripts/gateway_fullstack_acceptance.py" = ["E402", "E501", "UP017"]
+"scripts/gateway_network_load_acceptance.py" = ["E402"]
+"scripts/gateway_execution_load_acceptance.py" = ["E402", "UP017"]
+"scripts/gateway_provider_load_acceptance.py" = ["E402", "UP017"]
+"scripts/gateway_workflow_load_acceptance.py" = ["E402", "E501", "UP017"]
+"scripts/provider_quota_calibration.py" = ["UP017"]
+"scripts/evidence_quality_audit.py" = ["E402", "UP017"]
+"scripts/validate_collection_fix.py" = ["E402", "UP017"]
+"packages/sources/enums.py" = ["UP042"]
+"packages/sources/schemas.py" = ["UP017"]
+"packages/sources/citation.py" = ["UP017"]
+"packages/sources/performance.py" = ["UP017"]
 "packages/agents/workflow.py" = ["UP017"]
+"packages/agents/deep_research.py" = ["UP017"]
 "packages/content/schemas.py" = ["UP042"]
 "packages/content/service.py" = ["UP017"]
 "packages/memory/schemas.py" = ["UP042"]
@@ -55,6 +94,7 @@ select = ["E", "F", "I", "B", "UP"]
 "packages/ingestion/service.py" = ["UP017"]
 "packages/ingestion/storage.py" = ["UP017"]
 "packages/tasks/repository.py" = ["UP017"]
+"packages/tasks/service.py" = ["UP017"]
 "packages/evals/repository.py" = ["UP017"]
 "packages/ops/service.py" = ["UP017"]
 "apps/api/routes/*.py" = ["B008", "UP017"]

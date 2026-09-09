@@ -8,20 +8,27 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from apps.api.routes.content import router as content_router
+from apps.api.routes.deep_research import router as deep_research_router
 from apps.api.routes.delivery import router as delivery_router
 from apps.api.routes.documents import router as documents_router
 from apps.api.routes.evals import router as evals_router
+from apps.api.routes.gateway import router as gateway_router
 from apps.api.routes.ingestion import router as ingestion_router
 from apps.api.routes.memory import router as memory_router
 from apps.api.routes.ops import router as ops_router
 from apps.api.routes.registry import router as registry_router
 from apps.api.routes.research import router as research_router
+from apps.api.routes.research_reports import router as research_reports_router
+from apps.api.routes.research_runs import router as research_runs_router
 from apps.api.routes.search import router as search_router
 from apps.api.routes.tasks import router as tasks_router
+from apps.api.routes.themes import router as themes_router
+from apps.api.routes.workbench import router as workbench_router
 from packages.core.config import get_settings
 from packages.core.logging import bind_log_context, clear_log_context, configure_logging
 from packages.core.utils import utc_now_iso
-from packages.db.session import SessionLocal
+from packages.db.session import SessionLocal, get_engine
+from packages.research_gateway.errors import GatewayError
 from packages.tasks.metrics import metrics_content_type, metrics_payload, record_api_request
 
 LOGGER = logging.getLogger(__name__)
@@ -32,6 +39,15 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     configure_logging(settings.log_level)
     app.state.settings = settings
+    # G2.8 兜底：gateway 启用时幂等建 gateway 三表（正式来源是 alembic；
+    # 此处只保证跳过/落后 alembic 的新环境能启动）。仅 Postgres 方言生效。
+    if settings.capability_gateway_enabled:
+        try:
+            from packages.capability_gateway.wiring import ensure_gateway_tables
+
+            ensure_gateway_tables(get_engine())
+        except Exception:  # noqa: BLE001 - fail-open，网关表缺失不阻塞 API 启动
+            LOGGER.warning("GATEWAY_TABLE_BOOTSTRAP_FAILED", exc_info=True)
     yield
 
 
@@ -45,8 +61,26 @@ app.include_router(memory_router)
 app.include_router(delivery_router)
 app.include_router(tasks_router)
 app.include_router(evals_router)
+app.include_router(gateway_router)
 app.include_router(ops_router)
 app.include_router(registry_router)
+app.include_router(themes_router)
+app.include_router(workbench_router)
+app.include_router(deep_research_router)
+app.include_router(research_reports_router)
+app.include_router(research_runs_router)
+
+
+@app.exception_handler(GatewayError)
+async def _gateway_error_handler(request: Request, exc: GatewayError) -> JSONResponse:
+    headers = {}
+    if exc.retry_after_seconds:
+        headers["Retry-After"] = str(exc.retry_after_seconds)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=exc.to_response(),
+        headers=headers,
+    )
 
 
 def _request_path_template(request: Request) -> str:

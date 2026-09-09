@@ -46,7 +46,7 @@ Planning requirements:
 - Favor plans that support balanced analysis rather than single-sided argumentation.
 - If the query implies comparison, competition, causality, trend, policy, market structure, or risk, ensure the workflow can surface those aspects.
 - If the query is broad, normalize it into a question that is still answerable from evidence.
-
+ 
 Focus term selection rules:
 - Prefer terms that improve retrieval: entities, sectors, technologies, metrics, time periods, policy topics, mechanisms, risks.
 - Avoid filler phrases and overly broad generic words unless they are central to the query.

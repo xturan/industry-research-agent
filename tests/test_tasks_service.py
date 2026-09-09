@@ -10,7 +10,7 @@ from packages.agents.schemas import ResearchAnalyzeRequest
 from packages.content.schemas import ContentFormat, ContentGenerateRequest
 from packages.core.config import get_settings
 from packages.db.base import Base
-from packages.db.models import Document, SourceType, TaskAttempt, TaskJob
+from packages.db.models import Document, RunStep, SourceType, TaskAttempt, TaskJob
 from packages.db.session import reset_db_session_state
 from packages.delivery.enums import DeliveryTarget
 from packages.delivery.schemas import DeliveryJobCreateRequest
@@ -172,6 +172,67 @@ def test_task_worker_end_to_end_and_idempotency(monkeypatch, tmp_path: Path) -> 
         attempt_count = session.scalar(select(func.count()).select_from(TaskAttempt))
         assert task_count == 3
         assert attempt_count >= 3
+
+
+def test_task_research_source_assisted(monkeypatch, tmp_path: Path) -> None:
+    db_url = _setup_task_db(monkeypatch, tmp_path)
+    engine = create_engine(db_url)
+    worker = TaskWorker(worker_id="test-worker-source-assisted", poll_interval_seconds=1)
+
+    with Session(engine) as session:
+        _seed_document(session)
+        accepted = TaskService(session).enqueue_research(
+            ResearchAnalyzeTaskSubmitRequest(
+                idempotency_key="research:source:1",
+                request=ResearchAnalyzeRequest(
+                    query="Assess supply from user source",
+                    mode="mock",
+                    top_k=6,
+                    enable_source_acquisition=True,
+                    enable_pdf_processing=True,
+                    max_pdf_attachments_per_source=2,
+                    max_pdf_pages_per_attachment=10,
+                    user_provided_sources=[
+                        {
+                            "title": "Inline note",
+                            "inline_text": "Supply remains tight across key refiners.",
+                        }
+                    ],
+                ),
+            )
+        )
+
+    assert worker.run_once() is True
+
+    with Session(engine) as session:
+        task_view = TaskService(session).get_task(accepted.task_id)
+        assert task_view is not None
+        assert task_view.status.value == "succeeded"
+        result_json = task_view.result_json or {}
+        source_summary = result_json.get("source_acquisition") or {}
+        assert source_summary.get("enabled") is True
+        assert "user_input" in source_summary.get("routed_sources", [])
+        pdf_summary = source_summary.get("pdf_summary") or {}
+        assert pdf_summary.get("enabled") is True
+        assert "attachments_discovered" in pdf_summary
+        assert "attachments_processed" in pdf_summary
+
+        run_id = int(result_json["run_id"])
+        step_names = {
+            row.step_name
+            for row in session.scalars(select(RunStep).where(RunStep.run_id == run_id)).all()
+        }
+        assert {
+            "source_route",
+            "source_search",
+            "source_fetch_detail",
+            "source_extract_evidence",
+            "source_build_bundle",
+            "pdf_discover_attachments",
+            "pdf_download",
+            "pdf_extract",
+            "pdf_extract_evidence",
+        } <= step_names
 
 
 def test_task_retry_and_dead_letter(monkeypatch, tmp_path: Path) -> None:

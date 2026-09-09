@@ -494,6 +494,39 @@ def test_research_api_llm_mode_no_evidence(monkeypatch, tmp_path: Path) -> None:
         assert payload["theses"] == []
 
 
+def test_research_api_llm_mode_with_source_acquisition(monkeypatch, tmp_path: Path) -> None:
+    _setup_research_db(monkeypatch, tmp_path)
+    _install_fake_deepseek(monkeypatch)
+    get_settings.cache_clear()
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/research/analyze",
+            json={
+                "query": "Assess signal from provided source",
+                "mode": "llm",
+                "provider": "deepseek",
+                "enable_source_acquisition": True,
+                "user_provided_sources": [
+                    {
+                        "title": "Analyst note",
+                        "inline_text": (
+                            "Refining utilization remains high and cost support persists."
+                        ),
+                    }
+                ],
+            },
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["status"] == "succeeded"
+        assert payload["mode"] == "llm"
+        assert payload["provider"] == "deepseek"
+        assert payload["source_acquisition"]["enabled"] is True
+        assert "user_input" in payload["source_acquisition"]["routed_sources"]
+        assert payload["source_acquisition"]["evidence_items_found"] >= 1
+
+
 def test_research_api_rejects_invalid_step_model_key(monkeypatch, tmp_path: Path) -> None:
     _setup_research_db(monkeypatch, tmp_path)
     with TestClient(app) as client:

@@ -4,7 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from apps.api.dependencies import get_db_session
-from packages.evals.schemas import EvalRunView, SmokeEvalRequest, SmokeEvalResponse
+from packages.evals.schemas import (
+    EvalRunView,
+    SmokeEvalRequest,
+    SmokeEvalResponse,
+    SourceSmokeEvalRequest,
+    SourceSmokeEvalResponse,
+)
 from packages.evals.service import EvalService, EvalServiceError
 
 router = APIRouter(prefix="/evals", tags=["evals"])
@@ -21,8 +27,30 @@ def run_smoke_eval(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+@router.post("/run-source-smoke", response_model=SourceSmokeEvalResponse)
+def run_source_smoke_eval(
+    payload: SourceSmokeEvalRequest,
+    session: Session = Depends(get_db_session),
+) -> SourceSmokeEvalResponse:
+    try:
+        return EvalService(session).run_source_smoke(payload)
+    except EvalServiceError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @router.get("/runs/{eval_run_id}", response_model=EvalRunView)
 def get_eval_run(
+    eval_run_id: int,
+    session: Session = Depends(get_db_session),
+) -> EvalRunView:
+    view = EvalService(session).get_eval_run(eval_run_id)
+    if view is None:
+        raise HTTPException(status_code=404, detail="Eval run not found")
+    return view
+
+
+@router.get("/source-runs/{eval_run_id}", response_model=EvalRunView)
+def get_source_eval_run(
     eval_run_id: int,
     session: Session = Depends(get_db_session),
 ) -> EvalRunView:
